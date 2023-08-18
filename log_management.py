@@ -50,17 +50,20 @@ class LogManagement:
             datetime_str += "_{}".format(millisecond)
         return datetime_str
 
-    def add_log(self, log_message: str) -> None:
+    def add_log(self, log_message: str, is_error: bool = False) -> None:
         """
         This method write log messages to log file. This method save logs to file, when is
         __minimum_number_of_lines_to_write logs to save.
 
         :param log_message: txt to save to a file
+        :param is_error: if True then log describe error, default is False what means no error
         :return: None
         """
         self.__index += 1
         self.__number_lines_to_write += 1
-        self.__lines_to_write += "{}.\t{}\t{}\n".format(self.__index, self.__get_datetime(True), log_message)
+        new_line = "{}.\t{}\t{}".format(self.__index, self.__get_datetime(True), log_message)
+        self.__lines_to_write += new_line + "\n"
+        print(new_line)
 
         if self.__number_lines_to_write >= self.__minimum_number_of_lines_to_write:
             if not os.path.exists("logs") or not os.path.isdir("logs"):
