@@ -1,0 +1,11 @@
+
+{
+  "path_to_dict_com0com": "com0com",
+  "command_to_run_kegeln_program": "D:\\Kegeln\\Kegeln.exe w b6 a x",
+  "com_x": "COM1",
+  "com_y": "COM7",
+  "com_z": "COM8",
+  "com_timeout": 0.1,
+  "com_write_timeout": 0.1,
+  "minimum_number_of_lines_to_write_in_log_file": 1
+}
