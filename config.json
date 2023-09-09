@@ -7,5 +7,8 @@
   "com_z": "COM8",
   "com_timeout": 0.1,
   "com_write_timeout": 0.1,
-  "minimum_number_of_lines_to_write_in_log_file": 1
+  "minimum_number_of_lines_to_write_in_log_file": 1,
+  "ip_addr": "localhost",
+  "port": 12344,
+  "time_interval_break": 0.5
 }

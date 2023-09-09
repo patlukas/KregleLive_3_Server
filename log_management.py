@@ -4,7 +4,7 @@ from datetime import datetime
 
 
 class LogManagement:
-    def __init__(self, minimum_number_of_lines_to_write: int):
+    def __init__(self, minimum_number_of_lines_to_write: int = 1):
         """
         self.__name - <str> log file name
         self.__index - <int> index of the last saved log
@@ -23,6 +23,16 @@ class LogManagement:
         self.__number_lines_to_write = 0
         self.__minimum_number_of_lines_to_write = minimum_number_of_lines_to_write
         self.__lines_to_write = ""
+        self.__log_list = []
+
+    def set_minimum_number_of_lines_to_write(self, minimum_number_of_lines_to_write):
+        """
+        This method updates value in minimum_number_of_lines_to_write
+
+        :param minimum_number_of_lines_to_write: <int> when this number of logs are waiting,
+                                                        the logs are written to the file
+        """
+        self.__minimum_number_of_lines_to_write = minimum_number_of_lines_to_write
 
     def __get_file_name(self) -> str:
         """
@@ -50,20 +60,33 @@ class LogManagement:
             datetime_str += "_{}".format(millisecond)
         return datetime_str
 
-    def add_log(self, log_message: str, is_error: bool = False) -> None:
+    def add_log(self, priority: int, code: str, port: str, message: str) -> None:
         """
         This method write log messages to log file. This method save logs to file, when is
         __minimum_number_of_lines_to_write logs to save.
 
-        :param log_message: txt to save to a file
-        :param is_error: if True then log describe error, default is False what means no error
+        :param code: log code, e.g. 'SKT_SEND'
+        :param port: port name, e.g. 'COM1' or '127.0.0.1'
+        :param message: log description
+        :param priority: log priority level (0 - not important, ...)
         :return: None
         """
+        if type(port) == tuple:
+            port = str(port)
+        if type(code) != str:
+            code = str(code)
+        if type(port) != str:
+            port = str(port)
+        if type(message) != str:
+            message = str(message)
         self.__index += 1
         self.__number_lines_to_write += 1
-        new_line = "{}.\t{}\t{}".format(self.__index, self.__get_datetime(True), log_message)
+        date = self.__get_datetime(True)
+        self.__log_list.append([self.__index, date, priority, code, port, message])
+        new_line = "{}.\t{}\t{}\t{}\t{}\t{}".format(self.__index, date, priority, code.ljust(14), port.ljust(26), message)
         self.__lines_to_write += new_line + "\n"
-        print(new_line)
+        if priority > 1:
+           print(new_line)
 
         if self.__number_lines_to_write >= self.__minimum_number_of_lines_to_write:
             if not os.path.exists("logs") or not os.path.isdir("logs"):

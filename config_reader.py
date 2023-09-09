@@ -26,7 +26,7 @@ class ConfigReader:
         try:
             file = open("config.json")
         except FileNotFoundError as e:
-            raise ConfigReaderError(1, "Nie znaleziono pliku {}".format(os.path.abspath("config.json")), e)
+            raise ConfigReaderError(1, "Nie znaleziono pliku {}".format(os.path.abspath("config.json")))
         data = json.load(file)
         for key in self.__get_required_config_settings():
             if key not in data:
@@ -50,6 +50,9 @@ class ConfigReader:
             "com_z",
             "com_timeout",
             "com_write_timeout",
-            "minimum_number_of_lines_to_write_in_log_file"
+            "minimum_number_of_lines_to_write_in_log_file",
+            "ip_addr",
+            "port",
+            "time_interval_break"
         ]
         return list_settings
