@@ -1,4 +1,6 @@
 """This module is responsible for data transfer"""
+from typing import List
+
 import select
 import time
 
@@ -32,7 +34,6 @@ class ConnectionManager:
         self.__is_run = False
         self.__time_interval_break = time_interval_break
         self.__on_add_log(2, "COM_INFO", "", "COM_X={}, COM_Y={}".format(com_port_x.name, com_port_y.name))
-        self.start()
 
     def start(self) -> None:
         """
@@ -54,6 +55,18 @@ class ConnectionManager:
         :return: None
         """
         self.__is_run = False
+
+    def get_info(self) -> List[List[str]]:
+        """
+        This method returned info about connection
+        :return: list[list[name port: str, number recv data: str]]
+        """
+        data = []
+        data.append([self.__com_x["name"], str(self.__com_x["number_received_bytes"])])
+        data.append([self.__com_y["name"], str(self.__com_y["number_received_bytes"])])
+        for key in self.__sockets.keys():
+            data.append([str(key.getsockname()), str(self.__sockets[key]["number_received_bytes"])])
+        return data
 
     def __com_reader(self, com_in: dict, com_out: dict, sockets: dict) -> int:
         """

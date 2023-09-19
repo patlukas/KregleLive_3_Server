@@ -4,7 +4,7 @@ from datetime import datetime
 
 
 class LogManagement:
-    def __init__(self, minimum_number_of_lines_to_write: int = 1):
+    def __init__(self,minimum_number_of_lines_to_write: int = 1):
         """
         self.__name - <str> log file name
         self.__index - <int> index of the last saved log
@@ -82,7 +82,8 @@ class LogManagement:
         self.__index += 1
         self.__number_lines_to_write += 1
         date = self.__get_datetime(True)
-        self.__log_list.append([self.__index, date, priority, code, port, message])
+        data = [self.__index, date, priority, code, port, message]
+        self.__log_list.append(data)
         new_line = "{}.\t{}\t{}\t{}\t{}\t{}".format(self.__index, date, priority, code.ljust(14), port.ljust(26), message)
         self.__lines_to_write += new_line + "\n"
         if priority > 1:
@@ -96,6 +97,12 @@ class LogManagement:
             self.__lines_to_write = ""
             self.__number_lines_to_write = 0
 
+        if len(self.__log_list) > 500:
+            for i in range(0, len(self.__log_list)-50):
+                if int(self.__log_list[i][2]) < 10:
+                    self.__log_list.pop(i)
+                    break
+
     def close_log_file(self) -> None:
         """
         This method writes unsaved logs to a file.
@@ -106,3 +113,24 @@ class LogManagement:
             if not os.path.exists("logs") or not os.path.isdir("logs"):
                 os.makedirs("logs")
             file.write(self.__lines_to_write)
+
+    def get_logs(self, min_priority: int, number_logs: int, number_additional_errors: int):
+        """
+        This func return 'number_logs' logs which have priority is minimum min_priority
+
+        :param min_priority: log must have a minimum priority of this value
+        :param number_logs: maximum number of logs can be returned, but errors will be additional returned
+        :param number_additional_errors: maximum number of historical error logs
+        :return: list[logs]
+        """
+        data = []
+        for log in self.__log_list[::-1]:
+            if len(data) >= number_logs + number_additional_errors:
+                continue
+            elif int(log[2]) == 10:
+                data.append(log)
+            elif len(data) >= number_logs:
+                continue
+            elif int(log[2]) >= min_priority:
+                data.append(log)
+        return data

@@ -10,5 +10,6 @@
   "minimum_number_of_lines_to_write_in_log_file": 1,
   "ip_addr": "localhost",
   "port": 12344,
-  "time_interval_break": 0.5
+  "time_interval_break": 0.5,
+  "min_log_priority": 2
 }

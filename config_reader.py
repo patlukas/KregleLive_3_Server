@@ -53,6 +53,7 @@ class ConfigReader:
             "minimum_number_of_lines_to_write_in_log_file",
             "ip_addr",
             "port",
-            "time_interval_break"
+            "time_interval_break",
+            "min_log_priority"
         ]
         return list_settings
