@@ -85,7 +85,7 @@ class SerialPortManager:
         exist_y = self.__check_exist_port(com_y)
         exist_z = self.__check_exist_port(com_z)
         if not exist_x:
-            raise SerialPortManagementError(1, "Nie istnieje port " + com_x + "lub jest zajęty")
+            raise SerialPortManagementError(1, "Nie istnieje port " + com_x + " lub jest zajęty")
         if not exist_y and not exist_z:
             if self.__create_virtual_ports(com_y, com_z, path_to_com0com):
                 return 1
