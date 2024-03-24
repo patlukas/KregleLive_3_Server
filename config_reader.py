@@ -27,7 +27,10 @@ class ConfigReader:
             file = open("config.json")
         except FileNotFoundError as e:
             raise ConfigReaderError(1, "Nie znaleziono pliku {}".format(os.path.abspath("config.json")))
-        data = json.load(file)
+        try:
+            data = json.load(file)
+        except ValueError as e:
+            raise ConfigReaderError(1, "Niewłaściwy format danych w pliku {}".format(os.path.abspath("config.json")))
         for key in self.__get_required_config_settings():
             if key not in data:
                 raise ConfigReaderError(1, "KeyError - W pliku config.json nie ma: " + key)
@@ -54,6 +57,6 @@ class ConfigReader:
             "ip_addr",
             "port",
             "time_interval_break",
-            "min_log_priority"
+            "min_log_priority",
         ]
         return list_settings

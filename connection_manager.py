@@ -7,24 +7,38 @@ import time
 import serial
 import socket
 
+from com_manager import ComManager
+
+
+# class ConnectionManagerError(Exception):
+#     def __init__(self, code, message):
+#         self.code = code
+#         self.message = message
+#         super().__init__()
+
 
 class ConnectionManager:
     def __init__(self, com_name_x: str, com_name_y: str, com_timeout, com_write_timeout: float, on_add_log,
                  ip_addr: str, port: int, time_interval_break: float):
         """
-        :param com_name_x: <str> name of COM port to get information from 9pin machine
-        :param com_name_y: <str> name of COM port to get information from computer application
+        :param com_name_x: <str> name of COM port to get information from 9pin machine, e.g. "COM1"
+        :param com_name_y: <str> name of COM port to get information from computer application, e.g. "COM2"
         :param com_timeout: <float | int> maximum waiting time for downloading information from the COM port
         :param com_write_timeout: <float | int> maximum waiting time for sending information to the COM port
         :param on_add_log: <func> a function for saving the transmitted information in a log file
         :param ip_addr: <str> the IP address of the server (this computer).
         :param port: port which be used to communication via socket
         :param time_interval_break: length of time to wait after the end of the communication loop
+
+        :raise
+            ComManagerError
         """
-        com_port_x = serial.Serial(com_name_x, 9600, timeout=com_timeout, write_timeout=com_write_timeout)
-        com_port_y = serial.Serial(com_name_y, 9600, timeout=com_timeout, write_timeout=com_write_timeout)
-        self.__com_x = {"port": com_port_x, "data_to_send": b"", "number_received_bytes": 0, "name": "COM_X"}
-        self.__com_y = {"port": com_port_y, "data_to_send": b"", "number_received_bytes": 0, "name": "COM_Y"}
+        self.__com_x = ComManager(com_name_x, com_timeout, com_write_timeout, "COM_X", on_add_log)
+        self.__com_y = ComManager(com_name_y, com_timeout, com_write_timeout, "COM_Y", on_add_log)
+        # com_port_x = serial.Serial(com_name_x, 9600, timeout=com_timeout, write_timeout=com_write_timeout)
+        # com_port_y = serial.Serial(com_name_y, 9600, timeout=com_timeout, write_timeout=com_write_timeout)
+        # self.__com_x = {"port": com_port_x, "data_to_send": b"", "data_to_recv": b"", "number_received_bytes": 0, "name": "COM_X"}
+        # self.__com_y = {"port": com_port_y, "data_to_send": b"", "data_to_recv": b"", "number_received_bytes": 0, "name": "COM_Y"}
         self.__sockets = {}
         self.__ip_address = ip_addr
         self.__port = port
@@ -33,7 +47,7 @@ class ConnectionManager:
         self.__on_add_log = on_add_log
         self.__is_run = False
         self.__time_interval_break = time_interval_break
-        self.__on_add_log(2, "COM_INFO", "", "COM_X={}, COM_Y={}".format(com_port_x.name, com_port_y.name))
+        self.__on_add_log(2, "COM_INFO", "", "COM_X={}, COM_Y={}".format(com_name_x, com_name_y))
 
     def start(self) -> None:
         """
@@ -44,8 +58,10 @@ class ConnectionManager:
         while self.__is_run:
             self.__com_reader(self.__com_x, self.__com_y, self.__sockets)
             self.__com_reader(self.__com_y, self.__com_x, self.__sockets)
-            self.__com_sender(self.__com_x)
-            self.__com_sender(self.__com_y)
+            self.__com_x.send()
+            self.__com_y.send()
+            # self.__com_sender(self.__com_x)
+            # self.__com_sender(self.__com_y)
             self.__socket_manager()
             time.sleep(self.__time_interval_break)
 
@@ -56,82 +72,88 @@ class ConnectionManager:
         """
         self.__is_run = False
 
+    def close(self) -> None:
+        """
+        This method close every open ports and sockets
+        :return: None
+        """
+        self.__com_x.close()
+        self.__com_y.close()
+        for socket_el in self.__sockets:
+            self.__socket_close_connection(socket_el)
+
     def get_info(self) -> List[List[str]]:
         """
         This method returned info about connection
         :return: list[list[name port: str, number recv data: str]]
         """
-        data = []
-        data.append([self.__com_x["name"], str(self.__com_x["number_received_bytes"])])
-        data.append([self.__com_y["name"], str(self.__com_y["number_received_bytes"])])
+        data = [
+            [self.__com_x.get_alias(), str(self.__com_x.get_number_received_bytes())],
+            [self.__com_y.get_alias(), str(self.__com_y.get_number_received_bytes())]
+        ]
         for key in self.__sockets.keys():
             data.append([str(key.getsockname()), str(self.__sockets[key]["number_received_bytes"])])
         return data
 
-    def __com_reader(self, com_in: dict, com_out: dict, sockets: dict) -> int:
+    def __com_reader(self, com_in: ComManager, com_out: ComManager, sockets: dict) -> int:
         """
-        This method reads data from port com_in and and then displays this data in the console, writes this data to a
-        log file and adds to the queue of data to be sent to com_out and socket
+        This method reads data from the "com_in" port. It then adds the read data to the queue with data to be sent in
+        'com_out' and adds that data to the send queue on all sockets, or if there are no open sockets at that moment,
+        it adds that data to the waiting queue.
 
-        :param com_in: <{port, data_to_send, number_received_bytes}> dict with port to receive data
-        :param com_out: <{port, data_to_send, number_received_bytes}> dict with port to send data
-                        port - <serial.Serial> - object COM port
-                        data_to_send - <str> binary text with data to send
-                        number_received_bytes - <int> - number of received bytes
+        :param com_in: <ComManager> object with a COM port from which this function will read data
+        :param com_out: <ComManager> with COM port where this func will add read data to the queue with data to be sent
         :param sockets <{port: {data_to_send, number_received_bytes}, ...}>
                         port - <socket.socket> - object COM port
                         data_to_send - <str> binary text with data to send
                         number_received_bytes - <int> - number of received bytes
 
-        :return: The number of data bytes received or -1 means there was an error
+        :return: The number of data bytes received or -1 if there was an error
         """
         try:
-            in_waiting = com_in["port"].in_waiting
-            if in_waiting > 0:
-                data = com_in["port"].read(in_waiting)
-                com_in["number_received_bytes"] += len(data)
-                com_out["data_to_send"] += data
-                if len(sockets):
-                    for key in sockets:
-                        sockets[key]["data_to_send"] += data
-                else:
-                    self.__not_sent_data_to_socket += data
-                self.__on_add_log(5, "COM_READ", com_in["name"], data)
-                return len(data)
-            return 0
+            received_bytes = com_in.read()
+            if received_bytes == b"":
+                return 0
+            com_out.add_bytes_to_send(received_bytes)
+            if len(sockets):
+                for key in sockets:
+                    sockets[key]["data_to_send"] += received_bytes
+            else:
+                self.__not_sent_data_to_socket += received_bytes
+            return len(received_bytes)
         except (serial.SerialException, serial.SerialTimeoutException) as e:
-            self.__on_add_log(10, "COM_READ_ERROR", com_in["name"], e)
+            self.__on_add_log(10, "COM_READ_ERROR", com_in.get_alias(), e)
             return -1
 
-    def __com_sender(self, com_out: dict) -> int:
-        """
-        This method will try to send data to the com_out port
-
-        :param com_out: <{port, data_to_send, number_received_bytes}> dict with port to send data
-                        port - <serial.Serial> - object COM port
-                        data_to_send - <str> binary text with data to send
-                        number_received_bytes - <int> - number of received bytes
-        :return: Number of data bytes sent or -1 means there was an error
-        """
-        if com_out["data_to_send"] == b'':
-            return 0
-
-        position_special_sign = com_out["data_to_send"].rfind(b"\r")
-        if position_special_sign == -1:
-            return 0
-
-        if com_out["port"].out_waiting == 0:
-            try:
-                bytes_sent = com_out["port"].write(com_out["data_to_send"][:position_special_sign+2])
-                sent_data = com_out["data_to_send"][:bytes_sent]
-                com_out["data_to_send"] = com_out["data_to_send"][bytes_sent:]
-
-                self.__on_add_log(4, "COM_SEND", com_out["name"], sent_data)
-                return bytes_sent
-            except serial.SerialTimeoutException as e:
-                self.__on_add_log(1, "COM_SEND_TOUT", com_out["name"], str(e))
-                return -1
-        return 0
+    # def __com_sender(self, com_out: dict) -> int:
+    #     """
+    #     This method will try to send data to the com_out port
+    #
+    #     :param com_out: <{port, data_to_send, number_received_bytes}> dict with port to send data
+    #                     port - <serial.Serial> - object COM port
+    #                     data_to_send - <str> binary text with data to send
+    #                     number_received_bytes - <int> - number of received bytes
+    #     :return: Number of data bytes sent or -1 means there was an error
+    #     """
+    #     if com_out["data_to_send"] == b'':
+    #         return 0
+    #
+    #     position_special_sign = com_out["data_to_send"].rfind(b"\r")
+    #     if position_special_sign == -1:
+    #         return 0
+    #
+    #     if com_out["port"].out_waiting == 0:
+    #         try:
+    #             bytes_sent = com_out["port"].write(com_out["data_to_send"][:position_special_sign+2])
+    #             sent_data = com_out["data_to_send"][:bytes_sent]
+    #             com_out["data_to_send"] = com_out["data_to_send"][bytes_sent:]
+    #
+    #             self.__on_add_log(4, "COM_SEND", com_out["name"], sent_data)
+    #             return bytes_sent
+    #         except serial.SerialTimeoutException as e:
+    #             self.__on_add_log(1, "COM_SEND_TOUT", com_out["name"], str(e))
+    #             return -1
+    #     return 0
 
     def __socket_manager(self) -> bool:
         """
@@ -273,3 +295,17 @@ class ConnectionManager:
 
         self.__on_add_log(3, "SKT_SEND", client_address, sent_data)
         return number_sent_bits
+
+    def on_send_message(self, message: str, addressee_is_lane: bool):
+        if type(message) == str:
+            message = str.encode(message)
+        if addressee_is_lane:
+            self.__com_x["data_to_send"] += message
+        else:
+            self.__com_y["data_to_send"] += message
+
+        if len(self.__sockets):
+            for key in self.__sockets:
+                self.__sockets[key]["data_to_send"] += message
+        else:
+            self.__not_sent_data_to_socket += message

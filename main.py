@@ -1,5 +1,3 @@
-import time
-
 from connection_manager import ConnectionManager
 from log_management import LogManagement
 from config_reader import ConfigReader, ConfigReaderError
@@ -19,27 +17,34 @@ from PyQt5.QtWidgets import (
     QTableWidgetItem,
     QVBoxLayout,
     QPushButton,
-    QComboBox
+    QComboBox,
+    QCheckBox
 )
 from PyQt5 import QtCore, Qt
 from PyQt5 import QtGui
 from PyQt5.QtCore import QTimer, Qt
 from _thread import start_new_thread
+# import serial
 
 
 class GUI(QDialog):
     def __init__(self):
+        # com_0 = serial.Serial("COM1", 9600, timeout=1, write_timeout=1)
         super().__init__()
         self.__init_window()
         self.__layout = QVBoxLayout()
         self.setLayout(self.__layout)
         self.__log_management = None
+        self.__finishing_clear_off_earlier = None
         self.__connection_manager = None
         self.__connect_list_layout = None
         self.__table_logs = None
         self.__label_errors = None
         self.__number_errors = 0
         self.__min_priority = 1
+        # self.__container_fcof = None
+        # self.__list_widgets_fcof = []
+        # self.__list_widgets_fcof_label = []
         self.__show_logs = False
         self.__btn_logs_show = None
         self.__btn_logs_hide = None
@@ -101,7 +106,8 @@ class GUI(QDialog):
                                                           self.__config["com_write_timeout"],
                                                           self.__log_management.add_log,
                                                           self.__config["ip_addr"], self.__config["port"],
-                                                          self.__config["time_interval_break"])
+                                                          self.__config["time_interval_break"],
+                                                          )
             start_new_thread(self.__connection_manager.start, ())
         except ConfigReaderError as e:
             self.__log_management.add_log(10, "CNF_READ_ERROR", e.code, e.message)
