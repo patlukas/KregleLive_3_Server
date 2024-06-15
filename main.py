@@ -17,19 +17,16 @@ from PyQt5.QtWidgets import (
     QTableWidgetItem,
     QVBoxLayout,
     QPushButton,
-    QComboBox,
-    QCheckBox
+    QComboBox
 )
 from PyQt5 import QtCore, Qt
 from PyQt5 import QtGui
 from PyQt5.QtCore import QTimer, Qt
 from _thread import start_new_thread
-# import serial
 
 
 class GUI(QDialog):
     def __init__(self):
-        # com_0 = serial.Serial("COM1", 9600, timeout=1, write_timeout=1)
         super().__init__()
         self.__init_window()
         self.__layout = QVBoxLayout()
@@ -42,9 +39,6 @@ class GUI(QDialog):
         self.__label_errors = None
         self.__number_errors = 0
         self.__min_priority = 1
-        # self.__container_fcof = None
-        # self.__list_widgets_fcof = []
-        # self.__list_widgets_fcof_label = []
         self.__show_logs = False
         self.__btn_logs_show = None
         self.__btn_logs_hide = None
@@ -98,7 +92,8 @@ class GUI(QDialog):
             )
             self.__com_result = SerialPortManager(self.__config).ports_com_management()
             if self.__com_result[0] > 0:
-                self.__run_kegeln_program()
+                self.__run_kegeln_program(self.__config["path_to_run_kegeln_program"],
+                                          self.__config["flags_to_run_kegeln_program"])
             self.__log_management.add_log(2, "COM_MNGR", str(self.__com_result[0]), self.__com_result[1])
 
             self.__connection_manager = ConnectionManager(self.__config["com_x"], self.__config["com_y"],
@@ -245,17 +240,31 @@ class GUI(QDialog):
         os.chdir(exe_directory)
         self.__log_management.add_log(0, "DIR_SET", "", "Katalog domowy to {}".format(exe_directory))
 
-    def __run_kegeln_program(self):
-        cmd = self.__config["command_to_run_kegeln_program"]
-        if cmd == "":
-            self.__log_management.add_log(10, "KEGELN_1_ERROR", "kegeln.exe", "Path to kegeln not exist")
-            return "Path to kegeln not exist"
+    def __run_kegeln_program(self, path, flags):
+        """
+        This method check path to exe file and run this file with flags.
+
+        :param path: <str> path to kegeln.exe file
+        :param flags: <str> flags with which to run the exe file
+        :return: <str> Error message or if "" this mean everything was ok
+        :logs: KEGELN_PATH_NPROVI (10), KEGELN_PATH_NEXIST (10), KEGELN_ERROR (10), KEGELN_RUN (2)
+        """
+        path = self.__config["path_to_run_kegeln_program"]
+        flags = self.__config["flags_to_run_kegeln_program"]
+        if path == "":
+            self.__log_management.add_log(10, "KEGELN_PATH_NPROVI", "", "Kegeln's path file not provided")
+            return "Kegeln's path file not provided"
+        if not os.path.isfile(path):
+            self.__log_management.add_log(10, "KEGELN_PATH_NEXIST", "",
+                                          "Kegeln exe file not exists with this path")
+            return "Kegeln exe file not exists with this path"
         try:
-            subprocess.Popen(cmd, shell=True)
+            subprocess.Popen(path + " " + flags, shell=True)
         except subprocess.CalledProcessError as e:
-            self.__log_management.add_log(10, "KEGELN_2_ERROR", "kegeln.exe", str(e))
+            self.__log_management.add_log(10, "KEGELN_ERROR", "", str(e))
             return str(e)
-        self.__log_management.add_log(2, "KEGELN_RUN", "kegeln.exe", "Kegeln.exe run")
+        self.__log_management.add_log(2, "KEGELN_RUN", "", "Kegeln.exe run")
+        return ""
 
 
 if __name__ == '__main__':

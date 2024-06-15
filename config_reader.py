@@ -47,7 +47,8 @@ class ConfigReader:
         """
         list_settings = [
             "path_to_dict_com0com",
-            "command_to_run_kegeln_program",
+            "path_to_run_kegeln_program",
+            "flags_to_run_kegeln_program",
             "com_x",
             "com_y",
             "com_z",
