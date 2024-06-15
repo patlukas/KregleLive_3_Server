@@ -174,6 +174,7 @@ class ComManager:
         :param new_bytes_to_send: <bytes> Bytes which will be add to send queue
         :return: <int> Size of queue after add new bytes
         """
+        # TODO add check last byte is \r
         if type(new_bytes_to_send) != bytes:
             self.__on_add_log(6, "COM_SEND_WTPE", self.__alias, "Wrong type of data to send: '{}' have type '{}'"
                               .format(new_bytes_to_send, type(new_bytes_to_send).__name__))
