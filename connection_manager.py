@@ -8,6 +8,19 @@ from sockets_manager import SocketsManager
 
 
 class ConnectionManager:
+    """
+
+        Logs:
+            COM_READ_ERROR - 10 - error when reading data from the port
+            COM_CLOSE - 8 - Com and socket ports have been closed
+            COM_STOP - 7 - Communication has been stopped
+            COM_START - 7 - Communication has been started
+            COM_INFO - 2 - COM port number information
+
+        :raise
+            ComManagerError
+            SocketsManagerError
+    """
     def __init__(self, com_name_x: str, com_name_y: str, com_timeout, com_write_timeout: float, on_add_log,
                  ip_addr: str, port: int, time_interval_break: float):
         """
@@ -37,6 +50,7 @@ class ConnectionManager:
         This method starts transferring data
         :return: None
         """
+        self.__on_add_log(7, "COM_START", "", "Communication has been started")
         self.__is_run = True
         while self.__is_run:
             self.__com_reader(self.__com_x, self.__com_y, self.__sockets)
@@ -52,6 +66,7 @@ class ConnectionManager:
         This method stop transferring data
         :return: None
         """
+        self.__on_add_log(7, "COM_STOP", "", "Communication has been stopped")
         self.__is_run = False
 
     def close(self) -> None:
@@ -59,6 +74,7 @@ class ConnectionManager:
         This method close every open ports and sockets
         :return: None
         """
+        self.__on_add_log(7, "COM_CLOSE", "", "Com and socket ports have been closed")
         self.__com_x.close()
         self.__com_y.close()
         self.__sockets.close()
