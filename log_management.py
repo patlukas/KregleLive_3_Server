@@ -4,7 +4,7 @@ from datetime import datetime
 
 
 class LogManagement:
-    def __init__(self,minimum_number_of_lines_to_write: int = 1):
+    def __init__(self, minimum_number_of_lines_to_write: int = 1):
         """
         self.__name - <str> log file name
         self.__index - <int> index of the last saved log
@@ -36,6 +36,8 @@ class LogManagement:
 
     def __get_file_name(self) -> str:
         """
+        This function generates and returns a log file name, which includes the current date and time in its format.
+
         :return: name of logs file, in name is datetime
         """
         filename = "logs_{}.log".format(self.__get_datetime())
@@ -44,6 +46,8 @@ class LogManagement:
     @staticmethod
     def __get_datetime(with_ms: bool = False) -> str:
         """
+        This function returns the current date and time as a formatted string, optionally including milliseconds.
+
         :param with_ms: if True, then str in return include milliseconds
         :return: str with datetime, without ms format: YYYY_MM_DD__gg_mm_ss, with ms: YYYY_MM_DD__gg_mm_ss_mmmm
         """
@@ -87,7 +91,7 @@ class LogManagement:
         new_line = "{}.\t{}\t{}\t{}\t{}\t{}".format(self.__index, date, priority, code.ljust(14), port.ljust(26), message)
         self.__lines_to_write += new_line + "\n"
         if priority > 1:
-           print(new_line)
+            print(new_line)
 
         if self.__number_lines_to_write >= self.__minimum_number_of_lines_to_write:
             if not os.path.exists("logs") or not os.path.isdir("logs"):
