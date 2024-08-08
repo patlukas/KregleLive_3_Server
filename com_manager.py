@@ -1,5 +1,5 @@
 import serial
-from typing import Union
+from typing import Union, List
 
 
 class ComManagerError(Exception):
@@ -12,6 +12,7 @@ class ComManagerError(Exception):
         "10-004" - trying to send data to an unopened port
         "10-005" - trying to close unopened port
     """
+
     def __init__(self, code, message):
         self.code = code
         self.message = message
@@ -24,12 +25,14 @@ class ComManager:
 
         Logs:
             COM_SEND_WTPE - 6 - invalid data type attempted to be added to the send queue
+            COM_SEND_WEND - 6 - wrong end of data to send, should have '\r' as last sign
             COM_READ - 5 - read bytes from com port
             COM_SEND - 4 - sent bytes to com port
             COM_SEND_TOUT - 1 - timeout occurred while trying to send data
 
         :raise ComManagerError:
     """
+
     def __init__(self, port_name: str, timeout: Union[int, float, None],
                  write_timeout: Union[int, float, None], alias: str, on_add_log):
         """
@@ -69,11 +72,13 @@ class ComManager:
         self.__com_port = self.__create_port(timeout, write_timeout)
 
     @staticmethod
-    def __check_types(controlled_variables):
+    def __check_types(controlled_variables) -> None:
         """
         This method check types of variable, if variable has wrong type then throw error
         :param controlled_variables: <List<[str, value, List]>> List of list where in nested list is name of variable,
                                                                 value of variable and list of expected types
+
+        :return: None
         :raise ComManagerError:
         """
         for [name, value, expected_type] in controlled_variables:
@@ -144,7 +149,7 @@ class ComManager:
         This method send to port bytes from self.__bytes_to_send.
 
         If buffer out_waiting isn't empty or in self.__bytes_to_send isn't sign '\r' then method is ending.
-        This method will send only message which will be completed received, so it will send only messages wicth will
+        This method will send only message which will be completed received, so it will send only messages witch will
         be ended with sign '\r'
         :return: <int> number of sent bytes or -1 if was error
         :raise ComManagerError: method will throw this raise, if port was be closed
@@ -171,20 +176,25 @@ class ComManager:
     def add_bytes_to_send(self, new_bytes_to_send: bytes) -> int:
         """
         This method add to send queue new bytes.
+        
         :param new_bytes_to_send: <bytes> Bytes which will be add to send queue
         :return: <int> Size of queue after add new bytes
         """
-        # TODO add check last byte is \r
         if type(new_bytes_to_send) != bytes:
             self.__on_add_log(6, "COM_SEND_WTPE", self.__alias, "Wrong type of data to send: '{}' have type '{}'"
                               .format(new_bytes_to_send, type(new_bytes_to_send).__name__))
         else:
+            if new_bytes_to_send[-1:] != "b\r":
+                self.__on_add_log(6, "COM_SEND_WEND", self.__alias,
+                                  "Wrong end of data to send, should have '\r' as last sign: '{}'".format(
+                                      new_bytes_to_send))
             self.__bytes_to_send += new_bytes_to_send
         return len(self.__bytes_to_send)
 
     def get_number_received_bytes(self) -> int:
         """
         This method return number of received bytes from port.
+
         :return: <int> number of received bytes
         """
         return self.__number_received_bytes
@@ -192,6 +202,7 @@ class ComManager:
     def close(self) -> None:
         """
         This method close serial port.
+
         :return: <None>
         :raise ComManagerError: method will throw this raise, if port was be closed
         """
@@ -200,4 +211,3 @@ class ComManager:
                                   .format(self.__port_name, self.__alias))
         self.__com_port.close()
         self.__com_port = None
-        return
