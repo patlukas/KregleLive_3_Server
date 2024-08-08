@@ -5,7 +5,16 @@ from typing import Tuple
 
 
 class SerialPortManagementError(Exception):
-    def __init__(self, code, message):
+    """
+        List code:
+            13-000 - if not exists port com_y, but exists com_z [CRITICAL this program will be try connect to com_y]
+            13-001 - if ports exists, but not exits connection between this ports [CRITICAL]
+            13-002 - if not exists com_x [CRITICAL]
+            13-003 - error when program tried to create ports [CRITICAL]
+            13-004 - Unexpected exception
+
+        """
+    def __init__(self, code: str, message: str):
         self.code = code
         self.message = message
         super().__init__()
@@ -38,11 +47,11 @@ class SerialPortManager:
 
         :raises:
             SerialPortManagementError:
-                1 - Not exist COM_X or is busy
-                2 - Failed to create ports COM_Y COM_Z
-                3 - Not exist COM_Y or is busy
-                4 - Not exist connection between COM_Y and COM_Z
-                5 - Other Exception
+                13-000 - Not exist COM_X or is busy
+                13-001 - Failed to create ports COM_Y COM_Z
+                13-002 - Not exist COM_Y or is busy
+                13-003 - Not exist connection between COM_Y and COM_Z
+                13-004 - Other Exception
         """
         try:
             path_to_com0com = self.__config["path_to_dict_com0com"]
@@ -58,7 +67,7 @@ class SerialPortManager:
         except SerialPortManagementError:
             raise
         except Exception as e:
-            raise SerialPortManagementError(5, e)
+            raise SerialPortManagementError("13-004", str(e))
 
     def __check_and_prepare_ports(self, com_x: str, com_y: str, com_z: str, path_to_com0com: str) -> int:
         """
@@ -76,27 +85,27 @@ class SerialPortManager:
 
         :raises:
             SerialPortManagementError:
-                1 - if not exists port com_y, but exists com_z [CRITICAL this program will be try connect to com_y]
-                2 - if ports exists, but not exits connection between this ports [CRITICAL]
-                3 - if not exists com_x [CRITICAL]
-                4 - error when program tried to create ports [CRITICAL]
+                13-000 - if not exists port com_y, but exists com_z [CRITICAL this program will be try connect to com_y]
+                13-001 - if ports exists, but not exits connection between this ports [CRITICAL]
+                13-002 - if not exists com_x [CRITICAL]
+                13-003 - error when program tried to create ports [CRITICAL]
         """
         exist_x = self.__check_exist_port(com_x)
         exist_y = self.__check_exist_port(com_y)
         exist_z = self.__check_exist_port(com_z)
         if not exist_x:
-            raise SerialPortManagementError(1, "Nie istnieje port " + com_x + " lub jest zajęty")
+            raise SerialPortManagementError("13-000", "Nie istnieje port " + com_x + " lub jest zajęty")
         if not exist_y and not exist_z:
             if self.__create_virtual_ports(com_y, com_z, path_to_com0com):
                 return 1
             else:
-                raise SerialPortManagementError(2, "Nie udało się utworzyć pary portów " + com_y + "-" + com_z)
+                raise SerialPortManagementError("13-001", "Nie udało się utworzyć pary portów " + com_y + "-" + com_z)
         if exist_y and not exist_z:
             return 0
         if not exist_y and exist_z:
-            raise SerialPortManagementError(3, "Nie istnieje port " + com_y + "lub jest zajęty")
+            raise SerialPortManagementError("13-002", "Nie istnieje port " + com_y + "lub jest zajęty")
         if not self.__check_if_exist_connection_between_ports(com_y, com_z):
-            raise SerialPortManagementError(4, "Nie ma połączenia między portami " + com_y + " a " + com_z)
+            raise SerialPortManagementError("13-003", "Nie ma połączenia między portami " + com_y + " a " + com_z)
         return 2
 
     @staticmethod
