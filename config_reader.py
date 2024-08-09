@@ -7,8 +7,9 @@ class ConfigReaderError(Exception):
     """
         List code:
             12-000 - FileNotFoundError - if config.json does not exist
-            12-001 - KeyError - if config doesn't have required fields
-            12-002 - FileNotFoundError - if the path to the com0com directory is incorrect
+            12-001 - ValueError - if config.json format is not correct
+            12-002 - KeyError - if config doesn't have required fields
+            12-003 - FileNotFoundError - if the path to the com0com directory is incorrect
         """
     def __init__(self, code: str, message: str) -> None:
         self.code = code
@@ -22,26 +23,27 @@ class ConfigReader:
         This method get configuration from config.json
 
         :return: dict with config
-
         :raises:
             ConfigReaderError
                 12-000 - FileNotFoundError - if config.json does not exist
-                12-001 - KeyError - if config doesn't have required fields
-                12-002 - FileNotFoundError - if the path to the com0com directory is incorrect
+                12-001 - ValueError - if config.json format is not correct
+                12-002 - KeyError - if config doesn't have required fields
+                12-003 - FileNotFoundError - if the path to the com0com directory is incorrect
         """
         try:
             file = open("config.json")
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             raise ConfigReaderError("12-000", "Nie znaleziono pliku {}".format(os.path.abspath("config.json")))
         try:
             data = json.load(file)
-        except ValueError as e:
-            raise ConfigReaderError("12-001", "Niewłaściwy format danych w pliku {}".format(os.path.abspath("config.json")))
+        except ValueError:
+            raise ConfigReaderError("12-001", "Niewłaściwy format danych w pliku {}"
+                                    .format(os.path.abspath("config.json")))
         for key in self.__get_required_config_settings():
             if key not in data:
-                raise ConfigReaderError("12-001", "KeyError - W pliku config.json nie ma: " + key)
+                raise ConfigReaderError("12-002", "KeyError - W pliku config.json nie ma: " + key)
         if not os.path.exists(data["path_to_dict_com0com"] + "\\setupc.exe"):
-            raise ConfigReaderError("12-002", "Ścieżka do katalogu com0com w config.json jest niepoprawna")
+            raise ConfigReaderError("12-003", "Ścieżka do katalogu com0com w config.json jest niepoprawna")
         return data
 
     @staticmethod
