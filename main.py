@@ -57,6 +57,7 @@ class GUI(QDialog):
         self.__priority_dropdown - <None | QComboBox> Priority list item to set __min_priority
         self.__timer_connect_list_layout - <QTimer> Timer for updating the connection list layout.
         self.__timer_update_table_logs <QTimer> Timer for updating the logs table.
+        self.__kegeln_program_has_been_started <bool> kegeln program has been started
         """
         super().__init__()
         self.__init_window()
@@ -73,6 +74,7 @@ class GUI(QDialog):
         self.__btn_logs_show = None
         self.__btn_logs_hide = None
         self.__priority_dropdown = None
+        self.__kegeln_program_has_been_started = False
 
         self.__set_layout()
         self.__init_program()
@@ -92,14 +94,17 @@ class GUI(QDialog):
         :param event: The close event that is triggered when the window is requested to be closed.
         :return: None
         """
-        reply = QMessageBox.question(self, 'Potwierdź zamknięcie',
-                                     'Czy na pewno chcesz zamknąć aplikację?\n\nJeżeli jest uruchoiona aplikacja '
-                                     '"Zentral-PC Kegeln" to po wyłączeniu tego programu przestanie działać',
-                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        if reply == QMessageBox.Yes:
-            event.accept()
+        if self.__kegeln_program_has_been_started:
+            reply = QMessageBox.question(self, 'Potwierdź zamknięcie',
+                                         'Czy na pewno chcesz zamknąć aplikację?\n\nJeżeli jest uruchoiona aplikacja '
+                                         '"Zentral-PC Kegeln" to po wyłączeniu tego programu przestanie działać',
+                                         QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                event.accept()
+            else:
+                event.ignore()
         else:
-            event.ignore()
+            event.accept()
 
     def __init_window(self) -> None:
         """
@@ -344,6 +349,7 @@ class GUI(QDialog):
         except subprocess.CalledProcessError as e:
             self.__log_management.add_log(10, "KEGELN_ERROR", "", str(e))
             return str(e)
+        self.__kegeln_program_has_been_started = True
         self.__log_management.add_log(2, "KEGELN_RUN", "", "Kegeln.exe run")
         return ""
 
