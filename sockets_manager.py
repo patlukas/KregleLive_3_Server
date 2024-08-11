@@ -6,11 +6,11 @@ from typing import Tuple
 class SocketsManagerError(Exception):
     """
     List code:
-        "11-000" - wrong type of variable
-        "11-001" - general error when creating server socket, e.g. port and address is occurred
-        "11-002" - error when creating server socket, it is when was give port number out of range (0-65535)
-        "11-003" - error when creating server socket, it is when was give variable which has wrong type
-        "11-004" - error when server port number is out of range, must be from range 0-65535
+        11-000 - TypeError - wrong type of variable
+        11-001 - OSError - general error when creating server socket, e.g. port and address is occurred
+        11-002 - OverflowError error when creating server socket, it is when was give port number out of range (0-65535)
+        11-003 - TypeError - error when creating server socket, it is when was give variable which has wrong type
+        11-004 - PortError - error when server port number is out of range, must be from range 0-65535
     """
     def __init__(self, code, message):
         self.code = code
@@ -68,18 +68,18 @@ class SocketsManager:
         self.__queue_not_sent_data = b''
 
     @staticmethod
-    def __check_types(controlled_variables):
+    def __check_types(controlled_variables) -> None:
         """
         This method check types of variable, if variable has wrong type then throw error
 
         :param controlled_variables: <List<[str, value, List]>> List of list where in nested list is name of variable,
                                                                 value of variable and list of expected types
         :raise SocketsManagerError: 11-000
-        :logs:
-        """
+        :return: None
+         """
         for [name, value, expected_type] in controlled_variables:
             if type(value) not in expected_type:
-                raise SocketsManagerError("11-000", "Error type - variable '{}' must be one of [{}], but is {}"
+                raise SocketsManagerError("11-000", "TypeError - variable '{}' must be one of [{}], but is {}"
                                           .format(name, type(value).__name__, str(expected_type)))
 
     @staticmethod
@@ -90,11 +90,10 @@ class SocketsManager:
         :param port: <int> port number
         :return: <True> True - if port number if ok
         :raise SocketsManagerError: 11-004
-        :logs:
         """
         if port < 0 or port > 65535:
-            SocketsManagerError("11-004", "Server port number is out of range, must be from range 0-65535 is {}"
-                                .format(port))
+            SocketsManagerError("11-004", "PortError - Server port number is out of range, "
+                                          "must be from range 0-65535 is {}".format(port))
         return True
 
     def __create_server(self, ip_addr: str, port: int) -> socket.socket:
@@ -116,13 +115,13 @@ class SocketsManager:
             self.__on_add_log(2, "SKT_SRCD", "", "Socket server: ip addr: {} port: {}".format(ip_addr, port))
             return server_socket
         except OSError as e:
-            raise SocketsManagerError("11-001", "Error while create socket server | {}".format(e))
+            raise SocketsManagerError("11-001", "OSError - Error while create socket server | {}".format(e))
         except OverflowError as e:
-            raise SocketsManagerError("11-002", "Error while create socket server - wrong number of port | {}"
-                                      .format(e))
+            raise SocketsManagerError("11-002", "OverflowError - Error while create socket server - "
+                                                "wrong number of port | {}".format(e))
         except TypeError as e:
-            raise SocketsManagerError("11-003", "Error while create socket server - wrong type of argument | {}"
-                                      .format(e))
+            raise SocketsManagerError("11-003", "TypeError - Error while create socket server - "
+                                                "wrong type of argument | {}".format(e))
 
     def get_info(self) -> list:
         """
@@ -167,11 +166,11 @@ class SocketsManager:
                                                         "connections | {}".format(e))
         return received_data
 
-    def __accept_new_client(self):
+    def __accept_new_client(self) -> bool:
         """
         Accepts a connection from a client and performs necessary setup.
 
-        :return: True - client socket successfully accepted, False - there was an error while accepting
+        :return: <bool> True - client socket successfully accepted, False - there was an error while accepting
         :logs: SKT_ACPT_ERROR (10), SKT_ACPT (6)
         """
         try:
