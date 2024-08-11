@@ -1,5 +1,5 @@
 import serial
-from typing import Union, List
+from typing import Union
 
 
 class ComManagerError(Exception):
@@ -26,9 +26,11 @@ class ComManager:
         Logs:
             COM_SEND_WTPE - 6 - invalid data type attempted to be added to the send queue
             COM_SEND_WEND - 6 - wrong end of data to send, should have '\r' as last sign
+            COM_CLOSE - 6 - COM port have been closed
             COM_READ - 5 - read bytes from com port
             COM_SEND - 4 - sent bytes to com port
             COM_SEND_TOUT - 1 - timeout occurred while trying to send data
+            COM_CREATE - 1 - COM port has been created
 
         :raise ComManagerError:
     """
@@ -80,6 +82,7 @@ class ComManager:
 
         :return: None
         :raise ComManagerError:
+            10-000 - Wrong type of variable
         """
         for [name, value, expected_type] in controlled_variables:
             if type(value) not in expected_type:
@@ -97,8 +100,12 @@ class ComManager:
                                 until the timeout expires and return all bytes that were received until then.
         :param write_timeout: <float, None> waiting during received data (same options like in timeout)
         :return: <serial.Serial> object with communicate port
+        :logs: COM_CREATE (1)
         :raise ComManagerError: method will throw this raise, if was problem with create serial port
+            10-001 - ValueError - e.g. wrong baud rate or data bits
+            10-002 - SerialException - device can't be found or can't be configured
         """
+        self.__on_add_log(1, "COM_CREATE", self.__alias, "COM port '{}' has been created".format(self.__alias))
         try:
             com_port = serial.Serial(self.__port_name, 9600, timeout=timeout, write_timeout=write_timeout)
             return com_port
@@ -113,16 +120,20 @@ class ComManager:
     def get_alias(self) -> str:
         """
         This method return name alias of port, e.g. "COM_X"
+
         :return: <str> name alias
         """
         return self.__alias
 
     def read(self) -> bytes:
         """
+        ## TODO create test, to check must be "+1" not "+2" in index
         This method read bytes from com port.
 
         :return: <bytes> Received bytes form self.__bytes_to_recv with ended sign '\r'
-        :raise ComManagerError: method will throw this raise, if port was be closed
+        :logs: COM_READ (5)
+        :raise ComManagerError:
+            10-003 - method will throw this raise, if port was be closed
         """
         if self.__com_port is None:
             raise ComManagerError("10-003", "Port {} ({}) is closed or not was be created, so I can't read data"
@@ -139,20 +150,24 @@ class ComManager:
         if b"\r" not in self.__bytes_to_recv:
             return b""
 
-        index = self.__bytes_to_recv.rindex(b"\r") + 2
+        index = self.__bytes_to_recv.rindex(b"\r") + 1
         data_received, self.__bytes_to_recv = self.__bytes_to_recv[:index], self.__bytes_to_recv[index:]
         self.__number_received_bytes = len(data_received)
         return data_received
 
     def send(self) -> int:
         """
+        ## TODO create test, to check must be "+1" not "+2" in index_last_special_sign
         This method send to port bytes from self.__bytes_to_send.
 
         If buffer out_waiting isn't empty or in self.__bytes_to_send isn't sign '\r' then method is ending.
         This method will send only message which will be completed received, so it will send only messages witch will
         be ended with sign '\r'
+
         :return: <int> number of sent bytes or -1 if was error
-        :raise ComManagerError: method will throw this raise, if port was be closed
+        :logs: COM_SEND (4), COM_SEND_TOUT (1)
+        :raise ComManagerError:
+            10-004 - method will throw this raise, if port was be closed
         """
         if self.__com_port is None:
             raise ComManagerError("10-004", "Port {} ({}) is closed or not was be created, so I can't send data"
@@ -162,7 +177,7 @@ class ComManager:
             return 0
 
         try:
-            index_last_special_sign = self.__bytes_to_send.rindex(b"\r") + 2
+            index_last_special_sign = self.__bytes_to_send.rindex(b"\r") + 1
             number_sent_bytes = self.__com_port.write(self.__bytes_to_send[:index_last_special_sign])
             sent_bytes = self.__bytes_to_send[:number_sent_bytes]
             self.__bytes_to_send = self.__bytes_to_send[number_sent_bytes:]
@@ -179,15 +194,16 @@ class ComManager:
         
         :param new_bytes_to_send: <bytes> Bytes which will be add to send queue
         :return: <int> Size of queue after add new bytes
+        :logs: COM_SEND_WTPE (6), COM_SEND_WEND (6)
         """
         if type(new_bytes_to_send) != bytes:
             self.__on_add_log(6, "COM_SEND_WTPE", self.__alias, "Wrong type of data to send: '{}' have type '{}'"
                               .format(new_bytes_to_send, type(new_bytes_to_send).__name__))
         else:
-            if new_bytes_to_send[-1:] != "b\r":
+            if new_bytes_to_send[-1:] != b"\r":
                 self.__on_add_log(6, "COM_SEND_WEND", self.__alias,
                                   "Wrong end of data to send, should have '\r' as last sign: '{}'".format(
-                                      new_bytes_to_send))
+                                      new_bytes_to_send[-1:]))
             self.__bytes_to_send += new_bytes_to_send
         return len(self.__bytes_to_send)
 
@@ -204,8 +220,11 @@ class ComManager:
         This method close serial port.
 
         :return: <None>
-        :raise ComManagerError: method will throw this raise, if port was be closed
+        :logs: COM_CLOSE (6)
+        :raise ComManagerError:
+            10-005 - method will throw this raise, if port was be closed
         """
+        self.__on_add_log(6, "COM_CLOSE", self.__alias, "COM port {} have been closed".format(self.__alias))
         if self.__com_port is None:
             raise ComManagerError("10-005", "Port {} ({}) is closed or not was be created, so I can't close port"
                                   .format(self.__port_name, self.__alias))
