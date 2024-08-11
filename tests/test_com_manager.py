@@ -5,7 +5,7 @@ from com_manager import ComManager, ComManagerError
 """
     Requirements:
         must exists serial port: COM1<->COM2
-        cannot exist serial port: COM3
+        cannot exist serial port: COM13
 """
 
 
@@ -20,7 +20,7 @@ def test_busy_port():
 
 def test_cannot_exist_port():
     with pytest.raises(ComManagerError) as e:
-        b = ComManager("COM3", 1, 1, "COM_A", lambda a,b,c,d: print(a,b,c,d))
+        b = ComManager("COM13", 1, 1, "COM_A", lambda a,b,c,d: print(a,b,c,d))
         b.close()
     assert e.value.code == "10-002"
 
@@ -57,7 +57,7 @@ def test_in_communication():
     r4 = b.get_number_received_bytes()
     assert r3 == b'' and r4 == 0
 
-    a.write(b"World\r")
+    a.write(b"World\r_")
     r5 = b.read()
     r6 = b.get_number_received_bytes()
     assert r5 == b"Hello World\r" and r6 == 12
@@ -83,7 +83,7 @@ def test_out_communication():
     r = a.readall()
     assert r == b''
 
-    b.add_bytes_to_send(b"World\r")
+    b.add_bytes_to_send(b"World\r_")
     b.send()
     r = a.readall()
     assert r == b"Hello World\r"

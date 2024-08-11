@@ -127,7 +127,6 @@ class ComManager:
 
     def read(self) -> bytes:
         """
-        ## TODO create test, to check must be "+1" not "+2" in index
         This method read bytes from com port.
 
         :return: <bytes> Received bytes form self.__bytes_to_recv with ended sign '\r'
@@ -157,7 +156,6 @@ class ComManager:
 
     def send(self) -> int:
         """
-        ## TODO create test, to check must be "+1" not "+2" in index_last_special_sign
         This method send to port bytes from self.__bytes_to_send.
 
         If buffer out_waiting isn't empty or in self.__bytes_to_send isn't sign '\r' then method is ending.
