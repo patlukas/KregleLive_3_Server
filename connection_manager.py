@@ -11,11 +11,11 @@ class ConnectionManager:
     """
 
         Logs:
-            COM_READ_ERROR - 10 - error when reading data from the port
-            COM_CLOSE - 8 - Com and socket ports have been closed
-            COM_STOP - 7 - Communication has been stopped
-            COM_START - 7 - Communication has been started
-            COM_INFO - 2 - COM port number information
+            CON_READ_ERROR - 10 - error when reading data from the port
+            CON_CLOSE - 8 - Com and socket ports have been closed
+            CON_STOP - 7 - Communication has been stopped
+            CON_START - 7 - Communication has been started
+            CON_INFO - 2 - COM port number information
 
         :raise
             ComManagerError
@@ -33,6 +33,7 @@ class ConnectionManager:
         :param port: port which be used to communication via socket
         :param time_interval_break: length of time to wait after the end of the communication loop
 
+        :logs: CON_INFO (2)
         :raise
             ComManagerError
             SocketsManagerError
@@ -43,14 +44,15 @@ class ConnectionManager:
         self.__on_add_log = on_add_log
         self.__is_run = False
         self.__time_interval_break = time_interval_break
-        self.__on_add_log(2, "COM_INFO", "", "COM_X={}, COM_Y={}".format(com_name_x, com_name_y))
+        self.__on_add_log(2, "CON_INFO", "", "COM_X={}, COM_Y={}".format(com_name_x, com_name_y))
 
     def start(self) -> None:
         """
         This method starts transferring data
         :return: None
+        :logs: CON_START (7)
         """
-        self.__on_add_log(7, "COM_START", "", "Communication has been started")
+        self.__on_add_log(7, "CON_START", "", "Communication has been started")
         self.__is_run = True
         while self.__is_run:
             self.__com_reader(self.__com_x, self.__com_y, self.__sockets)
@@ -58,23 +60,26 @@ class ConnectionManager:
             self.__com_x.send()
             self.__com_y.send()
             bytes_to_send_to_com_x = self.__sockets.communications()
-            self.__com_x.add_bytes_to_send(bytes_to_send_to_com_x)
+            if bytes_to_send_to_com_x != b"":
+                self.__com_x.add_bytes_to_send(bytes_to_send_to_com_x)
             time.sleep(self.__time_interval_break)
 
     def stop(self) -> None:
         """
         This method stop transferring data
         :return: None
+        :logs: CON_STOP (7)
         """
-        self.__on_add_log(7, "COM_STOP", "", "Communication has been stopped")
+        self.__on_add_log(7, "CON_STOP", "", "Communication has been stopped")
         self.__is_run = False
 
     def close(self) -> None:
         """
         This method close every open ports and sockets
         :return: None
+        :logs: CON_CLOSE (8)
         """
-        self.__on_add_log(7, "COM_CLOSE", "", "Com and socket ports have been closed")
+        self.__on_add_log(8, "CON_CLOSE", "", "Com and socket ports have been closed")
         self.__com_x.close()
         self.__com_y.close()
         self.__sockets.close()
@@ -100,6 +105,7 @@ class ConnectionManager:
         :param sockets <SocketManager> obj to management socket connection
 
         :return: The number of data bytes received or -1 if there was an error
+        :logs: CON_READ_ERROR (10)
         """
         try:
             received_bytes = com_in.read()
@@ -109,5 +115,5 @@ class ConnectionManager:
             sockets.add_bytes_to_send(received_bytes)
             return len(received_bytes)
         except (serial.SerialException, serial.SerialTimeoutException) as e:
-            self.__on_add_log(10, "COM_READ_ERROR", com_in.get_alias(), e)
+            self.__on_add_log(10, "CON_READ_ERROR", com_in.get_alias(), e)
             return -1
