@@ -54,6 +54,7 @@ class ComManager:
         self.__bytes_to_recv - <bytes> buffer with data witch waiting to recv
                                         (in this buffer is data until not recv sign '\r')
         self.__number_received_bytes - <int> number of bytes which was recv from self.__bytes_to_recv
+        self.__number_received_communicates - <int> number of communicates which was recv from self.__bytes_to_recv
         self.__on_add_log - same like in :param on_add_log:
         self.__com_port - <serial.Serial, None>
                             - serial.Serial - opened com port to communicate
@@ -70,6 +71,7 @@ class ComManager:
         self.__bytes_to_send = b""
         self.__bytes_to_recv = b""
         self.__number_received_bytes = 0
+        self.__number_received_communicates = 0
         self.__on_add_log = on_add_log
         self.__com_port = self.__create_port(timeout, write_timeout)
 
@@ -151,7 +153,8 @@ class ComManager:
 
         index = self.__bytes_to_recv.rindex(b"\r") + 1
         data_received, self.__bytes_to_recv = self.__bytes_to_recv[:index], self.__bytes_to_recv[index:]
-        self.__number_received_bytes = len(data_received)
+        self.__number_received_bytes += len(data_received)
+        self.__number_received_communicates += data_received.count(b"\r")
         return data_received
 
     def send(self) -> int:
@@ -212,6 +215,14 @@ class ComManager:
         :return: <int> number of received bytes
         """
         return self.__number_received_bytes
+
+    def get_number_received_communicates(self) -> int:
+        """
+        This method return number of received communicates from port.
+
+        :return: <int> number of received communicates
+        """
+        return self.__number_received_communicates
 
     def close(self) -> None:
         """

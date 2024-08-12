@@ -34,6 +34,8 @@ class SocketsManager:
             SKT_ATST_ERROR - 10 - Wrong data type specified for sending (Add data To Send - Type ERROR)
             SKT_ATSE_ERROR -  10 - Wrong last sign. Must be '\r' (Add data To Send - End sign ERROR)
             SKT_ATSL_ERROR -  10 - New message must has minimum one byte (Add data To Send - Length ERROR)
+            SKT_CQUE - 8 - Queue with not send data has been cleared (Cleared QUEue)
+            SKT_EQUE - 8 - Queue with not send data was empty (Empty QUEue)
             SKT_RECV_CLOSE - 7 - While recv, class detected that the client socket was closed.
             SKT_ACPT - 6 - New client was connect (AkCePT new socket)
             SKT_CLSE - 6 - Socket has been closed (CLose Socket Clint)
@@ -57,6 +59,7 @@ class SocketsManager:
                                 - data_to_send - <bytes> waiting queue for send data
                                 - data_to_recv - <bytes> waiting queue for recv, in this var socket wait to sign '\r'
                                 - number_received_bytes - <int> number of recv bytes from data_to_recv
+                                - number_received_communicates - <int> number of recv communicates from data_to_recv
         self.__server_socket - <socket.socket> object with server socket, via this socket client can connect with app
         self.__queue_not_sent_data - <bytes> if aren't any client socket, then every data to send will be there storage
         """
@@ -127,12 +130,19 @@ class SocketsManager:
         """
         This method give list with primary information about every sockets with name ip addr and number of recv bytes.
 
-        :return: <list<list<str, str>>> -   list of list, in nested list is two str,
-                                            first is ip addr, second is number of recv bytes
+        :return: <list<list<str, str, str>>> -   list of list, in nested list is two str,
+                                                    first is ip addr or name
+                                                    second is number of communicates,
+                                                    third is number of recv bytes
         """
         result = []
         for key in list(self.__sockets.keys()):
-            result.append([str(key.getsockname()), str(self.__sockets[key]["number_received_bytes"])])
+            result.append([
+                str(key.getsockname()),
+                str(self.__sockets[key]["number_received_communicates"]),
+                str(self.__sockets[key]["number_received_bytes"])
+            ])
+        result.append(["Kolejka", str(self.__queue_not_sent_data.count(b"\r")), str(len(self.__queue_not_sent_data))])
         return result
 
     def communications(self) -> bytes:
@@ -184,7 +194,8 @@ class SocketsManager:
         self.__sockets[client_socket] = {
             "data_to_send": self.__queue_not_sent_data,
             "data_to_recv": b"",
-            "number_received_bytes": 0
+            "number_received_bytes": 0,
+            "number_received_communicates": 0
         }
         self.__queue_not_sent_data = b''
         self.__on_add_log(6, "SKT_ACPT", client_address, "New socket client")
@@ -200,7 +211,6 @@ class SocketsManager:
         :logs: SKT_ATST_ERROR (10), SKT_ATSL_ERROR (10), SKT_ATSE_ERROR (10), SKT_ATSD (1), SKT_ATQE (1)
         """
         # TODO Add limit queue
-        # TODO Add fun to clear queue
         if type(new_bytes_to_send) != bytes:
             self.__on_add_log(10, "SKT_ATST_ERROR", "", "Wrong type of data to send: '{}' have type '{}'"
                               .format(new_bytes_to_send, type(new_bytes_to_send).__name__))
@@ -258,6 +268,7 @@ class SocketsManager:
         data_received = data_to_recv[:index]
         self.__sockets[socket_el]["data_to_recv"] = data_to_recv[index:]
         self.__sockets[socket_el]["number_received_bytes"] += len(data_received)
+        self.__sockets[socket_el]["number_received_communicates"] += data_received.count(b"\r")
         self.__on_add_log(5, "SKT_RECV", client_address, str(data_received))
         return 1, data_received
 
@@ -334,3 +345,19 @@ class SocketsManager:
             self.__on_add_log(10, "SKT_CLSS_ERROR", "", "Error occurred while trying close socket server"
                                                         " | {}".format(e))
         return False
+
+    def on_clear_queue(self) -> int:
+        """
+        This method clear queue with unsent data has been cleared
+
+        :return: <int> number of deleted bytes
+        :logs: SKT_CQUE (8), SKT_EQUE (8)
+        """
+
+        number_of_deleted_bytes = len(self.__queue_not_sent_data)
+        if number_of_deleted_bytes > 0:
+            self.__queue_not_sent_data = b""
+            self.__on_add_log(8, "SKT_CQUE", "", "Queue with unsent data has been cleared")
+        else:
+            self.__on_add_log(8, "SKT_EQUE", "", "Queue with unsent data was empty")
+        return number_of_deleted_bytes

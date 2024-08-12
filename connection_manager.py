@@ -16,6 +16,7 @@ class ConnectionManager:
             CON_STOP - 7 - Communication has been stopped
             CON_START - 7 - Communication has been started
             CON_INFO - 2 - COM port number information
+            CON_SCQU - 2 - Clear queue unsent data from socket objct (Socket Clear QUeue)
 
         :raise
             ComManagerError
@@ -87,12 +88,17 @@ class ConnectionManager:
     def get_info(self) -> List[List[str]]:
         """
         This method returned info about connection
-        :return: list[list[name port: str, number recv data: str]]
+        :return: list[list[name port: str, number recv communicates: str, number recv data: str]]
         """
-        com_info = [
-            [self.__com_x.get_alias(), str(self.__com_x.get_number_received_bytes())],
-            [self.__com_y.get_alias(), str(self.__com_y.get_number_received_bytes())]
-        ]
+        com_info = []
+        for com in [self.__com_x, self.__com_y]:
+            com_info.append(
+                [
+                    com.get_alias(),
+                    str(com.get_number_received_communicates()),
+                    str(com.get_number_received_bytes())
+                ]
+            )
         return com_info + self.__sockets.get_info()
 
     def __com_reader(self, com_in: ComManager, com_out: ComManager, sockets: SocketsManager) -> int:
@@ -117,3 +123,13 @@ class ConnectionManager:
         except (serial.SerialException, serial.SerialTimeoutException) as e:
             self.__on_add_log(10, "CON_READ_ERROR", com_in.get_alias(), e)
             return -1
+
+    def on_clear_sockets_queue(self) -> int:
+        """
+        This method clear queue with unsent data has been cleared
+
+        :return: <int> number of deleted bytes
+        :logs: CON_SCQU (2)
+        """
+        self.__on_add_log(2, "CON_SCQU", "", "Queue with unsent data will be cleared")
+        return self.__sockets.on_clear_queue()

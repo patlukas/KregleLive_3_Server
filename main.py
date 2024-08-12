@@ -191,6 +191,9 @@ class GUI(QDialog):
             self.__priority_dropdown.addItem(str(i))
         self.__priority_dropdown.setCurrentText(str(self.__min_priority))
 
+        self.__btn_clear_queue = QPushButton("Wyczyść kolejkę")
+        self.__btn_clear_queue.clicked.connect(lambda: self.__on_clear_socket_queue())
+
         self.__btn_logs_show = QPushButton("Pokaż logi")
         self.__btn_logs_show.setVisible(not self.__show_logs)
         self.__btn_logs_show.clicked.connect(lambda: self.__on_show_logs(True))
@@ -205,6 +208,7 @@ class GUI(QDialog):
 
         col_config_layout.addWidget(self.__label_errors)
         col_config_layout.addWidget(dropdown_priority)
+        col_config_layout.addWidget(self.__btn_clear_queue)
         col_config_layout.addWidget(self.__btn_logs_show)
         col_config_layout.addWidget(self.__btn_logs_hide)
 
@@ -261,12 +265,12 @@ class GUI(QDialog):
 
         data = self.__connection_manager.get_info()
         number_of_connected_devices = 0
-        for name, rec in data:
-            if rec == "0":
+        for name, rec_communicates, rec_bytes in data:
+            if rec_communicates == "0" and rec_bytes == "0":
                 rec = ""
             else:
-                rec = "( " + rec + " B )"
-            label = QLabel(name + " " + rec)
+                rec = " ( " + rec_communicates + " | " + rec_bytes + " B )"
+            label = QLabel(name + rec)
             self.__connect_list_layout.addWidget(label)
             number_of_connected_devices += 1
         return number_of_connected_devices
@@ -353,6 +357,14 @@ class GUI(QDialog):
         self.__log_management.add_log(2, "KEGELN_RUN", "", "Kegeln.exe run")
         return ""
 
+    def __on_clear_socket_queue(self) -> None:
+        """
+
+        :return:
+        """
+        if self.__connection_manager is not None:
+            if self.__connection_manager.on_clear_sockets_queue() > 0:
+                self.__update_connect_list_layout()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

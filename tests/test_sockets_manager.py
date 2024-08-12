@@ -191,3 +191,13 @@ def test_1_client():
             break
     d.join()
     assert a.close()
+
+
+def test_clear_queue():
+    e = []
+    a = SocketsManager("localhost", 50000, lambda a, b, c, d: e.append(b))
+    assert a.on_clear_queue() == 0
+    a.add_bytes_to_send(b"Hejka\r")
+    assert a.on_clear_queue() == 6
+    assert a.on_clear_queue() == 0
+
