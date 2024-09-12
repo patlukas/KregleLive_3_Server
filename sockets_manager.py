@@ -263,8 +263,9 @@ class SocketsManager:
 
         data_to_recv = self.__sockets[socket_el]["data_to_recv"] + data
         if b"\r" not in data_to_recv:
-            return 1, b""
-        index = data_to_recv.rindex(b"\r") + 2
+            index = 0
+        else:
+            index = data_to_recv.rindex(b"\r") + 1
         data_received = data_to_recv[:index]
         self.__sockets[socket_el]["data_to_recv"] = data_to_recv[index:]
         self.__sockets[socket_el]["number_received_bytes"] += len(data_received)

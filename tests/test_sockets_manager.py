@@ -123,7 +123,7 @@ def test_0_client():
     e = []
     a = SocketsManager("localhost", 50000, lambda a, b, c, d: e.append(b))
 
-    assert a.get_info() == []
+    assert a.get_info() == [['Kolejka', '0', '0']]
     assert a.add_bytes_to_send(b"ABC\r")
     assert e[-1] == "SKT_ATQE"
 
@@ -147,7 +147,7 @@ def test_after_close():
 
     assert a.add_bytes_to_send(b"Hej\r")
     assert a.communications() == b""
-    assert a.get_info() == []
+    assert a.get_info() == [['Kolejka', '1', '4']]
 
 
 def test_1_client():
@@ -156,16 +156,16 @@ def test_1_client():
 
     b = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     b.connect(("localhost", 12345))
-    assert a.get_info() == []
+    assert a.get_info() == [['Kolejka', '0', '0']]
     a.communications()
-    assert a.get_info() == [["('127.0.0.1', 12345)", '0']]
+    assert a.get_info() == [["('127.0.0.1', 12345)", '0', '0'], ['Kolejka', '0', '0']]
 
     assert a.communications() == b""
     b.close()
 
-    assert a.get_info() == [["('127.0.0.1', 12345)", '0']]
+    assert a.get_info() == [["('127.0.0.1', 12345)", '0', '0'], ['Kolejka', '0', '0']]
     assert a.communications() == b""
-    assert a.get_info() == []
+    assert a.get_info() == [['Kolejka', '0', '0']]
     assert a.add_bytes_to_send(b"D\r")
     assert a.add_bytes_to_send(b"E\r")
     a.communications()
@@ -175,19 +175,20 @@ def test_1_client():
         bb = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         bb.connect(("localhost", 12345))
         assert bb.recv(1024) == b"D\rE\r"
-        bb.send(b"Hej\r")
+        bb.send(b'3\xde\xae\xde\xef\xa6\xce\xce\xce\xce~\xce\xee\xfa\xaf\xfc\r3\r4')
         bb.close()
     d = threading.Thread(target=c)
     d.start()
-    while len(a.get_info()) == 0:
+    while len(a.get_info()) == 1:
         assert a.communications() == b""
     assert a._SocketsManager__sockets[list(a._SocketsManager__sockets)[0]]["data_to_send"] == b"D\rE\r"
     assert a.communications() == b""
     assert a._SocketsManager__sockets[list(a._SocketsManager__sockets)[0]]["data_to_send"] == b""
     while True:
         x = a.communications()
-        assert x in [b"", b"Hej\r"]
-        if x == b"Hej\r":
+        assert x in [b"", b'3\xde\xae\xde\xef\xa6\xce\xce\xce\xce~\xce\xee\xfa\xaf\xfc\r3\r']
+        if x == b'3\xde\xae\xde\xef\xa6\xce\xce\xce\xce~\xce\xee\xfa\xaf\xfc\r3\r':
+            assert e[-1] == "SKT_RECV"
             break
     d.join()
     assert a.close()

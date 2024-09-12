@@ -24,6 +24,7 @@ class ComManager:
         This class is used to manage serial port communication.
 
         Logs:
+            COM_READ_NOISE - 10 - noisy data was read
             COM_SEND_WTPE - 6 - invalid data type attempted to be added to the send queue
             COM_SEND_WEND - 6 - wrong end of data to send, should have '\r' as last sign
             COM_CLOSE - 6 - COM port have been closed
@@ -132,7 +133,7 @@ class ComManager:
         This method read bytes from com port.
 
         :return: <bytes> Received bytes form self.__bytes_to_recv with ended sign '\r'
-        :logs: COM_READ (5)
+        :logs: COM_READ_NOISE (10), COM_READ (5)
         :raise ComManagerError:
             10-003 - method will throw this raise, if port was be closed
         """
@@ -147,6 +148,11 @@ class ComManager:
         data_read = self.__com_port.read(in_waiting)
         self.__on_add_log(5, "COM_READ", self.__alias, data_read)
         self.__bytes_to_recv += data_read
+
+        try:
+            data_read.decode('utf-8')
+        except UnicodeDecodeError:
+            self.__on_add_log(10, "COM_READ_NOISE", self.__alias, data_read)
 
         if b"\r" not in self.__bytes_to_recv:
             return b""
@@ -178,8 +184,8 @@ class ComManager:
             return 0
 
         try:
-            index_last_special_sign = self.__bytes_to_send.rindex(b"\r") + 1
-            number_sent_bytes = self.__com_port.write(self.__bytes_to_send[:index_last_special_sign])
+            index_first_special_sign = self.__bytes_to_send.index(b"\r") + 1
+            number_sent_bytes = self.__com_port.write(self.__bytes_to_send[:index_first_special_sign])
             sent_bytes = self.__bytes_to_send[:number_sent_bytes]
             self.__bytes_to_send = self.__bytes_to_send[number_sent_bytes:]
 

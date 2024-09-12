@@ -45,8 +45,9 @@ def test_close_port():
 
 
 def test_in_communication():
+    e = []
     a = serial.Serial("COM2", timeout=0.1, write_timeout=0.1)
-    b = ComManager("COM1", 0.1, 0.1, "COM_A", lambda a, b, c, d: print(a, b, c, d))
+    b = ComManager("COM1", 0.1, 0.1, "COM_A", lambda a, b, c, d: e.append(b))
     a.write(b"Hello")
     r1 = b.read()
     r2 = b.get_number_received_bytes()
@@ -61,6 +62,10 @@ def test_in_communication():
     r5 = b.read()
     r6 = b.get_number_received_bytes()
     assert r5 == b"Hello World\r" and r6 == 12
+
+    a.write(b'3\xde\xae\xde\xef\xa6\xce\xce\xce\xce~\xce\xee\xfa\xaf\xfc')
+    r7 = b.read()
+    assert r7 == b'' and e[-1] == "COM_READ_NOISE" and e[-2] == "COM_READ"
 
     a.close()
     b.close()
