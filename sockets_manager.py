@@ -261,6 +261,10 @@ class SocketsManager:
             self.__on_add_log(7, "SKT_RECV_CLOSE", client_address, "The socket connection was closed")
             return 0, b""
 
+        if data == b"\r":
+            self.__on_add_log(1, "SKT_RCVP", client_address, "Receive ping message")
+            return 1, b""
+
         data_to_recv = self.__sockets[socket_el]["data_to_recv"] + data
         if b"\r" not in data_to_recv:
             index = 0
