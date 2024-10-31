@@ -23,15 +23,13 @@ class ConnectionManager:
             SocketsManagerError
     """
     def __init__(self, com_name_x: str, com_name_y: str, com_timeout, com_write_timeout: float, on_add_log,
-                 ip_addr: str, port: int, time_interval_break: float):
+                 time_interval_break: float):
         """
         :param com_name_x: <str> name of COM port to get information from 9pin machine, e.g. "COM1"
         :param com_name_y: <str> name of COM port to get information from computer application, e.g. "COM2"
         :param com_timeout: <float | int> maximum waiting time for downloading information from the COM port
         :param com_write_timeout: <float | int> maximum waiting time for sending information to the COM port
         :param on_add_log: <func> a function for saving the transmitted information in a log file
-        :param ip_addr: <str> the IP address of the server (this computer).
-        :param port: port which be used to communication via socket
         :param time_interval_break: length of time to wait after the end of the communication loop
 
         :logs: CON_INFO (2)
@@ -41,7 +39,7 @@ class ConnectionManager:
         """
         self.__com_x = ComManager(com_name_x, com_timeout, com_write_timeout, "COM_X", on_add_log)
         self.__com_y = ComManager(com_name_y, com_timeout, com_write_timeout, "COM_Y", on_add_log)
-        self.__sockets = SocketsManager(ip_addr, port, on_add_log)
+        self.__sockets = SocketsManager(on_add_log)
         self.__on_add_log = on_add_log
         self.__is_run = False
         self.__time_interval_break = time_interval_break
@@ -133,3 +131,30 @@ class ConnectionManager:
         """
         self.__on_add_log(2, "CON_SCQU", "", "Queue with unsent data will be cleared")
         return self.__sockets.on_clear_queue()
+
+    def on_create_server(self, ip, port):
+        """
+        This method create server TCP
+
+        :param ip_addr: <str> server ip address
+        :param port: <int> port where server will listen (0-65535)
+        :return: True
+        :raise: SocketsManagerError
+        """
+        self.__sockets.create_server(ip, port)
+
+    def on_close_server(self):
+        """
+        This method close server.
+
+        :return: True - closing was ended successfully, False - was error while closing server socket
+        """
+        self.__sockets.close()
+
+    def on_get_list_ip(self):
+        """
+        This method give list of available IP on computer
+
+        :return: <list[str]> list of available IP on computer
+        """
+        return self.__sockets.get_list_ip()

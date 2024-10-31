@@ -1,4 +1,5 @@
 from connection_manager import ConnectionManager
+from gui.socket_section import SocketSection
 from log_management import LogManagement
 from config_reader import ConfigReader, ConfigReaderError
 from serial_port_manager import SerialPortManager, SerialPortManagementError
@@ -75,6 +76,7 @@ class GUI(QDialog):
         self.__btn_logs_hide = None
         self.__priority_dropdown = None
         self.__kegeln_program_has_been_started = False
+        self.__socket_section = None
 
         self.__set_layout()
         self.__init_program()
@@ -152,9 +154,10 @@ class GUI(QDialog):
                                                           self.__config["com_timeout"],
                                                           self.__config["com_write_timeout"],
                                                           self.__log_management.add_log,
-                                                          self.__config["ip_addr"], self.__config["port"],
                                                           self.__config["time_interval_break"],
                                                           )
+            self.__socket_section.set_func_to_get_list_ip(self.__connection_manager.on_get_list_ip)
+            self.__socket_section.set_default_port(self.__config["default_port"])
             start_new_thread(self.__connection_manager.start, ())
         except ConfigReaderError as e:
             self.__log_management.add_log(10, "CNF_READ_ERROR", e.code, e.message)
@@ -171,6 +174,8 @@ class GUI(QDialog):
 
         :return: None
         """
+        self.__socket_section = SocketSection(self.__on_create_server, self.__on_close_server)
+
         connect_list = QGroupBox("Komunikacja")
         self.__connect_list_layout = QVBoxLayout()
         connect_list.setLayout(self.__connect_list_layout)
@@ -217,6 +222,7 @@ class GUI(QDialog):
         row1.setLayout(row1_label)
         row1_label.addWidget(connect_list)
         row1_label.addWidget(col_config)
+        self.__layout.addWidget(self.__socket_section)
         self.__layout.addWidget(row1)
 
         self.__table_logs = QTableWidget()
@@ -359,12 +365,34 @@ class GUI(QDialog):
 
     def __on_clear_socket_queue(self) -> None:
         """
+        This method clear socket queue
 
-        :return:
+        :return: None
         """
         if self.__connection_manager is not None:
             if self.__connection_manager.on_clear_sockets_queue() > 0:
                 self.__update_connect_list_layout()
+
+    def __on_create_server(self, ip, port):
+        """
+        This method create server TCP if exists self.__connection_manager.
+
+        :param ip: <str> server ip address
+        :param port: <int> port where server will listen (0-65535)
+        :return: True
+        :raise: SocketsManagerError
+        """
+        if self.__connection_manager is not None:
+            self.__connection_manager.on_create_server(ip, port)
+
+    def __on_close_server(self):
+        """
+        This method close server if exists self.__connection_manager.
+
+        :return: True - closing was ended successfully, False - was error while closing server socket
+        """
+        if self.__connection_manager is not None:
+            self.__connection_manager.on_close_server()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

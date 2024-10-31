@@ -5,23 +5,24 @@ import threading
 
 
 def test_init_ip_addr():
+    a = SocketsManager(lambda a, b, c, d: print(a, b, c, d))
     with pytest.raises(SocketsManagerError) as e:
-        a = SocketsManager(None, 50000, lambda a, b, c, d: print(a, b, c, d))
+        a.create_server(None, 50000)
         a.close()
     assert str(e.value.code) == "11-000"
 
     with pytest.raises(SocketsManagerError) as e:
-        a = SocketsManager(123, 50000, lambda a, b, c, d: print(a, b, c, d))
+        a.create_server(123, 50000)
         a.close()
     assert str(e.value.code) == "11-000"
 
     with pytest.raises(SocketsManagerError) as e:
-        a = SocketsManager("1.1.1.11.1", 50000, lambda a, b, c, d: print(a, b, c, d))
+        a.create_server("1.1.1.11.1", 50000)
         a.close()
     assert str(e.value.code) == "11-001"
 
     with pytest.raises(SocketsManagerError) as e:
-        a = SocketsManager("192.268.1.256", 50000, lambda a, b, c, d: print(a, b, c, d))
+        a.create_server("192.268.1.256", 50000)
         a.close()
     assert str(e.value.code) == "11-001"
 
@@ -30,62 +31,69 @@ def test_init_ip_addr():
     ip_addr = s.getsockname()[0]
     s.close()
 
-    a = SocketsManager("localhost", 50000, lambda a, b, c, d: print(a, b, c, d))
+    a.create_server("localhost", 50000)
     a.close()
 
-    a = SocketsManager(ip_addr, 50000, lambda a, b, c, d: print(a, b, c, d))
+    a.create_server(ip_addr, 50000)
     a.close()
 
     ip_addr_not_exist = ip_addr.split(".")
     ip_addr_not_exist[3] = str(int(ip_addr_not_exist[3]) + 1)
     with pytest.raises(SocketsManagerError) as e:
-        a = SocketsManager(".".join(ip_addr_not_exist), 50000, lambda a, b, c, d: print(a, b, c, d))
+        a.create_server(".".join(ip_addr_not_exist), 50000)
         a.close()
     assert str(e.value.code) == "11-001"
 
 
 def test_init_port():
+    a = SocketsManager(lambda a, b, c, d: print(a, b, c, d))
+
     with pytest.raises(SocketsManagerError) as e:
-        a = SocketsManager("localhost", None, lambda a, b, c, d: print(a, b, c, d))
+        a.create_server("localhost", None)
         a.close()
     assert str(e.value.code) == "11-000"
 
     with pytest.raises(SocketsManagerError) as e:
-        a = SocketsManager("localhost", "12345", lambda a, b, c, d: print(a, b, c, d))
+        a.create_server("localhost", "12345")
         a.close()
     assert str(e.value.code) == "11-000"
 
     with pytest.raises(SocketsManagerError) as e:
-        a = SocketsManager("localhost", 12345.0, lambda a, b, c, d: print(a, b, c, d))
+        a.create_server("localhost", 12345.0)
         a.close()
     assert str(e.value.code) == "11-000"
 
     with pytest.raises(SocketsManagerError) as e:
-        a = SocketsManager("localhost", -1, lambda a, b, c, d: print(a, b, c, d))
+        a.create_server("localhost", -1)
         a.close()
     assert str(e.value.code) == "11-002"
 
     with pytest.raises(SocketsManagerError) as e:
-        a = SocketsManager("localhost", 65536, lambda a, b, c, d: print(a, b, c, d))
+        a.create_server("localhost", 65536)
         a.close()
     assert str(e.value.code) == "11-002"
 
     with pytest.raises(SocketsManagerError) as e:
-        a = SocketsManager("localhost", 1234567890123456789, lambda a, b, c, d: print(a, b, c, d))
+        a.create_server("localhost", 1234567890123456789)
         a.close()
     assert str(e.value.code) == "11-002"
 
-    a = SocketsManager("localhost", 0, lambda a, b, c, d: print(a, b, c, d))
+    a.create_server("localhost", 0)
+
     a.close()
 
-    a = SocketsManager("localhost", 65535, lambda a, b, c, d: print(a, b, c, d))
+    a.create_server("localhost", 65535)
+
     a.close()
 
 
 def test_busy_port_and_address():
-    a = SocketsManager("localhost", 50000, lambda a, b, c, d: print(a, b, c, d))
+    a = SocketsManager(lambda a, b, c, d: print(a, b, c, d))
+    a.create_server("localhost", 5000)
+
     with pytest.raises(SocketsManagerError) as e:
-        b = SocketsManager("localhost", 50000, lambda a, b, c, d: print(a, b, c, d))
+        b = SocketsManager(lambda a, b, c, d: print(a, b, c, d))
+        b.create_server("localhost", 5000)
         b.close()
     a.close()
     assert str(e.value.code) == "11-001"
@@ -93,7 +101,9 @@ def test_busy_port_and_address():
 
 def test_func_add_bytes_to_send():
     e = []
-    a = SocketsManager("localhost", 50000, lambda a, b, c, d: e.append(b))
+    a = SocketsManager(lambda a, b, c, d: e.append(b))
+    a.create_server("localhost", 5000)
+
 
     assert not a.add_bytes_to_send(None)
     assert e[-1] == "SKT_ATST_ERROR"
@@ -121,7 +131,9 @@ def test_func_add_bytes_to_send():
 
 def test_0_client():
     e = []
-    a = SocketsManager("localhost", 50000, lambda a, b, c, d: e.append(b))
+    a = SocketsManager(lambda a, b, c, d: e.append(b))
+    a.create_server("localhost", 65535)
+
 
     assert a.get_info() == [['Kolejka', '0', '0']]
     assert a.add_bytes_to_send(b"ABC\r")
@@ -139,7 +151,8 @@ def test_0_client():
 
 def test_after_close():
     e = []
-    a = SocketsManager("localhost", 50000, lambda a, b, c, d: e.append(b))
+    a = SocketsManager(lambda a, b, c, d: e.append(b))
+    a.create_server("localhost", 50000)
     assert a.close()
 
     assert not a.close()
@@ -152,7 +165,9 @@ def test_after_close():
 
 def test_1_client():
     e = []
-    a = SocketsManager("localhost", 12345, lambda a, b, c, d: e.append(b))
+    a = SocketsManager(lambda a, b, c, d: e.append(b))
+    a.create_server("localhost", 12345)
+
 
     b = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     b.connect(("localhost", 12345))
@@ -196,7 +211,8 @@ def test_1_client():
 
 def test_clear_queue():
     e = []
-    a = SocketsManager("localhost", 50000, lambda a, b, c, d: e.append(b))
+    a = SocketsManager(lambda a, b, c, d: e.append(b))
+    a.create_server("localhost", 50000)
     assert a.on_clear_queue() == 0
     a.add_bytes_to_send(b"Hejka\r")
     assert a.on_clear_queue() == 6

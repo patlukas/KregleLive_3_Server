@@ -63,8 +63,7 @@ class ConfigReader:
             "com_timeout",
             "com_write_timeout",
             "minimum_number_of_lines_to_write_in_log_file",
-            "ip_addr",
-            "port",
+            "default_port",
             "time_interval_break",
             "min_log_priority",
         ]

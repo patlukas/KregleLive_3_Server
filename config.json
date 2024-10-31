@@ -9,8 +9,7 @@
   "com_timeout": 0.1,
   "com_write_timeout": 0.1,
   "minimum_number_of_lines_to_write_in_log_file": 1,
-  "ip_addr": "localhost",
-  "port": 3000,
+  "default_port": 3333,
   "time_interval_break": 0.15,
   "min_log_priority": 2
 }

@@ -4,7 +4,7 @@ from _thread import start_new_thread
 
 
 def test_one_message_in_one_write():
-    o = ConnectionManager("COM2", "COM9", 1.5, 1, lambda a,b,c,d: print(a,b,c,d), "localhost", 12345, 0.5)
+    o = ConnectionManager("COM2", "COM9", 1.5, 1, lambda a,b,c,d: print(a,b,c,d),  0.5)
     start_new_thread(o.start, ())
 
     com_1 = serial.Serial("COM1", 9600, timeout=1, write_timeout=1)
@@ -18,7 +18,7 @@ def test_one_message_in_one_write():
 
 
 def test_one_message_in_two_write():
-    o = ConnectionManager("COM2", "COM9", 1.5, 1, lambda a,b,c,d: print(a,b,c,d), "localhost", 12345, 0.5)
+    o = ConnectionManager("COM2", "COM9", 1.5, 1, lambda a,b,c,d: print(a,b,c,d),  0.5)
     start_new_thread(o.start, ())
 
     com_1 = serial.Serial("COM1", 9600, timeout=1, write_timeout=1)
@@ -34,7 +34,7 @@ def test_one_message_in_two_write():
 
 
 def test_two_messages_in_one_write():
-    o = ConnectionManager("COM2", "COM9", 1.5, 1, lambda a,b,c,d: print(a,b,c,d), "localhost", 12345, 0.5)
+    o = ConnectionManager("COM2", "COM9", 1.5, 1, lambda a,b,c,d: print(a,b,c,d), 0.5)
     start_new_thread(o.start, ())
 
     com_1 = serial.Serial("COM1", 9600, timeout=1, write_timeout=1)
@@ -48,7 +48,7 @@ def test_two_messages_in_one_write():
 
 
 def test_two_messages_in_two_write():
-    o = ConnectionManager("COM2", "COM9", 1.5, 1, lambda a,b,c,d: print(a,b,c,d), "localhost", 12345, 0.5)
+    o = ConnectionManager("COM2", "COM9", 1.5, 1, lambda a,b,c,d: print(a,b,c,d), 0.5)
     start_new_thread(o.start, ())
 
     com_1 = serial.Serial("COM1", 9600, timeout=1, write_timeout=1)
@@ -63,7 +63,7 @@ def test_two_messages_in_two_write():
 
 
 def test_no_ended_message():
-    o = ConnectionManager("COM2", "COM9", 1.5, 1, lambda a,b,c,d: print(a,b,c,d), "localhost", 12345, 0.5)
+    o = ConnectionManager("COM2", "COM9", 1.5, 1, lambda a,b,c,d: print(a,b,c,d),  0.5)
     start_new_thread(o.start, ())
 
     com_1 = serial.Serial("COM1", 9600, timeout=1, write_timeout=1)

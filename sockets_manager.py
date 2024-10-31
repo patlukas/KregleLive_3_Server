@@ -48,10 +48,8 @@ class SocketsManager:
 
         :raise SocketsManagerError:
     """
-    def __init__(self, ip_addr: str, port: int, on_add_log):
+    def __init__(self, on_add_log):
         """
-        :param ip_addr: <str> server ip address
-        :param port: <int> server port
         :param on_add_log: <func(int,str,str,str)> function to add logs
 
         self.__on_add_log - same like in :param on_add_log:
@@ -60,15 +58,14 @@ class SocketsManager:
                                 - data_to_recv - <bytes> waiting queue for recv, in this var socket wait to sign '\r'
                                 - number_received_bytes - <int> number of recv bytes from data_to_recv
                                 - number_received_communicates - <int> number of recv communicates from data_to_recv
-        self.__server_socket - <socket.socket> object with server socket, via this socket client can connect with app
+        self.__server_socket - <socket.socket | None> object with server socket, via this socket client can connect with app
         self.__queue_not_sent_data - <bytes> if aren't any client socket, then every data to send will be there storage
         """
-        self.__check_types([["ip_addr", ip_addr, [str]], ["port", port, [int]]])
-        self.__check_port_number(port)
         self.__on_add_log = on_add_log
         self.__sockets = {}
-        self.__server_socket = self.__create_server(ip_addr, port)
+        self.__server_socket = None
         self.__queue_not_sent_data = b''
+
 
     @staticmethod
     def __check_types(controlled_variables) -> None:
@@ -99,16 +96,19 @@ class SocketsManager:
                                           "must be from range 0-65535 is {}".format(port))
         return True
 
-    def __create_server(self, ip_addr: str, port: int) -> socket.socket:
+    def create_server(self, ip_addr: str, port: int) -> bool:
         """
         This method create server socket port.
 
         :param ip_addr: <str> server ip address
         :param port: <int> port where server will listen (0-65535)
-        :return: <socket.socket> Object with created server socket
+        :return: <bool> True - successful, False - otherwise
         :raise SocketsManagerError: 11-001, 11-002, 11-003
         :logs: SKT_SRCD (2)
         """
+        self.__check_types([["ip_addr", ip_addr, [str]], ["port", port, [int]]])
+        self.__check_port_number(port)
+        self.__sockets = {}
         try:
             server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server_address = (ip_addr, port)
@@ -116,7 +116,7 @@ class SocketsManager:
             server_socket.listen(5)
             server_socket.settimeout(1)
             self.__on_add_log(2, "SKT_SRCD", "", "Socket server: ip addr: {} port: {}".format(ip_addr, port))
-            return server_socket
+            self.__server_socket = server_socket
         except OSError as e:
             raise SocketsManagerError("11-001", "OSError - Error while create socket server | {}".format(e))
         except OverflowError as e:
@@ -125,6 +125,7 @@ class SocketsManager:
         except TypeError as e:
             raise SocketsManagerError("11-003", "TypeError - Error while create socket server - "
                                                 "wrong type of argument | {}".format(e))
+        return True
 
     def get_info(self) -> list:
         """
@@ -366,3 +367,14 @@ class SocketsManager:
         else:
             self.__on_add_log(8, "SKT_EQUE", "", "Queue with unsent data was empty")
         return number_of_deleted_bytes
+
+    @staticmethod
+    def get_list_ip():
+        """
+        This method give list of available IP on computer
+
+        :return: <list[str]> list of available IP on computer
+        """
+        hostname = socket.gethostname()
+        ips = ['127.0.0.1'] + socket.gethostbyname_ex(hostname)[2]
+        return ips
