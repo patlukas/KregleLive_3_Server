@@ -23,7 +23,7 @@ class SocketSection(QGroupBox):
         self.__label_info = QLabel("")
         self.__combo_ip = QComboBox()
         self.__line_port = QLineEdit()
-        self.__button_refresh = QPushButton("Odśwież listę adresów IP")
+        # self.__button_refresh = QPushButton("Odśwież listę adresów IP")
         self.__button_create = QPushButton("Stwórz serwer")
 
         self.__widget_connected = QWidget()
@@ -36,14 +36,12 @@ class SocketSection(QGroupBox):
     def __set_layout(self):
         """."""
         self.__button_create.clicked.connect(self.__create)
-        self.__button_refresh.clicked.connect(self.__set_list_with_ip_address)
         self.__layout_connect.addWidget(self.__label_ip, 0, 0, Qt.AlignRight)
         self.__layout_connect.addWidget(self.__combo_ip, 0, 1)
         self.__layout_connect.addWidget(self.__label_port, 0, 3, Qt.AlignRight)
         self.__layout_connect.addWidget(self.__line_port, 0, 4)
         self.__layout_connect.addWidget(self.__label_info, 1, 0, 1, 4)
         self.__layout_connect.addWidget(self.__button_create, 1, 4)
-        self.__layout_connect.addWidget(self.__button_refresh, 1, 1)
         self.__layout_connect.setColumnMinimumWidth(2, 20)
         self.__layout_connect.setColumnStretch(1, 2)
         self.__layout_connect.setColumnStretch(4, 1)
@@ -58,7 +56,7 @@ class SocketSection(QGroupBox):
 
         self.setLayout(self.__stacked_layout)
 
-    def __set_list_with_ip_address(self):
+    def refresh_list_with_ip_address(self):
         self.__combo_ip.clear()
         if self.__get_list_ip is not None:
             list_ip = self.__get_list_ip()
@@ -83,7 +81,7 @@ class SocketSection(QGroupBox):
 
     def set_func_to_get_list_ip(self, on_get_list_ip):
         self.__get_list_ip = on_get_list_ip
-        self.__set_list_with_ip_address()
+        self.refresh_list_with_ip_address()
 
     def set_default_port(self, default_port):
         self.__line_port.setText(str(default_port))

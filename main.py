@@ -18,12 +18,13 @@ from PyQt5.QtWidgets import (
     QTableWidgetItem,
     QVBoxLayout,
     QPushButton,
-    QComboBox
+    QComboBox, QMenuBar, QAction
 )
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtCore import QTimer, Qt
 from _thread import start_new_thread
 
+APP_VERSION = "1.0.1"
 
 class GUI(QDialog):
     """
@@ -176,6 +177,8 @@ class GUI(QDialog):
         """
         self.__socket_section = SocketSection(self.__on_create_server, self.__on_close_server)
 
+        self.__layout.setMenuBar(self.__create_menu_bar())
+
         connect_list = QGroupBox("Komunikacja")
         self.__connect_list_layout = QVBoxLayout()
         connect_list.setLayout(self.__connect_list_layout)
@@ -196,9 +199,6 @@ class GUI(QDialog):
             self.__priority_dropdown.addItem(str(i))
         self.__priority_dropdown.setCurrentText(str(self.__min_priority))
 
-        self.__btn_clear_queue = QPushButton("Wyczyść kolejkę")
-        self.__btn_clear_queue.clicked.connect(lambda: self.__on_clear_socket_queue())
-
         self.__btn_logs_show = QPushButton("Pokaż logi")
         self.__btn_logs_show.setVisible(not self.__show_logs)
         self.__btn_logs_show.clicked.connect(lambda: self.__on_show_logs(True))
@@ -213,7 +213,6 @@ class GUI(QDialog):
 
         col_config_layout.addWidget(self.__label_errors)
         col_config_layout.addWidget(dropdown_priority)
-        col_config_layout.addWidget(self.__btn_clear_queue)
         col_config_layout.addWidget(self.__btn_logs_show)
         col_config_layout.addWidget(self.__btn_logs_hide)
 
@@ -235,6 +234,34 @@ class GUI(QDialog):
         self.__layout.addWidget(self.__table_logs)
         self.__layout.setStretchFactor(self.__table_logs, 1)
         self.__update_connect_list_layout()
+
+    def __create_menu_bar(self):
+        menu_bar = QMenuBar(self)
+
+        ip_menu = menu_bar.addMenu("Adresy IP")
+        ip_refresh_action = QAction("Odśwież listę adresów IP", self)
+        ip_refresh_action.triggered.connect(self.__socket_section.refresh_list_with_ip_address)
+        ip_menu.addAction(ip_refresh_action)
+
+        queue_menu = menu_bar.addMenu("Kolejka")
+        queue_clear_action = QAction("Wyczyść kolejkę wiadomości", self)
+        queue_clear_action.triggered.connect(self.__on_clear_socket_queue)
+        queue_menu.addAction(queue_clear_action)
+
+        help_menu = menu_bar.addMenu("Pomoc")
+        about_action = QAction("O aplikacji", self)
+        about_action.triggered.connect(self.__show_about)
+        help_menu.addAction(about_action)
+
+        return menu_bar
+
+    def __show_about(self):
+        about_text = (
+            "<h3>Kręgle Live - Serwer</h3>"
+            "<p>Wersja: {}</p>".format(APP_VERSION) +
+            "<p>Aplikacja wykonana w PyQt5.</p>"
+        )
+        QMessageBox.information(self, "O aplikacji", about_text)
 
     def __on_show_logs(self, show_logs: bool) -> None:
         """
