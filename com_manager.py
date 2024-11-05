@@ -150,8 +150,8 @@ class ComManager:
         self.__bytes_to_recv += data_read
 
         try:
-            data_read.decode('utf-8')
-        except UnicodeDecodeError:
+            data_read.decode('Windows-1250')
+        except UnicodeError:
             self.__on_add_log(10, "COM_READ_NOISE", self.__alias, data_read)
 
         if b"\r" not in self.__bytes_to_recv:
