@@ -24,7 +24,7 @@ from PyQt5 import QtCore, QtGui
 from PyQt5.QtCore import QTimer, Qt
 from _thread import start_new_thread
 
-APP_VERSION = "1.0.6"
+APP_VERSION = "1.0.7"
 
 class GUI(QDialog):
     """
@@ -157,8 +157,8 @@ class GUI(QDialog):
                                                           self.__log_management.add_log,
                                                           self.__config["time_interval_break"],
                                                           )
+            self.__socket_section.set_default_address(self.__config["default_ip"], self.__config["default_port"])
             self.__socket_section.set_func_to_get_list_ip(self.__connection_manager.on_get_list_ip)
-            self.__socket_section.set_default_port(self.__config["default_port"])
             start_new_thread(self.__connection_manager.start, ())
         except ConfigReaderError as e:
             self.__log_management.add_log(10, "CNF_READ_ERROR", e.code, e.message)

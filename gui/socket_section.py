@@ -13,6 +13,7 @@ class SocketSection(QGroupBox):
         self.__on_create_socket = on_create_socket
         self.__on_close_sockets = on_close_sockets
         self.__get_list_ip = None
+        self.__default_ip = ""
 
         self.__stacked_layout = QStackedLayout()
 
@@ -23,7 +24,6 @@ class SocketSection(QGroupBox):
         self.__label_info = QLabel("")
         self.__combo_ip = QComboBox()
         self.__line_port = QLineEdit()
-        # self.__button_refresh = QPushButton("Odśwież listę adresów IP")
         self.__button_create = QPushButton("Stwórz serwer")
 
         self.__widget_connected = QWidget()
@@ -61,6 +61,10 @@ class SocketSection(QGroupBox):
         if self.__get_list_ip is not None:
             list_ip = self.__get_list_ip()
             self.__combo_ip.addItems(list_ip)
+            if self.__default_ip in list_ip:
+                index = list_ip.index(self.__default_ip)
+                self.__combo_ip.setCurrentIndex(index)
+                self.__create()
 
     def __create(self):
         ip, port = self.__combo_ip.currentText(), self.__line_port.text()
@@ -83,5 +87,6 @@ class SocketSection(QGroupBox):
         self.__get_list_ip = on_get_list_ip
         self.refresh_list_with_ip_address()
 
-    def set_default_port(self, default_port):
-        self.__line_port.setText(str(default_port))
+    def set_default_address(self, ip, port):
+        self.__default_ip = ip
+        self.__line_port.setText(str(port))
