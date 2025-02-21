@@ -230,6 +230,14 @@ class ComManager:
         """
         return self.__number_received_communicates
 
+    def get_number_of_waiting_messages_to_send(self) -> int:
+        """
+        This method return number of waiting messages to send
+
+        :return: <int> number of waiting messages
+        """
+        return self.__bytes_to_send.count(b"\r")
+
     def close(self) -> None:
         """
         This method close serial port.

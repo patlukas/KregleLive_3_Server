@@ -118,8 +118,8 @@ class GUI(QDialog):
         self.setWindowTitle("Kręgle Live - Serwer")
         self.setWindowIcon(QtGui.QIcon('icon/icon.ico'))
         self.setWindowFlags(QtCore.Qt.WindowCloseButtonHint)
-        self.setMinimumWidth(400)
-        self.setMinimumHeight(225)
+        self.setMinimumWidth(460)
+        self.setMinimumHeight(345)
         self.move(300, 50)
         self.layout()
 
@@ -279,7 +279,7 @@ class GUI(QDialog):
         if show_logs:
             self.resize(980, 600)
         else:
-            self.resize(400, 225)
+            self.resize(460, 345)
 
     def __update_connect_list_layout(self) -> int:
         """
@@ -300,11 +300,13 @@ class GUI(QDialog):
 
         data = self.__connection_manager.get_info()
         number_of_connected_devices = 0
-        for name, rec_communicates, rec_bytes in data:
-            if rec_communicates == "0" and rec_bytes == "0":
+        for name, rec_communicates, rec_bytes, waiting_messages in data:
+            if rec_communicates == "0" and rec_bytes == "0" and waiting_messages == "0":
                 rec = ""
             else:
                 rec = " ( " + rec_communicates + " | " + rec_bytes + " B )"
+                if waiting_messages != "0":
+                    rec += " | ( " + waiting_messages + " w kolejce )"
             label = QLabel(name + rec)
             self.__connect_list_layout.addWidget(label)
             number_of_connected_devices += 1
