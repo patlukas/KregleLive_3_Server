@@ -29,6 +29,7 @@ class ComManager:
             COM_SEND_WEND - 6 - wrong end of data to send, should have '\r' as last sign
             COM_CLOSE - 6 - COM port have been closed
             COM_READ - 5 - read bytes from com port
+            COM_SEND_inQUEUE - 5 - message is already in the queue to be sent, so it is discarded
             COM_SEND - 4 - sent bytes to com port
             COM_SEND_TOUT - 1 - timeout occurred while trying to send data
             COM_CREATE - 1 - COM port has been created
@@ -73,6 +74,7 @@ class ComManager:
         self.__bytes_to_recv = b""
         self.__number_received_bytes = 0
         self.__number_received_communicates = 0
+        self.__number_duplicates = 0
         self.__on_add_log = on_add_log
         self.__com_port = self.__create_port(timeout, write_timeout)
 
@@ -201,7 +203,7 @@ class ComManager:
         
         :param new_bytes_to_send: <bytes> Bytes which will be add to send queue
         :return: <int> Size of queue after add new bytes
-        :logs: COM_SEND_WTPE (6), COM_SEND_WEND (6)
+        :logs: COM_SEND_WTPE (6), COM_SEND_WEND (6), COM_SEND_inQUEUE (5)
         """
         if type(new_bytes_to_send) != bytes:
             self.__on_add_log(6, "COM_SEND_WTPE", self.__alias, "Wrong type of data to send: '{}' have type '{}'"
@@ -211,7 +213,12 @@ class ComManager:
                 self.__on_add_log(6, "COM_SEND_WEND", self.__alias,
                                   "Wrong end of data to send, should have '\r' as last sign: '{}'".format(
                                       new_bytes_to_send[-1:]))
-            self.__bytes_to_send += new_bytes_to_send
+            if new_bytes_to_send in self.__bytes_to_send:
+                self.__on_add_log(5, "COM_SEND_inQUEUE", self.__alias, "Message '{}' is already in the queue to be sent, so it is discarded"
+                                  .format(new_bytes_to_send))
+                self.__number_duplicates += 1
+            else:
+                self.__bytes_to_send += new_bytes_to_send
         return len(self.__bytes_to_send)
 
     def get_number_received_bytes(self) -> int:
@@ -237,6 +244,14 @@ class ComManager:
         :return: <int> number of waiting messages
         """
         return self.__bytes_to_send.count(b"\r")
+
+    def get_number_of_duplicates(self) -> int:
+        """
+        This method return number of duplicate messages in queue to send
+
+        :return: <int> number of duplicates
+        """
+        return self.__number_duplicates
 
     def close(self) -> None:
         """

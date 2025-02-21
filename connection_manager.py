@@ -128,7 +128,8 @@ class ConnectionManager:
                     com.get_alias(),
                     str(com.get_number_received_communicates()),
                     str(com.get_number_received_bytes()),
-                    str(com.get_number_of_waiting_messages_to_send())
+                    str(com.get_number_of_waiting_messages_to_send()),
+                    str(com.get_number_of_duplicates())
                 ]
             )
         return com_info + self.__sockets.get_info()

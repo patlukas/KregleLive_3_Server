@@ -142,9 +142,10 @@ class SocketsManager:
                 str(key.getpeername()),
                 str(self.__sockets[key]["number_received_communicates"]),
                 str(self.__sockets[key]["number_received_bytes"]),
-                str(self.__sockets[key]["data_to_send"].count(b"\r"))
+                str(self.__sockets[key]["data_to_send"].count(b"\r")),
+                "0"
             ])
-        result.append(["Kolejka", str(self.__queue_not_sent_data.count(b"\r")), str(len(self.__queue_not_sent_data)), "0"])
+        result.append(["Kolejka", str(self.__queue_not_sent_data.count(b"\r")), str(len(self.__queue_not_sent_data)), "0", "0"])
         return result
 
     def communications(self) -> bytes:
