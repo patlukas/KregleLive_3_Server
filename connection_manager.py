@@ -11,10 +11,13 @@ class ConnectionManager:
     """
 
         Logs:
+            CON_ERROR_WAIT - 10 - alarmingly long wait for response
+            CON_WAIT_LONG - 10 - too long to wait for a response, so another message was sent
             CON_READ_ERROR - 10 - error when reading data from the port
             CON_CLOSE - 8 - Com and socket ports have been closed
             CON_STOP - 7 - Communication has been stopped
             CON_START - 7 - Communication has been started
+            CON_WAIT_END - 6 - however, a belated message has arrived
             CON_INFO - 2 - COM port number information
             CON_SCQU - 2 - Clear queue unsent data from socket objct (Socket Clear QUeue)
 
@@ -23,14 +26,16 @@ class ConnectionManager:
             SocketsManagerError
     """
     def __init__(self, com_name_x: str, com_name_y: str, com_timeout, com_write_timeout: float, on_add_log,
-                 time_interval_break: float):
+                 time_interval_break: float, max_waiting_time_for_response: float, warning_response_time: float):
         """
         :param com_name_x: <str> name of COM port to get information from 9pin machine, e.g. "COM1"
         :param com_name_y: <str> name of COM port to get information from computer application, e.g. "COM2"
         :param com_timeout: <float | int> maximum waiting time for downloading information from the COM port
         :param com_write_timeout: <float | int> maximum waiting time for sending information to the COM port
         :param on_add_log: <func> a function for saving the transmitted information in a log file
-        :param time_interval_break: length of time to wait after the end of the communication loop
+        :param time_interval_break: <float> length of time to wait after the end of the communication loop
+        :param max_waiting_time_for_response: <float> time in seconds, after which, if the lane does not respond, we will send another
+        :param warning_response_time: <float> time in seconds after which program will inform about the alarmingly long waiting time for a response
 
         :logs: CON_INFO (2)
         :raise
@@ -39,84 +44,53 @@ class ConnectionManager:
         """
         self.__com_x = ComManager(com_name_x, com_timeout, com_write_timeout, "COM_X", on_add_log)
         self.__com_y = ComManager(com_name_y, com_timeout, com_write_timeout, "COM_Y", on_add_log)
-        self.__time_next_send_x = 0
-        self.__time_last_send_x = 0
-        self.__last_sent_x = b""
-        # self.__time_next_send_y = 0
-        # self.__time_last_send_y = 0
-        # self.__last_sent_y = b""
         self.__sockets = SocketsManager(on_add_log)
         self.__on_add_log = on_add_log
         self.__is_run = False
         self.__time_interval_break = time_interval_break
-        self.__breaks_between_second_sending_in_a_row_in_ms = 2500 #should be in config
-        self.__warning_waiting_time = 750 #should be in config
+        self.__max_waiting_time_for_response = max_waiting_time_for_response
+        self.__warning_response_time = warning_response_time
         self.__on_add_log(2, "CON_INFO", "", "COM_X={}, COM_Y={}".format(com_name_x, com_name_y))
 
     def start(self) -> None:
         """
         This method starts transferring data
         :return: None
-        :logs: CON_START (7)
+        :logs: CON_ERROR_WAIT (10), CON_WAIT_LONG (10), CON_START (7), CON_WAIT_END (6)
         """
         self.__on_add_log(7, "CON_START", "", "Communication has been started")
 
-        time_now_in_ms = int(time.time() * 1000)
-        self.__time_next_send_x = time_now_in_ms + 1500
-        # self.__time_next_send_y = time_now_in_ms + 1500
-        self.__time_last_send_x = 0
-        # self.__time_last_send_y = 0
-        self.__last_sent_x = b""
-        # self.__last_sent_y = b""
+        time_next_sending_x = time.time() + 1.5
+        time_last_sending_x = 0
+        last_sent_x = b""
 
         self.__is_run = True
         while self.__is_run:
-            time_now_in_ms = int(time.time() * 1000)
+            if time_last_sending_x > 0 and time.time() > time_last_sending_x + self.__warning_response_time:
+                self.__on_add_log(10, "CON_WAIT_LONG", "COM_X", "Długie oczekiwanie na odpowiedź na: " + str(last_sent_x))
+                time_last_sending_x = -1
 
-            if self.__time_last_send_x > 0 and self.__time_last_send_x + self.__warning_waiting_time < time_now_in_ms:
-                self.__on_add_log(10, "CON_WAIT_LONG", "COM_X", "Długie oczekiwanie na odpowiedź na: " + str(self.__last_sent_x))
-                self.__time_last_send_x = -1
+            recv_bytes_x, recv_msg_x = self.__com_reader(self.__com_x, self.__com_y, self.__sockets)
 
-            # if self.__time_last_send_y > 0 and self.__time_last_send_y + self.__warning_waiting_time < time_now_in_ms:
-            #     self.__on_add_log(10, "CON_WAIT_LONG", "COM_Y", "Długie oczekiwanie na odpowiedź na: " + str(self.__last_sent_y))
-            #     self.__time_last_send_y = -1
+            if recv_bytes_x > 0:
+                if time_last_sending_x == -1:
+                    self.__on_add_log(6, "CON_WAIT_END", "COM_X", "Przyszła odpowiedź na: " + str(last_sent_x))
+                time_next_sending_x = 0
+                time_last_sending_x = 0
 
-
-            if self.__com_reader(self.__com_x, self.__com_y, self.__sockets) > 0:
-                if self.__time_last_send_x == -1:
-                    self.__on_add_log(6, "CON_WAIT_END", "COM_X", "Przyszła odpowiedź na: " + str(self.__last_sent_x))
-                self.__time_next_send_x = 0
-                self.__time_last_send_x = 0
-
-            # if self.__com_reader(self.__com_y, self.__com_x, self.__sockets) > 0:
-            #     if self.__time_last_send_y == -1:
-            #         self.__on_add_log(6, "CON_WAIT_END", "COM_Y", "Przyszła odpowiedź na: " + str(self.__last_sent_y))
-            #     self.__time_next_send_y = 0
-            #     self.__time_last_send_y= 0
             self.__com_reader(self.__com_y, self.__com_x, self.__sockets)
-
-
-            if time_now_in_ms >= self.__time_next_send_x:
-                if self.__time_next_send_x > 0 and self.__last_sent_x != b"":
-                    self.__on_add_log(10, "CON_ERROR_WAIT", "COM_X", "Oczekiwanie na tyle długie, że zostanie wysłana nowa wiadomość. Ostatnio wysłana: " + str(self.__last_sent_x))
-                    self.__time_next_send_x = 0
-                sent_bytes, sent_msg = self.__com_x.send()
-                if sent_bytes > 0:
-                    self.__time_next_send_x = time_now_in_ms + self.__breaks_between_second_sending_in_a_row_in_ms
-                    self.__time_last_send_x = time_now_in_ms
-                    self.__last_sent_x = sent_msg
-
-            # if time_now_in_ms >= self.__time_next_send_y:
-            #     if self.__time_next_send_y > 0 and self.__last_sent_y != b"":
-            #         self.__on_add_log(10, "CON_ERROR_WAIT", "COM_Y", "Oczekiwanie na tyle długie, że zostanie wysłana nowa wiadomość. Ostatnio wysłana: " + str(self.__last_sent_y))
-            #         self.__time_next_send_y = 0
-            #     sent_bytes, sent_msg = self.__com_y.send()
-            #     if sent_bytes > 0:
-            #         self.__time_next_send_y = time_now_in_ms + self.__breaks_between_second_sending_in_a_row_in_ms
-            #         self.__time_last_send_y = time_now_in_ms
-            #         self.__last_sent_y = sent_msg
             self.__com_y.send()
 
+            if time.time() >= time_next_sending_x:
+                if time_next_sending_x > 0 and last_sent_x != b"":
+                    self.__on_add_log(10, "CON_ERROR_WAIT", "COM_X", "Oczekiwanie na tyle długie, że zostanie wysłana nowa wiadomość. Ostatnio wysłana: " + str(last_sent_x))
+                    time_next_sending_x = 0
+                sent_bytes_x, sent_msg_x = self.__com_x.send()
+
+                if sent_bytes_x > 0:
+                    time_next_sending_x = time.time() + self.__max_waiting_time_for_response
+                    time_last_sending_x = time.time()
+                    last_sent_x = sent_msg_x
             bytes_to_send_to_com_x = self.__sockets.communications()
             if bytes_to_send_to_com_x != b"":
                 self.__com_x.add_bytes_to_send(bytes_to_send_to_com_x)
@@ -158,7 +132,7 @@ class ConnectionManager:
             )
         return com_info + self.__sockets.get_info()
 
-    def __com_reader(self, com_in: ComManager, com_out: ComManager, sockets: SocketsManager) -> int:
+    def __com_reader(self, com_in: ComManager, com_out: ComManager, sockets: SocketsManager) -> (int, bytes):
         """
         This method reads data from the "com_in" port. It then adds the read data to the queue with data to be sent in
         'com_out' and sockets queue.
@@ -167,19 +141,19 @@ class ConnectionManager:
         :param com_out: <ComManager> with COM port where this func will add read data to the queue with data to be sent
         :param sockets <SocketManager> obj to management socket connection
 
-        :return: The number of data bytes received or -1 if there was an error
+        :return: <int, bytes> The number of data bytes received or -1 if there was an error, received bytes
         :logs: CON_READ_ERROR (10)
         """
         try:
             received_bytes = com_in.read()
             if received_bytes == b"":
-                return 0
+                return 0, b""
             com_out.add_bytes_to_send(received_bytes)
             sockets.add_bytes_to_send(received_bytes)
-            return len(received_bytes)
+            return len(received_bytes), received_bytes
         except (serial.SerialException, serial.SerialTimeoutException) as e:
             self.__on_add_log(10, "CON_READ_ERROR", com_in.get_alias(), e)
-            return -1
+            return -1, b""
 
     def on_clear_sockets_queue(self) -> int:
         """

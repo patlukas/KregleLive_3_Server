@@ -156,6 +156,8 @@ class GUI(QDialog):
                                                           self.__config["com_write_timeout"],
                                                           self.__log_management.add_log,
                                                           self.__config["time_interval_break"],
+                                                          self.__config["max_waiting_time_for_response"],
+                                                          self.__config["warning_response_time"]
                                                           )
             self.__socket_section.set_default_address(self.__config["default_ip"], self.__config["default_port"])
             self.__socket_section.set_func_to_get_list_ip(self.__connection_manager.on_get_list_ip)
