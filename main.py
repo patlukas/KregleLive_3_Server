@@ -178,6 +178,7 @@ class GUI(QDialog):
             self.__socket_section.set_default_address(self.__config["default_ip"], self.__config["default_port"])
             self.__socket_section.set_func_to_get_list_ip(self.__connection_manager.on_get_list_ip)
             self.__prepare_lane_stat_table(self.__config["number_of_lane"])
+            self.__launch_startup_tools(self.__config["tools_to_run_on_startup"])
             start_new_thread(self.__connection_manager.start, ())
         except ConfigReaderError as e:
             self.__log_management.add_log(10, "CNF_READ_ERROR", e.code, e.message)
@@ -593,12 +594,21 @@ class GUI(QDialog):
             tool_action.triggered.connect(lambda: self.__launch_tool(file_path))
             view_menu.addAction(tool_action)
 
+    def __launch_startup_tools(self, list_name_tools):
+        for name_tool in list_name_tools:
+            file_path = os.path.join("Tools", name_tool + ".lnk")
+            self.__launch_tool(file_path)
+
     def __launch_tool(self, file_path):
         try:
             if os.name == 'nt':
                 os.startfile(file_path)
+        except FileNotFoundError as e:
+            self.__log_management.add_log(10, "TOOL_RUN_ERROR", "NO_FILE", "Nie można uruchomić narzędzia {}, bo nie ma takiego pliku:  {}".format(file_path, e))
+        except OSError as e:
+            self.__log_management.add_log(10, "TOOL_RUN_ERROR", "OSError", "Nie można uruchomić narzędzia {}, bo plik prowadzi do nikąd:  {}".format(file_path, e))
         except Exception as e:
-            self.__log_management.add_log(10, "TOOL_RUN_ERROR", "", "Nie można uruchomić narzędzia {}: {}".format(file_path, e))
+            self.__log_management.add_log(10, "TOOL_RUN_ERROR", "", "Nie można uruchomić narzędzia {}: {} {}".format(file_path, type(e).__name__, e))
 
     def __on_clear_socket_queue(self) -> None:
         """
