@@ -15,6 +15,7 @@ class ConnectionManager:
             CON_READ_ERROR - 10 - error when reading data from the port
             CON_WAIT_veryLONG - 10 - critical long wait for a response
             CON_CLOSE - 8 - Com and socket ports have been closed
+            CON_REPLACE - 7 - Message was changed on fly
             CON_WAIT_LONG - 7 - long wait for a response
             CON_STOP - 7 - Communication has been stopped
             CON_START - 7 - Communication has been started
@@ -41,6 +42,8 @@ class ConnectionManager:
         :param warning_response_time: <float> time in seconds after which program will inform about the alarmingly long waiting time for a response
         :param number_of_lane: <int>
 
+        List of additional_options: <empty list>
+
         :logs: CON_INFO (2)
         :raise
             ComManagerError
@@ -48,6 +51,8 @@ class ConnectionManager:
         """
         self.__com_x = ComManager(com_name_x, com_timeout, com_write_timeout, "COM_X", on_add_log)
         self.__com_y = ComManager(com_name_y, com_timeout, com_write_timeout, "COM_Y", on_add_log)
+        self.__recv_com_x_additional_options = 0
+        self.__recv_com_y_additional_options = 0
         self.__sockets = SocketsManager(on_add_log)
         self.__on_add_log = on_add_log
         self.__is_run = False
@@ -100,7 +105,7 @@ class ConnectionManager:
                 self.__count_anomalies_pending_response(last_sent_x, 1)
                 response_waiting_mode = 1
 
-            recv_bytes_x, recv_msg_x = self.__com_reader(self.__com_x, self.__com_y, self.__sockets)
+            recv_bytes_x, recv_msg_x = self.__com_reader(self.__com_x, self.__com_y, self.__sockets, self.__recv_com_x_additional_options)
             if recv_bytes_x > 0:
                 if response_waiting_mode in [1, 2]:
                     self.__on_add_log(6, "CON_WAIT_END", "COM_X", "Przyszła odpowiedź na: " + str(last_sent_x))
@@ -108,7 +113,7 @@ class ConnectionManager:
                 time_next_sending_x = 0
                 response_waiting_mode = 0
 
-            self.__com_reader(self.__com_y, self.__com_x, self.__sockets)
+            self.__com_reader(self.__com_y, self.__com_x, self.__sockets, self.__recv_com_y_additional_options)
             self.__com_y.send()
 
             if time.time() >= time_next_sending_x:
@@ -166,7 +171,7 @@ class ConnectionManager:
             )
         return com_info + self.__sockets.get_info()
 
-    def __com_reader(self, com_in: ComManager, com_out: ComManager, sockets: SocketsManager) -> (int, bytes):
+    def __com_reader(self, com_in: ComManager, com_out: ComManager, sockets: SocketsManager, additional_options: int) -> (int, bytes):
         """
         This method reads data from the "com_in" port. It then adds the read data to the queue with data to be sent in
         'com_out' and sockets queue.
@@ -174,6 +179,7 @@ class ConnectionManager:
         :param com_in: <ComManager> object with a COM port from which this function will read data
         :param com_out: <ComManager> with COM port where this func will add read data to the queue with data to be sent
         :param sockets <SocketManager> obj to management socket connection
+        :param additional_options <int> options used to edit message on fly
 
         :return: <int, bytes> The number of data bytes received or -1 if there was an error, received bytes
         :logs: CON_READ_ERROR (10)
@@ -182,12 +188,55 @@ class ConnectionManager:
             received_bytes = com_in.read()
             if received_bytes == b"":
                 return 0, b""
+
+            received_bytes = self.__edit_message_on_the_fly(additional_options, received_bytes)
+
             com_out.add_bytes_to_send(received_bytes)
             sockets.add_bytes_to_send(received_bytes)
             return len(received_bytes), received_bytes
         except (serial.SerialException, serial.SerialTimeoutException) as e:
             self.__on_add_log(10, "CON_READ_ERROR", com_in.get_alias(), e)
             return -1, b""
+
+    def __edit_message_on_the_fly(self, options: int, messages: bytes) -> bytes:
+        """
+        NOT USED
+        Method is used to swap message data on the fly if certain conditions occur
+
+        The method was made to turn on the printer, but it turned out that messages are sent every 3s, so this way did not speed up the operation
+
+        List options:
+            <empty>
+
+        :param options: <int> options
+        :param messages: <bytes> message/messages to edit
+        :return: <bytes> message/messags after edit
+        :logs: CON_REPLACE (7)
+        """
+        if options == 0:
+            return messages
+        return_messages = b""
+        for message in messages.split(b"\r")[:-1]:
+            message_old = message
+            # if options & 1 and message[4:6] == b"IG" and len(message) == 27: #PRINT_ON
+            #     head = message[:-2]
+            #     head_new = head[:24] + bytes([head[24] | 0b00000001]) + head[25:]
+            #     if head_new != head:
+            #         message_new = head_new + self.__calculate_control_sum(head_new) + b"\r"
+            #         self.__on_add_log(7, "CON_REPLACE", "", "Wiadomość {} zostałą zamianiona na {}".format(message, message_new))
+            #         message = message_new
+            if message_old != message:
+                self.__on_add_log(7, "CON_REPLACE", "", "Wiadomość {} zostałą zamianiona na {}".format(message_old, message))
+            return_messages += message + b"\r"
+        return return_messages
+
+    @staticmethod
+    def __calculate_control_sum(message_head: bytes) -> bytes:
+        sum_ascii = 0
+        for x in message_head:
+            sum_ascii += x
+        checksum = bytes(hex(sum_ascii).split("x")[-1].upper()[-2:], 'utf-8')
+        return checksum
 
     def __analysis_of_responses(self, msg_to: bytes, msg_from: bytes, time_send: float) -> None:
         """
@@ -302,7 +351,11 @@ class ConnectionManager:
             data.append(data_lane)
         return data
 
-    def clear_lane_stat(self, clear_type: str):
+    def clear_lane_stat(self, clear_type: str) -> None:
+        """
+        :param clear_type: <"Max", "Warn", "All">
+        :return: None
+        """
         if clear_type == "Max":
             for lane_stat in self.__history_of_communication_x:
                 lane_stat["left_max"] = len(lane_stat["response_times"])
