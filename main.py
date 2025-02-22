@@ -274,6 +274,8 @@ class GUI(QDialog):
         lane_stat_list_table.triggered.connect(lambda checked: self.__on_show_table_stat(checked))
         view_menu.addAction(lane_stat_list_table)
 
+        self.__add_menu_with_tools_to_menu_bar(menu_bar)
+
         help_menu = menu_bar.addMenu("Pomoc")
         about_action = QAction("O aplikacji", self)
         about_action.triggered.connect(self.__show_about)
@@ -569,6 +571,34 @@ class GUI(QDialog):
         self.__kegeln_program_has_been_started = True
         self.__log_management.add_log(2, "KEGELN_RUN", "", "Kegeln.exe run")
         return ""
+
+    def __add_menu_with_tools_to_menu_bar(self, menu_bar):
+        tools_dir = "Tools"
+        if not os.path.exists(tools_dir):
+            os.makedirs(tools_dir)
+
+        try:
+            tools_files = os.listdir(tools_dir)
+        except Exception as e:
+            return
+
+        if len(tools_files) == 0:
+            return
+
+        view_menu = menu_bar.addMenu("Narzędzia")
+        for file in tools_files:
+            file_path = os.path.join(tools_dir, file)
+            option_name = file.replace(".lnk", "")
+            tool_action = QAction(option_name, self)
+            tool_action.triggered.connect(lambda: self.__launch_tool(file_path))
+            view_menu.addAction(tool_action)
+
+    def __launch_tool(self, file_path):
+        try:
+            if os.name == 'nt':
+                os.startfile(file_path)
+        except Exception as e:
+            self.__log_management.add_log(10, "TOOL_RUN_ERROR", "", "Nie można uruchomić narzędzia {}: {}".format(file_path, e))
 
     def __on_clear_socket_queue(self) -> None:
         """
