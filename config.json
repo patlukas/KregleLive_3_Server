@@ -14,5 +14,7 @@
   "default_ip": "192.168.0.200",
   "default_port": 3000,
   "max_waiting_time_for_response": 3,
-  "warning_response_time": 0.4
+  "warning_response_time": 0.4,
+  "critical_response_time": 1.0,
+  "number_of_lane": 6
 }

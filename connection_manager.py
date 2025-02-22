@@ -11,10 +11,11 @@ class ConnectionManager:
     """
 
         Logs:
-            CON_ERROR_WAIT - 10 - alarmingly long wait for response
-            CON_WAIT_LONG - 10 - too long to wait for a response, so another message was sent
+            CON_ERROR_WAIT - 10 - timeout - too long wait for response, so next message was sent
             CON_READ_ERROR - 10 - error when reading data from the port
+            CON_WAIT_veryLONG - 10 - critical long wait for a response
             CON_CLOSE - 8 - Com and socket ports have been closed
+            CON_WAIT_LONG - 7 - long wait for a response
             CON_STOP - 7 - Communication has been stopped
             CON_START - 7 - Communication has been started
             CON_WAIT_END - 6 - however, a belated message has arrived
@@ -26,7 +27,8 @@ class ConnectionManager:
             SocketsManagerError
     """
     def __init__(self, com_name_x: str, com_name_y: str, com_timeout, com_write_timeout: float, on_add_log,
-                 time_interval_break: float, max_waiting_time_for_response: float, warning_response_time: float):
+                 time_interval_break: float, max_waiting_time_for_response: float, critical_response_time: float,
+                 warning_response_time: float, number_of_lane: int):
         """
         :param com_name_x: <str> name of COM port to get information from 9pin machine, e.g. "COM1"
         :param com_name_y: <str> name of COM port to get information from computer application, e.g. "COM2"
@@ -35,7 +37,9 @@ class ConnectionManager:
         :param on_add_log: <func> a function for saving the transmitted information in a log file
         :param time_interval_break: <float> length of time to wait after the end of the communication loop
         :param max_waiting_time_for_response: <float> time in seconds, after which, if the lane does not respond, we will send another
+        :param critical_response_time: <float>  time in seconds after which program will inform about the criticaly long waiting time for a response
         :param warning_response_time: <float> time in seconds after which program will inform about the alarmingly long waiting time for a response
+        :param number_of_lane: <int>
 
         :logs: CON_INFO (2)
         :raise
@@ -49,34 +53,60 @@ class ConnectionManager:
         self.__is_run = False
         self.__time_interval_break = time_interval_break
         self.__max_waiting_time_for_response = max_waiting_time_for_response
+        self.__critical_response_time = critical_response_time
         self.__warning_response_time = warning_response_time
+        self.__history_of_communication_x = []
+        self.__number_of_lane = number_of_lane
         self.__on_add_log(2, "CON_INFO", "", "COM_X={}, COM_Y={}".format(com_name_x, com_name_y))
+
+        for _ in range(self.__number_of_lane):
+            self.__history_of_communication_x.append({
+                "no_answer": 0,
+                "warning_wait": 0,
+                "critical_wait": 0,
+                "left_max": 0,
+                "response_times": []
+            })
 
     def start(self) -> None:
         """
         This method starts transferring data
+
+        possible value in response_waiting_mode:
+            3 - if the wait is longer than this __warning_response_time then add log CON_WAIT_LONG and set mode 2
+            2 - if the wait is longer than this __critical_response_time then add log CON_WAIT_veryLONG and set mode 1
+            1 v 2 - the wait was long, so when received add log with a late message was received
+            0 - does not wait for a response
+
         :return: None
-        :logs: CON_ERROR_WAIT (10), CON_WAIT_LONG (10), CON_START (7), CON_WAIT_END (6)
+        :logs: CON_ERROR_WAIT (10), CON_WAIT_veryLONG (10), CON_WAIT_LONG (7), CON_START (7), CON_WAIT_END (6)
         """
         self.__on_add_log(7, "CON_START", "", "Communication has been started")
 
         time_next_sending_x = time.time() + 1.5
         time_last_sending_x = 0
         last_sent_x = b""
+        response_waiting_mode = 0
 
         self.__is_run = True
         while self.__is_run:
-            if time_last_sending_x > 0 and time.time() > time_last_sending_x + self.__warning_response_time:
-                self.__on_add_log(10, "CON_WAIT_LONG", "COM_X", "Długie oczekiwanie na odpowiedź na: " + str(last_sent_x))
-                time_last_sending_x = -1
+            if response_waiting_mode == 3 and time.time() > time_last_sending_x + self.__warning_response_time:
+                self.__on_add_log(7, "CON_WAIT_LONG", "COM_X", "Ostrzegawczo długie oczekiwanie na odpowiedź na: " + str(last_sent_x))
+                self.__count_anomalies_pending_response(last_sent_x, 2)
+                response_waiting_mode = 2
+
+            if response_waiting_mode == 2 and time.time() > time_last_sending_x + self.__critical_response_time:
+                self.__on_add_log(10, "CON_WAIT_veryLONG", "COM_X", "Krytycznie długie oczekiwanie na odpowiedź na: " + str(last_sent_x))
+                self.__count_anomalies_pending_response(last_sent_x, 1)
+                response_waiting_mode = 1
 
             recv_bytes_x, recv_msg_x = self.__com_reader(self.__com_x, self.__com_y, self.__sockets)
-
             if recv_bytes_x > 0:
-                if time_last_sending_x == -1:
+                if response_waiting_mode in [1, 2]:
                     self.__on_add_log(6, "CON_WAIT_END", "COM_X", "Przyszła odpowiedź na: " + str(last_sent_x))
+                self.__analysis_of_responses(last_sent_x, recv_msg_x, time_last_sending_x)
                 time_next_sending_x = 0
-                time_last_sending_x = 0
+                response_waiting_mode = 0
 
             self.__com_reader(self.__com_y, self.__com_x, self.__sockets)
             self.__com_y.send()
@@ -85,12 +115,14 @@ class ConnectionManager:
                 if time_next_sending_x > 0 and last_sent_x != b"":
                     self.__on_add_log(10, "CON_ERROR_WAIT", "COM_X", "Oczekiwanie na tyle długie, że zostanie wysłana nowa wiadomość. Ostatnio wysłana: " + str(last_sent_x))
                     time_next_sending_x = 0
+                    self.__count_anomalies_pending_response(last_sent_x, 0)
                 sent_bytes_x, sent_msg_x = self.__com_x.send()
 
                 if sent_bytes_x > 0:
                     time_next_sending_x = time.time() + self.__max_waiting_time_for_response
                     time_last_sending_x = time.time()
                     last_sent_x = sent_msg_x
+                    response_waiting_mode = 3
             bytes_to_send_to_com_x = self.__sockets.communications()
             if bytes_to_send_to_com_x != b"":
                 self.__com_x.add_bytes_to_send(bytes_to_send_to_com_x)
@@ -157,6 +189,61 @@ class ConnectionManager:
             self.__on_add_log(10, "CON_READ_ERROR", com_in.get_alias(), e)
             return -1, b""
 
+    def __analysis_of_responses(self, msg_to: bytes, msg_from: bytes, time_send: float) -> None:
+        """
+        The main task of the function is to add to history_of_communication_x the time to wait for a response
+
+        :param msg_to: <bytes> message to lane
+        :param msg_from: <bytes> message from lane
+        :param time_send: <float>
+        :return: None
+        """
+        if msg_from.count(b"\r") > 1:
+            self.__on_add_log(10, "CON_ANLS_ERROR_1", "", "Przyszło kilka odpowiedzi ({}) po wiadomości {}".format(msg_from, msg_to))
+            return
+
+        if len(msg_to) < 2 or len(msg_from) < 4:
+            return
+        try:
+            msg_to_addressee = int(msg_to[1:2])
+            msg_from_sender = int(msg_from[3:4])
+            if msg_to_addressee >= self.__number_of_lane or msg_from_sender >= self.__number_of_lane:
+                return
+            if msg_to_addressee != msg_from_sender:
+                self.__on_add_log(10, "CON_ANLS_ERROR_2", "", "Odpowiedź od innego toru: po wiadomości {} przyszła odpowiedź {}".format(msg_to, msg_from))
+                return
+            delta_time = int((time.time() - time_send) * 1000)
+            self.__history_of_communication_x[msg_to_addressee]["response_times"].append(delta_time)
+        except ValueError:
+            return
+
+    def __count_anomalies_pending_response(self, msg: bytes, stage: int) -> None:
+        """
+        Function increments the corresponding values in anomaly statistics
+
+        :param msg: <bytes> message for which we (are waiting) / (have finished waiting)
+        :param stage: <int> 0 - time out (waiting end), 1 - critical waiting time, 2 - warning waiting time
+        :return: None
+        """
+        if len(msg) < 2:
+            return
+        try:
+            addressee = int(msg[1:2])
+            if addressee >= self.__number_of_lane:
+                return
+            if stage == 0:
+                self.__history_of_communication_x[addressee]["no_answer"] += 1
+                if self.__history_of_communication_x[addressee]["critical_wait"] > 0:
+                    self.__history_of_communication_x[addressee]["critical_wait"] -= 1
+            elif stage == 1:
+                self.__history_of_communication_x[addressee]["critical_wait"] += 1
+                if self.__history_of_communication_x[addressee]["warning_wait"] > 0:
+                    self.__history_of_communication_x[addressee]["warning_wait"] -= 1
+            else:
+                self.__history_of_communication_x[addressee]["warning_wait"] += 1
+        except ValueError:
+            return
+
     def on_clear_sockets_queue(self) -> int:
         """
         This method clear queue with unsent data has been cleared
@@ -193,3 +280,43 @@ class ConnectionManager:
         :return: <list[str]> list of available IP on computer
         """
         return self.__sockets.get_list_ip()
+
+    def get_lane_response_stat(self):
+        data = []
+        for i, lane_stat in enumerate(self.__history_of_communication_x):
+            list_all = lane_stat["response_times"]
+            data_lane = [len(list_all)]
+            for n in [50, [100, 50], 250, 1000, len(list_all)]:
+                left = n[0] if isinstance(n, list) else n
+                right = n[1] if isinstance(n, list) else 0
+                l = list_all[-left:-right] if right > 0 else list_all[-left:]
+                if len(list_all) <= right:
+                    data_lane.append("")
+                elif len(l) == 0:
+                    data_lane.append(0)
+                else:
+                    data_lane.append(int(sum(l) / len(l)))
+            list_max = list_all[lane_stat["left_max"]:]
+            max_wait = 0 if len(list_max) == 0 else max(list_max)
+            data_lane.extend([max_wait, lane_stat["warning_wait"], lane_stat["critical_wait"], lane_stat["no_answer"]])
+            data.append(data_lane)
+        return data
+
+    def clear_lane_stat(self, clear_type: str):
+        if clear_type == "Max":
+            for lane_stat in self.__history_of_communication_x:
+                lane_stat["left_max"] = len(lane_stat["response_times"])
+        if clear_type == "Warn":
+            for lane_stat in self.__history_of_communication_x:
+                lane_stat["warning_wait"] = 0
+                lane_stat["critical_wait"] = 0
+                lane_stat["no_answer"] = 0
+        if clear_type == "All":
+            for i in range(len(self.__history_of_communication_x)):
+                self.__history_of_communication_x[i] = {
+                    "no_answer": 0,
+                    "warning_wait": 0,
+                    "critical_wait": 0,
+                    "left_max": 0,
+                    "response_times": []
+                }
