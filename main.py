@@ -1,6 +1,7 @@
 from PyQt5.QtGui import QBrush
 
 from connection_manager import ConnectionManager
+from gui.section_lane_control_panel import SectionLaneControlPanel
 from gui.socket_section import SocketSection
 from log_management import LogManagement
 from config_reader import ConfigReader, ConfigReaderError
@@ -29,7 +30,7 @@ from PyQt5 import QtCore, QtGui
 from PyQt5.QtCore import QTimer, Qt
 from _thread import start_new_thread
 
-APP_VERSION = "1.1.1"
+APP_VERSION = "1.2.0"
 
 class GUI(QDialog):
     """
@@ -86,6 +87,7 @@ class GUI(QDialog):
         self.__priority_dropdown = None
         self.__kegeln_program_has_been_started = False
         self.__socket_section = None
+        self.__section_lane_control_panel = SectionLaneControlPanel()
 
         self.__set_layout()
         self.__init_program()
@@ -178,6 +180,7 @@ class GUI(QDialog):
             self.__socket_section.set_default_address(self.__config["default_ip"], self.__config["default_port"])
             self.__socket_section.set_func_to_get_list_ip(self.__connection_manager.on_get_list_ip)
             self.__prepare_lane_stat_table(self.__config["number_of_lane"])
+            self.__section_lane_control_panel.init(self.__config["number_of_lane"], self.__log_management.add_log, self.__connection_manager.add_message_to_x)
             self.__launch_startup_tools(self.__config["tools_to_run_on_startup"])
             start_new_thread(self.__connection_manager.start, ())
         except ConfigReaderError as e:
@@ -247,6 +250,8 @@ class GUI(QDialog):
         self.__table_lane_stat = QTableWidget()
         self.__layout.addWidget(self.__table_lane_stat)
 
+        self.__layout.addWidget(self.__section_lane_control_panel)
+
         self.__update_connect_list_layout()
 
     def __create_menu_bar(self):
@@ -274,6 +279,18 @@ class GUI(QDialog):
         lane_stat_list_table.setChecked(self.__show_lane_stat)
         lane_stat_list_table.triggered.connect(lambda checked: self.__on_show_table_stat(checked))
         view_menu.addAction(lane_stat_list_table)
+
+        lane_control_enter = QAction("Sterowanie torami - Enter", self)
+        lane_control_enter.setCheckable(True)
+        lane_control_enter.setChecked(False)
+        lane_control_enter.triggered.connect(lambda checked: self.__on_show_lane_control("Enter", checked))
+        view_menu.addAction(lane_control_enter)
+
+        lane_control_time = QAction("Sterowanie torami - Czas stop", self)
+        lane_control_time.setCheckable(True)
+        lane_control_time.setChecked(False)
+        lane_control_time.triggered.connect(lambda checked: self.__on_show_lane_control("Time", checked))
+        view_menu.addAction(lane_control_time)
 
         self.__add_menu_with_tools_to_menu_bar(menu_bar)
 
@@ -310,6 +327,10 @@ class GUI(QDialog):
             self.__timer_update_table_lane_stat.start(500)
         else:
             self.__timer_update_table_lane_stat.stop()
+        self.adjustSize()
+
+    def __on_show_lane_control(self, name_type: str, show: bool):
+        self.__section_lane_control_panel.show_control_panel(name_type, show)
         self.adjustSize()
 
     def __update_connect_list_layout(self) -> int:

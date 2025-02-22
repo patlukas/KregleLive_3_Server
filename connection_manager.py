@@ -351,6 +351,12 @@ class ConnectionManager:
             data.append(data_lane)
         return data
 
+    def add_message_to_x(self, head_message: bytes):
+        message = head_message + self.__calculate_control_sum(head_message) + b"\r"
+        self.__on_add_log(5, "CON_USERMSG", "", "Wiadomość dodana przez użytkowanika {}".format(message))
+        self.__com_x.add_bytes_to_send(message)
+        self.__sockets.add_bytes_to_send(message)
+
     def clear_lane_stat(self, clear_type: str) -> None:
         """
         :param clear_type: <"Max", "Warn", "All">
