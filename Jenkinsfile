@@ -4,7 +4,7 @@ pipeline {
         BRANCH = 'main'
         GITHUB_USER = "patlukas"
         REPO_NAME = "KregleLive_3_Server"
-        FILES = '["config.json", "icon"]'
+        FILES = '["config.json", "icon/*"]'
     }
     stages {
         stage('Checkout') {
