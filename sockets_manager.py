@@ -139,7 +139,7 @@ class SocketsManager:
         result = []
         for key in list(self.__sockets.keys()):
             result.append([
-                str(key.getsockname()),
+                str(key.getpeername()),
                 str(self.__sockets[key]["number_received_communicates"]),
                 str(self.__sockets[key]["number_received_bytes"])
             ])

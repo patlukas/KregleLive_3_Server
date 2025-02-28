@@ -39,10 +39,18 @@ class ConnectionManager:
         """
         self.__com_x = ComManager(com_name_x, com_timeout, com_write_timeout, "COM_X", on_add_log)
         self.__com_y = ComManager(com_name_y, com_timeout, com_write_timeout, "COM_Y", on_add_log)
+        self.__time_next_send_x = 0
+        self.__time_last_send_x = 0
+        self.__last_sent_x = b""
+        # self.__time_next_send_y = 0
+        # self.__time_last_send_y = 0
+        # self.__last_sent_y = b""
         self.__sockets = SocketsManager(on_add_log)
         self.__on_add_log = on_add_log
         self.__is_run = False
         self.__time_interval_break = time_interval_break
+        self.__breaks_between_second_sending_in_a_row_in_ms = 2500 #should be in config
+        self.__warning_waiting_time = 750 #should be in config
         self.__on_add_log(2, "CON_INFO", "", "COM_X={}, COM_Y={}".format(com_name_x, com_name_y))
 
     def start(self) -> None:
@@ -52,12 +60,63 @@ class ConnectionManager:
         :logs: CON_START (7)
         """
         self.__on_add_log(7, "CON_START", "", "Communication has been started")
+
+        time_now_in_ms = int(time.time() * 1000)
+        self.__time_next_send_x = time_now_in_ms + 1500
+        # self.__time_next_send_y = time_now_in_ms + 1500
+        self.__time_last_send_x = 0
+        # self.__time_last_send_y = 0
+        self.__last_sent_x = b""
+        # self.__last_sent_y = b""
+
         self.__is_run = True
         while self.__is_run:
-            self.__com_reader(self.__com_x, self.__com_y, self.__sockets)
+            time_now_in_ms = int(time.time() * 1000)
+
+            if self.__time_last_send_x > 0 and self.__time_last_send_x + self.__warning_waiting_time < time_now_in_ms:
+                self.__on_add_log(10, "CON_WAIT_LONG", "COM_X", "Długie oczekiwanie na odpowiedź na: " + str(self.__last_sent_x))
+                self.__time_last_send_x = -1
+
+            # if self.__time_last_send_y > 0 and self.__time_last_send_y + self.__warning_waiting_time < time_now_in_ms:
+            #     self.__on_add_log(10, "CON_WAIT_LONG", "COM_Y", "Długie oczekiwanie na odpowiedź na: " + str(self.__last_sent_y))
+            #     self.__time_last_send_y = -1
+
+
+            if self.__com_reader(self.__com_x, self.__com_y, self.__sockets) > 0:
+                if self.__time_last_send_x == -1:
+                    self.__on_add_log(6, "CON_WAIT_END", "COM_X", "Przyszła odpowiedź na: " + str(self.__last_sent_x))
+                self.__time_next_send_x = 0
+                self.__time_last_send_x = 0
+
+            # if self.__com_reader(self.__com_y, self.__com_x, self.__sockets) > 0:
+            #     if self.__time_last_send_y == -1:
+            #         self.__on_add_log(6, "CON_WAIT_END", "COM_Y", "Przyszła odpowiedź na: " + str(self.__last_sent_y))
+            #     self.__time_next_send_y = 0
+            #     self.__time_last_send_y= 0
             self.__com_reader(self.__com_y, self.__com_x, self.__sockets)
-            self.__com_x.send()
+
+
+            if time_now_in_ms >= self.__time_next_send_x:
+                if self.__time_next_send_x > 0 and self.__last_sent_x != b"":
+                    self.__on_add_log(10, "CON_ERROR_WAIT", "COM_X", "Oczekiwanie na tyle długie, że zostanie wysłana nowa wiadomość. Ostatnio wysłana: " + str(self.__last_sent_x))
+                    self.__time_next_send_x = 0
+                sent_bytes, sent_msg = self.__com_x.send()
+                if sent_bytes > 0:
+                    self.__time_next_send_x = time_now_in_ms + self.__breaks_between_second_sending_in_a_row_in_ms
+                    self.__time_last_send_x = time_now_in_ms
+                    self.__last_sent_x = sent_msg
+
+            # if time_now_in_ms >= self.__time_next_send_y:
+            #     if self.__time_next_send_y > 0 and self.__last_sent_y != b"":
+            #         self.__on_add_log(10, "CON_ERROR_WAIT", "COM_Y", "Oczekiwanie na tyle długie, że zostanie wysłana nowa wiadomość. Ostatnio wysłana: " + str(self.__last_sent_y))
+            #         self.__time_next_send_y = 0
+            #     sent_bytes, sent_msg = self.__com_y.send()
+            #     if sent_bytes > 0:
+            #         self.__time_next_send_y = time_now_in_ms + self.__breaks_between_second_sending_in_a_row_in_ms
+            #         self.__time_last_send_y = time_now_in_ms
+            #         self.__last_sent_y = sent_msg
             self.__com_y.send()
+
             bytes_to_send_to_com_x = self.__sockets.communications()
             if bytes_to_send_to_com_x != b"":
                 self.__com_x.add_bytes_to_send(bytes_to_send_to_com_x)

@@ -163,7 +163,7 @@ class ComManager:
         self.__number_received_communicates += data_received.count(b"\r")
         return data_received
 
-    def send(self) -> int:
+    def send(self) -> (int, bytes):
         """
         This method send to port bytes from self.__bytes_to_send.
 
@@ -171,7 +171,7 @@ class ComManager:
         This method will send only message which will be completed received, so it will send only messages witch will
         be ended with sign '\r'
 
-        :return: <int> number of sent bytes or -1 if was error
+        :return: <int, bytes> number of sent bytes or -1 if was error, and sent message
         :logs: COM_SEND (4), COM_SEND_TOUT (1)
         :raise ComManagerError:
             10-004 - method will throw this raise, if port was be closed
@@ -181,7 +181,7 @@ class ComManager:
                                   .format(self.__port_name, self.__alias))
 
         if self.__com_port.out_waiting > 0 or self.__bytes_to_send == b"" or b"\r" not in self.__bytes_to_send:
-            return 0
+            return 0, b""
 
         try:
             index_first_special_sign = self.__bytes_to_send.index(b"\r") + 1
@@ -190,10 +190,10 @@ class ComManager:
             self.__bytes_to_send = self.__bytes_to_send[number_sent_bytes:]
 
             self.__on_add_log(4, "COM_SEND", self.__alias, sent_bytes)
-            return len(sent_bytes)
+            return len(sent_bytes), sent_bytes
         except serial.SerialTimeoutException as e:
             self.__on_add_log(1, "COM_SEND_TOUT", self.__alias, str(e))
-            return -1
+            return -1, b""
 
     def add_bytes_to_send(self, new_bytes_to_send: bytes) -> int:
         """

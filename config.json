@@ -9,7 +9,7 @@
   "com_timeout": 0.1,
   "com_write_timeout": 0.1,
   "minimum_number_of_lines_to_write_in_log_file": 1,
-  "time_interval_break": 0.15,
+  "time_interval_break": 0.5,
   "min_log_priority": 2,
   "default_ip": "192.168.0.200",
   "default_port": 3000
