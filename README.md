@@ -94,7 +94,7 @@ pip install -r requirements.txt
 | **v1.0.1**       | 2023-10-19        | 10      |                                              |
 | **First commit** | 2023-06-30        | 1       |                                              |
 
-![](https://github.ct8.pl/readme/patlukas/KregleLive_3_Client)
+![](https://github.ct8.pl/readme/patlukas/KregleLive_3_Server)
 
 ## Screenshots
 
