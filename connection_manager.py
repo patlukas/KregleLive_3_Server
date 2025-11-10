@@ -49,8 +49,8 @@ class ConnectionManager:
             ComManagerError
             SocketsManagerError
         """
-        self.__com_x = ComManager(com_name_x, com_timeout, com_write_timeout, "COM_X", on_add_log)
-        self.__com_y = ComManager(com_name_y, com_timeout, com_write_timeout, "COM_Y", on_add_log)
+        self.__com_x = ComManager(com_name_x, com_timeout, com_write_timeout, "COM_X", on_add_log, [b"30", b"31", b"32", b"33", b"34", b"35"])
+        self.__com_y = ComManager(com_name_y, com_timeout, com_write_timeout, "COM_Y", on_add_log, [b"38"])
         self.__recv_com_x_additional_options = 0
         self.__recv_com_y_additional_options = 0
         self.__sockets = SocketsManager(on_add_log)
@@ -63,6 +63,8 @@ class ConnectionManager:
         self.__history_of_communication_x = []
         self.__number_of_lane = number_of_lane
         self.__on_add_log(2, "CON_INFO", "", "COM_X={}, COM_Y={}".format(com_name_x, com_name_y))
+        self.__list_func_for_analyze_msg_to_send = []
+        self.__list_func_for_analyze_msg_to_recv = []
 
         for _ in range(self.__number_of_lane):
             self.__history_of_communication_x.append({
@@ -105,7 +107,7 @@ class ConnectionManager:
                 self.__count_anomalies_pending_response(last_sent_x, 1)
                 response_waiting_mode = 1
 
-            recv_bytes_x, recv_msg_x = self.__com_reader(self.__com_x, self.__com_y, self.__sockets, self.__recv_com_x_additional_options)
+            recv_bytes_x, recv_msg_x = self.__com_reader(self.__com_x, self.__com_y, self.__sockets, self.__recv_com_x_additional_options, self.__list_func_for_analyze_msg_to_recv)
             if recv_bytes_x > 0:
                 if response_waiting_mode in [1, 2]:
                     self.__on_add_log(6, "CON_WAIT_END", "COM_X", "Przyszła odpowiedź na: " + str(last_sent_x))
@@ -113,7 +115,7 @@ class ConnectionManager:
                 time_next_sending_x = 0
                 response_waiting_mode = 0
 
-            self.__com_reader(self.__com_y, self.__com_x, self.__sockets, self.__recv_com_y_additional_options)
+            self.__com_reader(self.__com_y, self.__com_x, self.__sockets, self.__recv_com_y_additional_options, self.__list_func_for_analyze_msg_to_send)
             self.__com_y.send()
 
             if time.time() >= time_next_sending_x:
@@ -130,7 +132,9 @@ class ConnectionManager:
                     response_waiting_mode = 3
             bytes_to_send_to_com_x = self.__sockets.communications()
             if bytes_to_send_to_com_x != b"":
-                self.__com_x.add_bytes_to_send(bytes_to_send_to_com_x)
+                # TODO
+                self.__on_add_log(10, "TODO_1", "", "Give msg from socket to com_x")
+                # self.__com_x.add_bytes_to_send(bytes_to_send_to_com_x)
             time.sleep(self.__time_interval_break)
 
     def stop(self) -> None:
@@ -171,7 +175,7 @@ class ConnectionManager:
             )
         return com_info + self.__sockets.get_info()
 
-    def __com_reader(self, com_in: ComManager, com_out: ComManager, sockets: SocketsManager, additional_options: int) -> (int, bytes):
+    def __com_reader(self, com_in: ComManager, com_out: ComManager, sockets: SocketsManager, additional_options: int, list_func_for_analyze_msg) -> (int, bytes):
         """
         This method reads data from the "com_in" port. It then adds the read data to the queue with data to be sent in
         'com_out' and sockets queue.
@@ -180,6 +184,7 @@ class ConnectionManager:
         :param com_out: <ComManager> with COM port where this func will add read data to the queue with data to be sent
         :param sockets <SocketManager> obj to management socket connection
         :param additional_options <int> options used to edit message on fly
+        :param list_func_for_analyze_msg: list[func] TODO
 
         :return: <int, bytes> The number of data bytes received or -1 if there was an error, received bytes
         :logs: CON_READ_ERROR (10)
@@ -191,12 +196,37 @@ class ConnectionManager:
 
             received_bytes = self.__edit_message_on_the_fly(additional_options, received_bytes)
 
-            com_out.add_bytes_to_send(received_bytes)
-            sockets.add_bytes_to_send(received_bytes)
+            while b"\r" in received_bytes:
+                index_first_special_sign = received_bytes.index(b"\r") + 1
+                msg = received_bytes[:index_first_special_sign]
+                received_bytes = received_bytes[index_first_special_sign:]
+
+                com_in_front, com_in_end, com_out_front, com_out_end = self.__analyze_msg(msg, list_func_for_analyze_msg)
+
+                com_in.add_msg_to_send(com_in_front, com_in_end)
+                com_out.add_msg_to_send(com_out_front, com_out_end)
+
+                # TODO optymalize
+                socket_msg = b""
+                for m in com_in_front + com_out_front + com_in_end + com_out_end:
+                    socket_msg += m["message"]
+                sockets.add_bytes_to_send(socket_msg)
             return len(received_bytes), received_bytes
         except (serial.SerialException, serial.SerialTimeoutException) as e:
             self.__on_add_log(10, "CON_READ_ERROR", com_in.get_alias(), e)
             return -1, b""
+
+    def __analyze_msg(self, message, list_func_to_analyze):
+        """
+        TODO
+        """
+        msg_obj = {"message": message, "time_wait": -1, "priority": 3}
+        for func in list_func_to_analyze:
+            print("A", func)
+            com_in_front, com_in_end, com_out_front, com_out_end = func(message)
+            if len(com_in_front) + len(com_in_end) + len(com_out_front) + len(com_out_end) != 0:
+                return com_in_front, com_in_end, com_out_front, com_out_end
+        return [], [], [], [msg_obj]
 
     def __edit_message_on_the_fly(self, options: int, messages: bytes) -> bytes:
         """
@@ -351,10 +381,14 @@ class ConnectionManager:
             data.append(data_lane)
         return data
 
-    def add_message_to_x(self, head_message: bytes):
+    def add_message_to_x(self, head_message: bytes, front: bool, priority: int, time_wait: int):
         message = head_message + self.__calculate_control_sum(head_message) + b"\r"
         self.__on_add_log(5, "CON_USERMSG", "", "Wiadomość dodana przez użytkowanika {}".format(message))
-        self.__com_x.add_bytes_to_send(message)
+        msg_obj = {"message": message, "time_wait": time_wait, "priority": priority}
+        if front:
+            self.__com_x.add_msg_to_send([msg_obj], [])
+        else:
+            self.__com_x.add_msg_to_send([], [msg_obj])
         self.__sockets.add_bytes_to_send(message)
 
     def clear_lane_stat(self, clear_type: str) -> None:
@@ -379,3 +413,6 @@ class ConnectionManager:
                     "left_max": 0,
                     "response_times": []
                 }
+
+    def add_func_for_analyze_msg_to_recv(self, func):
+        self.__list_func_for_analyze_msg_to_recv.append(func)

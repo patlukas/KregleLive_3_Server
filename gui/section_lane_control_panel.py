@@ -50,7 +50,7 @@ class SectionLaneControlPanel(QGroupBox):
         self.__log_management(3, "LCP_CLICK", "", "Dodano nowe wiadomości przez 'Sterowanie torami': Adresaci {}, Wiadomość '{}'({})".format(list_lane_to_print, what_message_means, body_message))
         for lane in list_lane:
             message = b"3" + bytes(str(lane), "cp1250") + b"38" + body_message
-            self.__on_add_message(message)
+            self.__on_add_message(message, True, 9, -1) #TODO change time_wait
 
     @staticmethod
     def __get_panel_with_buttons(main_label: str, option_name: str, structure: list, number_col: int, on_click):

@@ -1,4 +1,5 @@
 import serial
+import time
 from typing import Union
 
 
@@ -38,7 +39,7 @@ class ComManager:
     """
 
     def __init__(self, port_name: str, timeout: Union[int, float, None],
-                 write_timeout: Union[int, float, None], alias: str, on_add_log):
+                 write_timeout: Union[int, float, None], alias: str, on_add_log, list_recipients):
         """
         :param port_name: <str> name of port e.g. "COM1", "COM2"
         :param timeout: <int, float, None> waiting during send data
@@ -49,6 +50,7 @@ class ComManager:
         :param write_timeout: <int, float, None> waiting during received data (same options like in timeout)
         :param alias: <str> alternative port name, e.g. "COM_X", "COM_Y"
         :param on_add_log: <func(int,str,str,str)> function to add logs
+        :param list_recipients: list[bytes] -
 
         self.__port_name - same like in :param port_name:
         self.__alias - same like in :param alias:
@@ -70,13 +72,21 @@ class ComManager:
         ])
         self.__port_name = port_name
         self.__alias = alias
-        self.__bytes_to_send = b""
+        # self.__bytes_to_send = b""
+        self.__send_buckets = []
+        self.__send_buckets_pointer = 0
+        self.__recipient_to_queue_index = {}
+        self.__default_time_wait_between_msg_on_bucket = 700
         self.__bytes_to_recv = b""
         self.__number_received_bytes = 0
         self.__number_received_communicates = 0
         self.__number_duplicates = 0
         self.__on_add_log = on_add_log
         self.__com_port = self.__create_port(timeout, write_timeout)
+
+        for i, recipient in enumerate(list_recipients):
+            self.__send_buckets.append({"time_last_send": 0, "messages": []})
+            self.__recipient_to_queue_index[recipient] = i
 
     @staticmethod
     def __check_types(controlled_variables) -> None:
@@ -182,44 +192,124 @@ class ComManager:
             raise ComManagerError("10-004", "Port {} ({}) is closed or not was be created, so I can't send data"
                                   .format(self.__port_name, self.__alias))
 
-        if self.__com_port.out_waiting > 0 or self.__bytes_to_send == b"" or b"\r" not in self.__bytes_to_send:
+        if self.__com_port.out_waiting > 0:
             return 0, b""
 
-        try:
-            index_first_special_sign = self.__bytes_to_send.index(b"\r") + 1
-            number_sent_bytes = self.__com_port.write(self.__bytes_to_send[:index_first_special_sign])
-            sent_bytes = self.__bytes_to_send[:number_sent_bytes]
-            self.__bytes_to_send = self.__bytes_to_send[number_sent_bytes:]
+        count_bucket = len(self.__send_buckets)
 
-            self.__on_add_log(4, "COM_SEND", self.__alias, sent_bytes)
-            return len(sent_bytes), sent_bytes
+        try:
+            time_now = int(time.time() * 1000)
+            msg_bucket_index = -1
+            msg_bucket_priority = -1
+            for i in range(count_bucket):
+                bucket_index = (self.__send_buckets_pointer + i) % count_bucket
+                list_msg = self.__send_buckets[bucket_index]["messages"]
+
+                if len(list_msg) == 0:
+                    continue
+
+                priority = list_msg[0]["priority"]
+
+                time_wait = list_msg[0]["time_wait"]
+                if time_wait == -1:
+                    time_wait = self.__default_time_wait_between_msg_on_bucket
+
+                if time_now < self.__send_buckets[bucket_index]["time_last_send"] + time_wait:
+                    continue
+
+                if priority > msg_bucket_priority:
+                    msg_bucket_index = bucket_index
+                    msg_bucket_priority = priority
+
+            if msg_bucket_index == -1:
+                return 0, b""
+
+            bytes_to_send = self.__send_buckets[msg_bucket_index]["messages"][0]["message"]
+            number_sent_bytes = self.__com_port.write(bytes_to_send)
+            self.__send_buckets[msg_bucket_index]["messages"].pop(0)
+            self.__send_buckets[msg_bucket_index]["time_last_send"] = time_now
+
+            if len(bytes_to_send) != number_sent_bytes:
+                self.__on_add_log(10, "NEW_3",
+                               "Not send all bytes: '{}' {} {}".format(bytes_to_send, len(bytes_to_send), number_sent_bytes))
+
+            if msg_bucket_index == self.__send_buckets_pointer:
+                self.__send_buckets_pointer = (self.__send_buckets_pointer + 1) % count_bucket
+
+            self.__on_add_log(4, "COM_SEND", self.__alias, bytes_to_send)
+            return len(bytes_to_send), bytes_to_send
         except serial.SerialTimeoutException as e:
             self.__on_add_log(1, "COM_SEND_TOUT", self.__alias, str(e))
             return -1, b""
 
     def add_bytes_to_send(self, new_bytes_to_send: bytes) -> int:
         """
+        TODO: TO DEL
         This method add to send queue new bytes.
         
         :param new_bytes_to_send: <bytes> Bytes which will be add to send queue
         :return: <int> Size of queue after add new bytes
         :logs: COM_SEND_WTPE (6), COM_SEND_WEND (6), COM_SEND_inQUEUE (5)
         """
-        if type(new_bytes_to_send) != bytes:
-            self.__on_add_log(6, "COM_SEND_WTPE", self.__alias, "Wrong type of data to send: '{}' have type '{}'"
-                              .format(new_bytes_to_send, type(new_bytes_to_send).__name__))
-        else:
-            if new_bytes_to_send[-1:] != b"\r":
-                self.__on_add_log(6, "COM_SEND_WEND", self.__alias,
-                                  "Wrong end of data to send, should have '\r' as last sign: '{}'".format(
-                                      new_bytes_to_send[-1:]))
-            if new_bytes_to_send in self.__bytes_to_send:
-                self.__on_add_log(5, "COM_SEND_inQUEUE", self.__alias, "Message '{}' is already in the queue to be sent, so it is discarded"
-                                  .format(new_bytes_to_send))
-                self.__number_duplicates += 1
-            else:
-                self.__bytes_to_send += new_bytes_to_send
-        return len(self.__bytes_to_send)
+        return 0
+        # if type(new_bytes_to_send) != bytes:
+        #     self.__on_add_log(6, "COM_SEND_WTPE", self.__alias, "Wrong type of data to send: '{}' have type '{}'"
+        #                       .format(new_bytes_to_send, type(new_bytes_to_send).__name__))
+        # else:
+        #     if new_bytes_to_send[-1:] != b"\r":
+        #         self.__on_add_log(6, "COM_SEND_WEND", self.__alias,
+        #                           "Wrong end of data to send, should have '\r' as last sign: '{}'".format(
+        #                               new_bytes_to_send[-1:]))
+        #     if new_bytes_to_send in self.__bytes_to_send:
+        #         self.__on_add_log(5, "COM_SEND_inQUEUE", self.__alias, "Message '{}' is already in the queue to be sent, so it is discarded"
+        #                           .format(new_bytes_to_send))
+        #         self.__number_duplicates += 1
+        #     else:
+        #         self.__bytes_to_send += new_bytes_to_send
+        # return len(self.__bytes_to_send)
+
+    def add_msg_to_send(self, list_msg_front, list_msg_end) -> int:
+        """
+
+        :param list_msg_front: <list[dict<"message": bytes, "time_wait": int (ms), "priority": int <1,9>]>
+        :param list_msg_end: <list[dict<"message": bytes, "time_wait": int (ms), "priority": int <1,9>]>
+        :return:
+        :logs:
+        """
+        for msg in list_msg_front[::-1]:
+            recipient = msg["message"][:2]
+            if recipient not in self.__recipient_to_queue_index:
+                self.__on_add_log(9, "COM_ADD_MSG_SEND_NFIND", self.__alias, "Not find bucket: '{}' {}".format(recipient, self.__recipient_to_queue_index))
+                continue
+            index = self.__recipient_to_queue_index[recipient]
+            self.__on_add_log(6, "COM_ADD_MSG_SEND_FRONT", self.__alias, "Add message '{}' to front in bucket '{}'".format(index, msg["message"]))
+            self.__send_buckets[index]["messages"].insert(0, msg)
+
+        for msg in list_msg_end:
+            recipient = msg["message"][:2]
+            if recipient not in self.__recipient_to_queue_index:
+                self.__on_add_log(9, "COM_ADD_MSG_SEND_NFIND", self.__alias, "Not find bucket: '{}' {}".format(recipient, self.__recipient_to_queue_index))
+                continue
+            index = self.__recipient_to_queue_index[recipient]
+            self.__on_add_log(6, "COM_ADD_MSG_SEND_ENDT", self.__alias, "Add message '{}' to end in bucket '{}'".format(index, msg["message"]))
+            self.__send_buckets[index]["messages"].append(msg)
+
+        # TODO: make more optymalize func
+        for b_index in range(len(self.__send_buckets)):
+            seen_msg = set()
+            i = 0
+            while i < len(self.__send_buckets[b_index]["messages"]):
+                m = self.__send_buckets[b_index]["messages"][i]["message"]
+                if m in seen_msg:
+                    self.__on_add_log(5, "COM_SEND_inQUEUE", self.__alias,
+                                      "Message '{}' is already in the queue to be sent, so it is discarded"
+                                      .format(m))
+                    del self.__send_buckets[b_index]["messages"][i]
+                else:
+                    seen_msg.add(m)
+                    i += 1
+
+        return 0
 
     def get_number_received_bytes(self) -> int:
         """
@@ -243,7 +333,11 @@ class ComManager:
 
         :return: <int> number of waiting messages
         """
-        return self.__bytes_to_send.count(b"\r")
+        n = 0
+        for bucket in self.__send_buckets:
+            n += len(bucket["messages"])
+        return n
+        # return self.__bytes_to_send.count(b"\r")
 
     def get_number_of_duplicates(self) -> int:
         """

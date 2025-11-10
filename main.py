@@ -2,6 +2,7 @@ from PyQt5.QtGui import QBrush
 
 from connection_manager import ConnectionManager
 from gui.section_lane_control_panel import SectionLaneControlPanel
+from gui.section_clearoff_fast import SectionClearOffTest
 from gui.socket_section import SocketSection
 from log_management import LogManagement
 from config_reader import ConfigReader, ConfigReaderError
@@ -88,6 +89,7 @@ class GUI(QDialog):
         self.__kegeln_program_has_been_started = False
         self.__socket_section = None
         self.__section_lane_control_panel = SectionLaneControlPanel()
+        self.__section_clearoff_fast = SectionClearOffTest()
 
         self.__set_layout()
         self.__init_program()
@@ -181,7 +183,11 @@ class GUI(QDialog):
             self.__socket_section.set_func_to_get_list_ip(self.__connection_manager.on_get_list_ip)
             self.__prepare_lane_stat_table(self.__config["number_of_lane"])
             self.__section_lane_control_panel.init(self.__config["number_of_lane"], self.__log_management.add_log, self.__connection_manager.add_message_to_x)
+            self.__section_clearoff_fast.init(self.__config["number_of_lane"], self.__log_management.add_log)
             self.__launch_startup_tools(self.__config["tools_to_run_on_startup"])
+
+            self.__connection_manager.add_func_for_analyze_msg_to_recv(lambda msg: self.__section_clearoff_fast.analyze_message(msg))
+
             start_new_thread(self.__connection_manager.start, ())
         except ConfigReaderError as e:
             self.__log_management.add_log(10, "CNF_READ_ERROR", e.code, e.message)
@@ -251,6 +257,7 @@ class GUI(QDialog):
         self.__layout.addWidget(self.__table_lane_stat)
 
         self.__layout.addWidget(self.__section_lane_control_panel)
+        self.__layout.addWidget(self.__section_clearoff_fast)
 
         self.__update_connect_list_layout()
 
@@ -292,6 +299,12 @@ class GUI(QDialog):
         lane_control_time.triggered.connect(lambda checked: self.__on_show_lane_control("Time", checked))
         view_menu.addAction(lane_control_time)
 
+        clear_off = QAction("Zbierane na 3 rzuty", self)
+        clear_off.setCheckable(True)
+        clear_off.setChecked(False)
+        clear_off.triggered.connect(lambda checked: self.__on_show_clear_off_fast(checked))
+        view_menu.addAction(clear_off)
+
         self.__add_menu_with_tools_to_menu_bar(menu_bar)
 
         help_menu = menu_bar.addMenu("Pomoc")
@@ -331,6 +344,11 @@ class GUI(QDialog):
 
     def __on_show_lane_control(self, name_type: str, show: bool):
         self.__section_lane_control_panel.show_control_panel(name_type, show)
+        self.adjustSize()
+
+    def __on_show_clear_off_fast(self, show: bool):
+        print("A")
+        self.__section_clearoff_fast.show_control_panel(show)
         self.adjustSize()
 
     def __update_connect_list_layout(self) -> int:
@@ -647,6 +665,7 @@ class GUI(QDialog):
 
         :param ip: <str> server ip address
         :param port: <int> port where server will listen (0-65535)
+        :return: True
         :return: True
         :raise: SocketsManagerError
         """
