@@ -1,16 +1,21 @@
 
 {
-  "path_to_dict_com0com": "com0com",
+  "path_to_dict_com0com": "C:\\Users\\PL\\Documents\\pendrive2\\com0com",
   "path_to_run_kegeln_program": "C:\\programme\\Kegeln\\Kegeln.exe",
   "flags_to_run_kegeln_program": "w b6 a x",
   "com_x": "COM1",
   "com_y": "COM7",
   "com_z": "COM8",
-  "com_timeout": 0.1,
-  "com_write_timeout": 0.1,
+  "com_timeout": 0.05,
+  "com_write_timeout": 0.05,
   "minimum_number_of_lines_to_write_in_log_file": 1,
-  "time_interval_break": 0.5,
+  "time_interval_break": 0.05,
   "min_log_priority": 2,
   "default_ip": "192.168.0.200",
-  "default_port": 3000
+  "default_port": 3000,
+  "max_waiting_time_for_response": 3,
+  "warning_response_time": 0.4,
+  "critical_response_time": 1.0,
+  "number_of_lane": 6,
+  "tools_to_run_on_startup": ["Asystent Tworzenia Dru�yn"]
 }
