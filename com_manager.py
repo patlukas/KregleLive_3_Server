@@ -39,7 +39,7 @@ class ComManager:
     """
 
     def __init__(self, port_name: str, timeout: Union[int, float, None],
-                 write_timeout: Union[int, float, None], alias: str, on_add_log, list_recipients):
+                 write_timeout: Union[int, float, None], alias: str, on_add_log, list_recipients, time_wait_between_msg_on_bucket):
         """
         :param port_name: <str> name of port e.g. "COM1", "COM2"
         :param timeout: <int, float, None> waiting during send data
@@ -50,7 +50,8 @@ class ComManager:
         :param write_timeout: <int, float, None> waiting during received data (same options like in timeout)
         :param alias: <str> alternative port name, e.g. "COM_X", "COM_Y"
         :param on_add_log: <func(int,str,str,str)> function to add logs
-        :param list_recipients: list[bytes] -
+        :param list_recipients: list[bytes] - TODO
+        :param time_wait_between_msg_on_bucket: int TODO
 
         self.__port_name - same like in :param port_name:
         self.__alias - same like in :param alias:
@@ -76,7 +77,7 @@ class ComManager:
         self.__send_buckets = []
         self.__send_buckets_pointer = 0
         self.__recipient_to_queue_index = {}
-        self.__default_time_wait_between_msg_on_bucket = 700
+        self.__default_time_wait_between_msg_on_bucket = time_wait_between_msg_on_bucket
         self.__bytes_to_recv = b""
         self.__number_received_bytes = 0
         self.__number_received_communicates = 0
@@ -230,8 +231,7 @@ class ComManager:
             self.__send_buckets[msg_bucket_index]["time_last_send"] = time_now
 
             if len(bytes_to_send) != number_sent_bytes:
-                self.__on_add_log(10, "NEW_3",
-                               "Not send all bytes: '{}' {} {}".format(bytes_to_send, len(bytes_to_send), number_sent_bytes))
+                self.__on_add_log(10, "NEW_3", "Nie wysłano wszystkich danych: '{}', długość wiadomości: {}, ilość wysłanych danych: {}".format(bytes_to_send, len(bytes_to_send), number_sent_bytes))
 
             if msg_bucket_index == self.__send_buckets_pointer:
                 self.__send_buckets_pointer = (self.__send_buckets_pointer + 1) % count_bucket
@@ -279,19 +279,19 @@ class ComManager:
         for msg in list_msg_front[::-1]:
             recipient = msg["message"][:2]
             if recipient not in self.__recipient_to_queue_index:
-                self.__on_add_log(9, "COM_ADD_MSG_SEND_NFIND", self.__alias, "Not find bucket: '{}' {}".format(recipient, self.__recipient_to_queue_index))
+                self.__on_add_log(9, "COM_ADD_MSG_SEND_NFIND", self.__alias, "Nie znaleziono kolejki {} dla wiadomości: '{}'".format(recipient, self.__recipient_to_queue_index))
                 continue
             index = self.__recipient_to_queue_index[recipient]
-            self.__on_add_log(6, "COM_ADD_MSG_SEND_FRONT", self.__alias, "Add message '{}' to front in bucket '{}'".format(index, msg["message"]))
+            self.__on_add_log(6, "COM_ADD_MSG_SEND_FRONT", self.__alias, "Dodano wiadomość '{}' z priorytetem {} i time_wait: {} na początek kubełka '{}' o numerze {}".format(msg["message"], msg["priority"], msg["time_wait"], recipient, index))
             self.__send_buckets[index]["messages"].insert(0, msg)
 
         for msg in list_msg_end:
             recipient = msg["message"][:2]
             if recipient not in self.__recipient_to_queue_index:
-                self.__on_add_log(9, "COM_ADD_MSG_SEND_NFIND", self.__alias, "Not find bucket: '{}' {}".format(recipient, self.__recipient_to_queue_index))
+                self.__on_add_log(9, "COM_ADD_MSG_SEND_NFIND", self.__alias, "Nie znaleziono kolejki {} dla wiadomości: '{}'".format(recipient, self.__recipient_to_queue_index))
                 continue
             index = self.__recipient_to_queue_index[recipient]
-            self.__on_add_log(6, "COM_ADD_MSG_SEND_ENDT", self.__alias, "Add message '{}' to end in bucket '{}'".format(index, msg["message"]))
+            self.__on_add_log(6, "COM_ADD_MSG_SEND_END", self.__alias, "Dodano wiadomość '{}' z priorytetem {} i time_wait: {} na koniec kubełka '{}' o numerze {}".format(msg["message"], msg["priority"], msg["time_wait"], recipient, index))
             self.__send_buckets[index]["messages"].append(msg)
 
         # TODO: make more optymalize func
@@ -301,9 +301,7 @@ class ComManager:
             while i < len(self.__send_buckets[b_index]["messages"]):
                 m = self.__send_buckets[b_index]["messages"][i]["message"]
                 if m in seen_msg:
-                    self.__on_add_log(5, "COM_SEND_inQUEUE", self.__alias,
-                                      "Message '{}' is already in the queue to be sent, so it is discarded"
-                                      .format(m))
+                    self.__on_add_log(5, "COM_SEND_inQUEUE", self.__alias, "Wiadomość '{}' już jest w kolejce, więc duplikat zostaje usunięty".format(m))
                     del self.__send_buckets[b_index]["messages"][i]
                 else:
                     seen_msg.add(m)

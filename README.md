@@ -114,19 +114,21 @@ pip install -r requirements.txt
 
 ## 📌 Version History
 
-| Version          | Release Date      | Commits | Changes                                      |
-|------------------|-------------------|---------|----------------------------------------------|
-| **v1.2.0.0**     | 🚧 In Development | 50+     |                                              |
-| **v1.1.3.0**     | 2025-02-28        | 46      | Added Jenkins to create new releases         |  
-| **v1.1.1**       | 2025-02-21        | 42      | Added waiting for a response from the lanes  |
-| **v1.1.0**       | 2025-02-05        | 38      | Added automatic creation of TCP server       |
-| **v1.0.6**       | 2025-11-22        | 34      | Added support for Polish characters          |
-| **v1.0.5**       | 2024-11-02        | 33      | Added dropdown with possible IP addresses    |
-| **v1.0.4**       | 2024-08-13        | 28      |                                              |
-| **v1.0.3**       | 2024-08-08        | 21      |                                              |
-| **v1.0.2**       | 2024-06-15        | 15      |                                              |
-| **v1.0.1**       | 2023-10-19        | 10      |                                              |
-| **First commit** | 2023-06-30        | 1       |                                              |
+| Version          | Release Date      | Commits | Changes                                               |
+|------------------|-------------------|---------|-------------------------------------------------------|
+| **v1.2.0.0**     | 🚧 In Development |         |                                                       |
+| **v1.2.1.0**     | 2025-11-11        | 70      | Fix bug, add new feature to faster end clear off      |
+| **v1.2.0.0**     | 2025-11-10        | 60      | ❌ Broken version - Change queue with messages to send |
+| **v1.1.3.0**     | 2025-02-28        | 46      | Added Jenkins to create new releases                  |  
+| **v1.1.1**       | 2025-02-21        | 42      | Added waiting for a response from the lanes           |
+| **v1.1.0**       | 2025-02-05        | 38      | Added automatic creation of TCP server                |
+| **v1.0.6**       | 2025-11-22        | 34      | Added support for Polish characters                   |
+| **v1.0.5**       | 2024-11-02        | 33      | Added dropdown with possible IP addresses             |
+| **v1.0.4**       | 2024-08-13        | 28      |                                                       |
+| **v1.0.3**       | 2024-08-08        | 21      |                                                       |
+| **v1.0.2**       | 2024-06-15        | 15      |                                                       |
+| **v1.0.1**       | 2023-10-19        | 10      |                                                       |
+| **First commit** | 2023-06-30        | 1       |                                                       |
 
 ![](https://github.ct8.pl/readme/patlukas/KregleLive_3_Server)
 

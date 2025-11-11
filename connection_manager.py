@@ -49,8 +49,8 @@ class ConnectionManager:
             ComManagerError
             SocketsManagerError
         """
-        self.__com_x = ComManager(com_name_x, com_timeout, com_write_timeout, "COM_X", on_add_log, [b"30", b"31", b"32", b"33", b"34", b"35"])
-        self.__com_y = ComManager(com_name_y, com_timeout, com_write_timeout, "COM_Y", on_add_log, [b"38"])
+        self.__com_x = ComManager(com_name_x, com_timeout, com_write_timeout, "COM_X", on_add_log, [b"30", b"31", b"32", b"33", b"34", b"35"], 700)
+        self.__com_y = ComManager(com_name_y, com_timeout, com_write_timeout, "COM_Y", on_add_log, [b"38"], 0)
         self.__recv_com_x_additional_options = 0
         self.__recv_com_y_additional_options = 0
         self.__sockets = SocketsManager(on_add_log)
@@ -195,7 +195,8 @@ class ConnectionManager:
                 return 0, b""
 
             received_bytes = self.__edit_message_on_the_fly(additional_options, received_bytes)
-
+            socket_msg = b""
+            received_bytes_from_in = received_bytes
             while b"\r" in received_bytes:
                 index_first_special_sign = received_bytes.index(b"\r") + 1
                 msg = received_bytes[:index_first_special_sign]
@@ -207,11 +208,11 @@ class ConnectionManager:
                 com_out.add_msg_to_send(com_out_front, com_out_end)
 
                 # TODO optymalize
-                socket_msg = b""
+
                 for m in com_in_front + com_out_front + com_in_end + com_out_end:
                     socket_msg += m["message"]
                 sockets.add_bytes_to_send(socket_msg)
-            return len(received_bytes), received_bytes
+            return len(received_bytes_from_in), received_bytes_from_in
         except (serial.SerialException, serial.SerialTimeoutException) as e:
             self.__on_add_log(10, "CON_READ_ERROR", com_in.get_alias(), e)
             return -1, b""
