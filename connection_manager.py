@@ -49,8 +49,8 @@ class ConnectionManager:
             ComManagerError
             SocketsManagerError
         """
-        self.__com_x = ComManager(com_name_x, com_timeout, com_write_timeout, "COM_X", on_add_log, [b"30", b"31", b"32", b"33", b"34", b"35"])
-        self.__com_y = ComManager(com_name_y, com_timeout, com_write_timeout, "COM_Y", on_add_log, [b"38"])
+        self.__com_x = ComManager(com_name_x, com_timeout, com_write_timeout, "COM_X", on_add_log, [b"30", b"31", b"32", b"33", b"34", b"35"], 700)
+        self.__com_y = ComManager(com_name_y, com_timeout, com_write_timeout, "COM_Y", on_add_log, [b"38"], 0)
         self.__recv_com_x_additional_options = 0
         self.__recv_com_y_additional_options = 0
         self.__sockets = SocketsManager(on_add_log)

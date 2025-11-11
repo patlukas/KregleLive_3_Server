@@ -39,7 +39,7 @@ class ComManager:
     """
 
     def __init__(self, port_name: str, timeout: Union[int, float, None],
-                 write_timeout: Union[int, float, None], alias: str, on_add_log, list_recipients):
+                 write_timeout: Union[int, float, None], alias: str, on_add_log, list_recipients, time_wait_between_msg_on_bucket):
         """
         :param port_name: <str> name of port e.g. "COM1", "COM2"
         :param timeout: <int, float, None> waiting during send data
@@ -50,7 +50,8 @@ class ComManager:
         :param write_timeout: <int, float, None> waiting during received data (same options like in timeout)
         :param alias: <str> alternative port name, e.g. "COM_X", "COM_Y"
         :param on_add_log: <func(int,str,str,str)> function to add logs
-        :param list_recipients: list[bytes] -
+        :param list_recipients: list[bytes] - TODO
+        :param time_wait_between_msg_on_bucket: int TODO
 
         self.__port_name - same like in :param port_name:
         self.__alias - same like in :param alias:
@@ -76,7 +77,7 @@ class ComManager:
         self.__send_buckets = []
         self.__send_buckets_pointer = 0
         self.__recipient_to_queue_index = {}
-        self.__default_time_wait_between_msg_on_bucket = 700
+        self.__default_time_wait_between_msg_on_bucket = time_wait_between_msg_on_bucket
         self.__bytes_to_recv = b""
         self.__number_received_bytes = 0
         self.__number_received_communicates = 0
