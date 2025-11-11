@@ -71,7 +71,7 @@ class SectionClearOffTest(QGroupBox):
     def analyze_message(self, msg):
         if msg[4:6] == b"i0":
             lane = int(msg[3:4])
-            self.__log_management(5, "S_COF", "", "Odebrano wiadomość i0 a torze '{}'({})".format(lane, msg ))
+            self.__log_management(5, "S_COF_1", "", "Odebrano wiadomość i0 a torze '{}'({})".format(lane, msg ))
             if lane >= len(self.__list_throw_to_current_layout):
                 return [], [], [], []
             self.__checkboxes[0][lane].setChecked(self.__checkboxes[1][lane].isChecked())
@@ -84,14 +84,14 @@ class SectionClearOffTest(QGroupBox):
             lane = int(msg[3:4])
             if lane >= len(self.__list_throw_to_current_layout):
                 return [], [], [], [] # {"message": msg, "time_wait": -1, "priority": 3}
-            self.__log_management(5, "S_COF", "", "Odebrano wiadomość o rzucie na torze '{}'({})".format(lane, msg))
+            self.__log_management(4, "S_COF_2", "", "Odebrano wiadomość o rzucie na torze '{}'({})".format(lane, msg))
             next_layout = msg[17:20]
             fallen_pins = msg[26:29]
             if next_layout != b"000" or fallen_pins == b"000":
                 self.__list_throw_to_current_layout[lane] += 1
-                self.__log_management(5, "S_COF", "", "Na torze {} jest rzut {} do układu".format(lane, self.__list_throw_to_current_layout[lane]))
             else:
                 self.__list_throw_to_current_layout[lane] = 0
+            self.__log_management(5, "S_COF_3", "", "Na torze {} będzie rzut numer {} do układu".format(lane, self.__list_throw_to_current_layout[lane]+1))
             self.__actualize_label(lane)
             if not self.__checkboxes[0][lane].isChecked():
                 return [], [], [], []
@@ -102,7 +102,7 @@ class SectionClearOffTest(QGroupBox):
         max_throw = 3
         if self.__list_throw_to_current_layout[lane] < max_throw:
             return [], [], [], []
-        self.__log_management(7, "S_COF", "", "Zakończenie układu i ustawienie pełnego układu na torze: {}".format(lane))
+        self.__log_management(7, "S_COF_4", "", "Zakończenie układu i ustawienie pełnego układu na torze: {}".format(lane))
         self.__list_throw_to_current_layout[lane] = 0
         com_x_front, com_y_end =  self.__send_message_to_end_layout(
             message[2:4] + message[0:2],
@@ -175,4 +175,4 @@ class SectionClearOffTest(QGroupBox):
         """
         TODO
         """
-        self.__labels[lane].setText(str(self.__list_throw_to_current_layout[lane]) + " | " + str(self.__list_count_clear_off_finish[lane]))
+        self.__labels[lane].setText(str(self.__list_throw_to_current_layout[lane] + 1) + " | " + str(self.__list_count_clear_off_finish[lane]))
