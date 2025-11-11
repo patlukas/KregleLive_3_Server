@@ -11,18 +11,36 @@ class SectionClearOffTest(QGroupBox):
         self.setLayout(self.__layout)
         self.setVisible(False)
         self.__checkboxes = []
+        self.__labels = []
         self.__list_throw_to_current_layout = []
+        self.__list_count_clear_off_finish = []
 
     def init(self, number_of_lane: int, log_management):
         self.__log_management = log_management
         for i in range(number_of_lane):
             self.__list_throw_to_current_layout.append(0)
+            self.__list_count_clear_off_finish.append(0)
         self.__box = self.__get_panel(number_of_lane)
         self.__layout.addWidget(self.__box)
 
     def __get_panel(self, number_of_lane):
         box = QGroupBox("")
         layout = QGridLayout()
+
+        box_row = QGroupBox("Status na torach")
+        layout_row = QGridLayout()
+        for i in range(number_of_lane):
+            pair_layout = QHBoxLayout()
+            label = QLabel()
+            self.__labels.append(label)
+            pair_layout.addWidget(label)
+            self.__actualize_label(i)
+            layout_row.addLayout(pair_layout, 0, i)
+
+        box_row.setLayout(layout_row)
+        layout.addWidget(box_row, 0, 0)
+
+
         for row, title in enumerate(["Aktualny tor", "Następny tor"]):
             box_row = QGroupBox(title)
             layout_row = QGridLayout()
@@ -44,14 +62,13 @@ class SectionClearOffTest(QGroupBox):
                 layout_row.addLayout(pair_layout, 0, i)
 
             box_row.setLayout(layout_row)
-            layout.addWidget(box_row, row, 0)
+            layout.addWidget(box_row, row+1, 0)
 
         box.setLayout(layout)
         box.setVisible(False)
         return box
 
     def analyze_message(self, msg):
-        print("AAAA")
         if msg[4:6] == b"i0":
             lane = int(msg[3:4])
             self.__log_management(5, "S_COF", "", "Odebrano wiadomość i0 a torze '{}'({})".format(lane, msg ))
@@ -59,6 +76,7 @@ class SectionClearOffTest(QGroupBox):
                 return [], [], [], []
             self.__checkboxes[0][lane].setChecked(self.__checkboxes[1][lane].isChecked())
             self.__checkboxes[1][lane].setChecked(False)
+            self.__list_throw_to_current_layout[lane] = 0
             return [], [], [], []
         if msg[4:5] in [b"w", b"g", b"h", b"f"]:
             lane = int(msg[3:4])
@@ -72,6 +90,9 @@ class SectionClearOffTest(QGroupBox):
                 self.__log_management(5, "S_COF", "", "Na torze {} jest rzut {} do układu".format(lane, self.__list_throw_to_current_layout[lane]))
             else:
                 self.__list_throw_to_current_layout[lane] = 0
+            self.__actualize_label(lane)
+            if not self.__checkboxes[0][lane].isChecked():
+                return [], [], [], []
             return self.__analyse_max_throw_clearoff(lane, msg)
         return [], [], [], []
 
@@ -93,6 +114,8 @@ class SectionClearOffTest(QGroupBox):
             message[26:29],
             message[29:-2]
         )
+        self.__list_count_clear_off_finish[lane] += 1
+        self.__actualize_label(lane)
         return com_x_front, com_y_end, [], [{"message": message, "time_wait": -1, "priority": 3}]
 
     def __send_message_to_end_layout(self, message_head, number_of_throw, last_throw_result, lane_sum, total_sum, next_layout,
@@ -145,3 +168,9 @@ class SectionClearOffTest(QGroupBox):
         self.setVisible(show)
         if show:
             self.adjustSize()
+
+    def __actualize_label(self, lane):
+        """
+        TODO
+        """
+        self.__labels[lane].setText(str(self.__list_throw_to_current_layout[lane]) + " | " + str(self.__list_count_clear_off_finish[lane]))
