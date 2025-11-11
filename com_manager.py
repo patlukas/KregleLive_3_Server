@@ -282,7 +282,7 @@ class ComManager:
                 self.__on_add_log(9, "COM_ADD_MSG_SEND_NFIND", self.__alias, "Nie znaleziono kolejki {} dla wiadomości: '{}'".format(recipient, self.__recipient_to_queue_index))
                 continue
             index = self.__recipient_to_queue_index[recipient]
-            self.__on_add_log(6, "COM_ADD_MSG_SEND_FRONT", self.__alias, "Dodano wiadomość '{}' na początek kubełka '{}' o numerze {}".format(msg["message"], recipient, index))
+            self.__on_add_log(6, "COM_ADD_MSG_SEND_FRONT", self.__alias, "Dodano wiadomość '{}' z priorytetem {} i time_wait: {} na początek kubełka '{}' o numerze {}".format(msg["message"], msg["priority"], msg["time_wait"], recipient, index))
             self.__send_buckets[index]["messages"].insert(0, msg)
 
         for msg in list_msg_end:
@@ -291,7 +291,7 @@ class ComManager:
                 self.__on_add_log(9, "COM_ADD_MSG_SEND_NFIND", self.__alias, "Nie znaleziono kolejki {} dla wiadomości: '{}'".format(recipient, self.__recipient_to_queue_index))
                 continue
             index = self.__recipient_to_queue_index[recipient]
-            self.__on_add_log(6, "COM_ADD_MSG_SEND_END", self.__alias, "Dodano wiadomość '{}' na koniec kubełka '{}' o numerze {}".format(msg["message"], recipient, index))
+            self.__on_add_log(6, "COM_ADD_MSG_SEND_END", self.__alias, "Dodano wiadomość '{}' z priorytetem {} i time_wait: {} na koniec kubełka '{}' o numerze {}".format(msg["message"], msg["priority"], msg["time_wait"], recipient, index))
             self.__send_buckets[index]["messages"].append(msg)
 
         # TODO: make more optymalize func
