@@ -64,9 +64,7 @@ class SectionClearOffTest(QGroupBox):
             lane = int(msg[3:4])
             if lane >= len(self.__list_throw_to_current_layout):
                 return [], [], [], [] # {"message": msg, "time_wait": -1, "priority": 3}
-            if not self.__checkboxes[0][lane].isChecked():
-                return [], [], [], []
-            self.__log_management(5, "S_COF", "", "Odebrano wiadomość o rzucie a torze '{}'({})".format(lane, msg))
+            self.__log_management(5, "S_COF", "", "Odebrano wiadomość o rzucie na torze '{}'({})".format(lane, msg))
             next_layout = msg[17:20]
             fallen_pins = msg[26:29]
             if next_layout != b"000" or fallen_pins == b"000":

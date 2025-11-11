@@ -230,8 +230,7 @@ class ComManager:
             self.__send_buckets[msg_bucket_index]["time_last_send"] = time_now
 
             if len(bytes_to_send) != number_sent_bytes:
-                self.__on_add_log(10, "NEW_3",
-                               "Not send all bytes: '{}' {} {}".format(bytes_to_send, len(bytes_to_send), number_sent_bytes))
+                self.__on_add_log(10, "NEW_3", "Nie wysłano wszystkich danych: '{}', długość wiadomości: {}, ilość wysłanych danych: {}".format(bytes_to_send, len(bytes_to_send), number_sent_bytes))
 
             if msg_bucket_index == self.__send_buckets_pointer:
                 self.__send_buckets_pointer = (self.__send_buckets_pointer + 1) % count_bucket
@@ -279,19 +278,19 @@ class ComManager:
         for msg in list_msg_front[::-1]:
             recipient = msg["message"][:2]
             if recipient not in self.__recipient_to_queue_index:
-                self.__on_add_log(9, "COM_ADD_MSG_SEND_NFIND", self.__alias, "Not find bucket: '{}' {}".format(recipient, self.__recipient_to_queue_index))
+                self.__on_add_log(9, "COM_ADD_MSG_SEND_NFIND", self.__alias, "Nie znaleziono kolejki {} dla wiadomości: '{}'".format(recipient, self.__recipient_to_queue_index))
                 continue
             index = self.__recipient_to_queue_index[recipient]
-            self.__on_add_log(6, "COM_ADD_MSG_SEND_FRONT", self.__alias, "Add message '{}' to front in bucket '{}'".format(index, msg["message"]))
+            self.__on_add_log(6, "COM_ADD_MSG_SEND_FRONT", self.__alias, "Dodano wiadomość '{}' na początek kubełka '{}' o numerze {}".format(msg["message"], recipient, index))
             self.__send_buckets[index]["messages"].insert(0, msg)
 
         for msg in list_msg_end:
             recipient = msg["message"][:2]
             if recipient not in self.__recipient_to_queue_index:
-                self.__on_add_log(9, "COM_ADD_MSG_SEND_NFIND", self.__alias, "Not find bucket: '{}' {}".format(recipient, self.__recipient_to_queue_index))
+                self.__on_add_log(9, "COM_ADD_MSG_SEND_NFIND", self.__alias, "Nie znaleziono kolejki {} dla wiadomości: '{}'".format(recipient, self.__recipient_to_queue_index))
                 continue
             index = self.__recipient_to_queue_index[recipient]
-            self.__on_add_log(6, "COM_ADD_MSG_SEND_ENDT", self.__alias, "Add message '{}' to end in bucket '{}'".format(index, msg["message"]))
+            self.__on_add_log(6, "COM_ADD_MSG_SEND_END", self.__alias, "Dodano wiadomość '{}' na koniec kubełka '{}' o numerze {}".format(msg["message"], recipient, index))
             self.__send_buckets[index]["messages"].append(msg)
 
         # TODO: make more optymalize func
@@ -301,9 +300,7 @@ class ComManager:
             while i < len(self.__send_buckets[b_index]["messages"]):
                 m = self.__send_buckets[b_index]["messages"][i]["message"]
                 if m in seen_msg:
-                    self.__on_add_log(5, "COM_SEND_inQUEUE", self.__alias,
-                                      "Message '{}' is already in the queue to be sent, so it is discarded"
-                                      .format(m))
+                    self.__on_add_log(5, "COM_SEND_inQUEUE", self.__alias, "Wiadomość '{}' już jest w kolejce, więc duplikat zostaje usunięty".format(m))
                     del self.__send_buckets[b_index]["messages"][i]
                 else:
                     seen_msg.add(m)
