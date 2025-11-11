@@ -114,7 +114,7 @@ class SectionClearOffTest(QGroupBox):
             message[20:23],
             message[23:26],
             message[26:29],
-            message[29:-2]
+            message[29:32]
         )
         self.__list_count_clear_off_finish[lane] += 1
         self.__actualize_label(lane)
