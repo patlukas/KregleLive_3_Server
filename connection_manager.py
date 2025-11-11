@@ -195,7 +195,7 @@ class ConnectionManager:
                 return 0, b""
 
             received_bytes = self.__edit_message_on_the_fly(additional_options, received_bytes)
-
+            socket_msg = b""
             while b"\r" in received_bytes:
                 index_first_special_sign = received_bytes.index(b"\r") + 1
                 msg = received_bytes[:index_first_special_sign]
@@ -207,11 +207,11 @@ class ConnectionManager:
                 com_out.add_msg_to_send(com_out_front, com_out_end)
 
                 # TODO optymalize
-                socket_msg = b""
+
                 for m in com_in_front + com_out_front + com_in_end + com_out_end:
                     socket_msg += m["message"]
                 sockets.add_bytes_to_send(socket_msg)
-            return len(received_bytes), received_bytes
+            return len(socket_msg), socket_msg
         except (serial.SerialException, serial.SerialTimeoutException) as e:
             self.__on_add_log(10, "CON_READ_ERROR", com_in.get_alias(), e)
             return -1, b""
