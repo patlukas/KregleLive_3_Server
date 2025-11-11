@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QGroupBox, QGridLayout, QPushButton, QCheckBox, QLabel, QHBoxLayout
+from PyQt5.QtWidgets import QGroupBox, QGridLayout, QPushButton, QCheckBox, QLabel, QHBoxLayout, QComboBox
 from PyQt5.QtCore import Qt
 
 class SectionClearOffTest(QGroupBox):
@@ -12,6 +12,7 @@ class SectionClearOffTest(QGroupBox):
         self.setVisible(False)
         self.__checkboxes = []
         self.__labels = []
+        self.__combo_modes = None
         self.__list_throw_to_current_layout = []
         self.__list_count_clear_off_finish = []
 
@@ -27,6 +28,10 @@ class SectionClearOffTest(QGroupBox):
         box = QGroupBox("")
         layout = QGridLayout()
 
+        self.__combo_modes = QComboBox()
+        self.__combo_modes.addItems(["Tryb A", "Tryb A - szybki"])
+        layout.addWidget(self.__combo_modes, 0, 0)
+
         box_row = QGroupBox("Status na torach")
         layout_row = QGridLayout()
         for i in range(number_of_lane):
@@ -38,7 +43,7 @@ class SectionClearOffTest(QGroupBox):
             layout_row.addLayout(pair_layout, 0, i)
 
         box_row.setLayout(layout_row)
-        layout.addWidget(box_row, 0, 0)
+        layout.addWidget(box_row, 1, 0)
 
 
         for row, title in enumerate(["Aktualny tor", "Następny tor"]):
@@ -62,7 +67,7 @@ class SectionClearOffTest(QGroupBox):
                 layout_row.addLayout(pair_layout, 0, i)
 
             box_row.setLayout(layout_row)
-            layout.addWidget(box_row, row+1, 0)
+            layout.addWidget(box_row, row+2, 0)
 
         box.setLayout(layout)
         box.setVisible(False)
@@ -147,9 +152,18 @@ class SectionClearOffTest(QGroupBox):
         z_2_5_1500 = z(5, 1500)
         b_pick_up_7 = b_click(b"T41", 7)
 
-        mode = [b_stop_9, b_layout_5, b_clear_6, b_enter_6, z_2_5_1500, b_pick_up_7]
+        b_layout_5_300 = b_click(b"T16", 5, 300)
+        b_clear_6_300 = b_click(b"T22", 6, 300)
+        b_pick_up_7_300 = b_click(b"T41", 7, 300)
 
-        return mode, []
+        modes = [
+            [b_stop_9, b_layout_5, b_clear_6, b_enter_6, z_2_5_1500, b_pick_up_7],
+            [b_stop_9, b_layout_5_300, b_clear_6_300, b_enter_6, z_2_5_1500, b_pick_up_7_300],
+        ]
+
+        mode_index = self.__combo_modes.currentIndex()
+        self.__log_management(3, "S_COF_5", "", "Do ustawienia pełnego ukłądu użyto metody numer {}".format(mode_index))
+        return modes[mode_index], []
 
     def __on_get_message(self, message, priority=5, time_wait=-1):
         msg = message + self.__calculate_control_sum(message) + b"\r"
