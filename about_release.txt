@@ -1,1 +1,1 @@
-Add Jenkins to automate exe creation and release addition
+Add feature to faster end clear off
