@@ -77,6 +77,8 @@ class SectionClearOffTest(QGroupBox):
             self.__checkboxes[0][lane].setChecked(self.__checkboxes[1][lane].isChecked())
             self.__checkboxes[1][lane].setChecked(False)
             self.__list_throw_to_current_layout[lane] = 0
+            self.__list_count_clear_off_finish[lane] = 0
+            self.__actualize_label(lane)
             return [], [], [], []
         if msg[4:5] in [b"w", b"g", b"h", b"f"]:
             lane = int(msg[3:4])
@@ -100,7 +102,7 @@ class SectionClearOffTest(QGroupBox):
         max_throw = 3
         if self.__list_throw_to_current_layout[lane] < max_throw:
             return [], [], [], []
-        self.__log_management(10, "S_COF", "", "Pełny układ".format(lane,self.__list_throw_to_current_layout[lane]))
+        self.__log_management(7, "S_COF", "", "Zakończenie układu i ustawienie pełnego układu na torze: {}".format(lane))
         self.__list_throw_to_current_layout[lane] = 0
         com_x_front, com_y_end =  self.__send_message_to_end_layout(
             message[2:4] + message[0:2],
