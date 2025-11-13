@@ -32,7 +32,7 @@ from PyQt5.QtCore import QTimer, Qt
 from _thread import start_new_thread
 
 APP_NAME = "KL3S"
-APP_VERSION = "1.2.2"
+APP_VERSION = "1.2.3"
 
 class GUI(QDialog):
     """

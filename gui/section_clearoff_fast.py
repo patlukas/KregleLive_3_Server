@@ -151,7 +151,7 @@ class SectionClearOffTest(QGroupBox):
             lane = int(msg[3:4])
             if lane >= len(self.__list_throw_to_current_layout):
                 return [], [], [], [] # {"message": msg, "time_wait": -1, "priority": 3}s
-            throw_number = int(msg[5:8])
+            throw_number = int(msg[5:8], 16)
             self.__log_management(4, "S_COF_2", "", "Odebrano wiadomość o rzucie {} na torze '{}'({})".format(throw_number, lane, msg))
             if self.__list_count_all_throws[lane] == 0:
                 self.__log_management(3, "S_COF_14", "", "Są próbne: jest rzut '{}'".format(throw_number))
@@ -182,8 +182,8 @@ class SectionClearOffTest(QGroupBox):
             if lane >= len(self.__list_throw_to_current_layout):
                 return [], [], [], []
 
-            count_full_throw = int(msg[6:9])
-            count_clear_off_throw = int(msg[9:12])
+            count_full_throw = int(msg[6:9], 16)
+            count_clear_off_throw = int(msg[9:12], 16)
             self.__list_count_full_throws[lane] = count_full_throw
             self.__list_count_all_throws[lane] = count_full_throw + count_clear_off_throw
             self.__log_management(5, "S_COF_11", "", "Na torze '{}' włączono meczówkę na {}+{} rzutów".format(lane, count_full_throw, count_clear_off_throw))
