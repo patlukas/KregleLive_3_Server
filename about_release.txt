@@ -1,1 +1,1 @@
-Add more modes to set full layout when clear off is finished faster
+Set app icon for exe file

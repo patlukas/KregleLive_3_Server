@@ -117,6 +117,7 @@ pip install -r requirements.txt
 | Version          | Release Date      | Commits | Changes                                                             |
 |------------------|-------------------|---------|---------------------------------------------------------------------|
 | **v1.2.3.0**     | 🚧 In Development |         |                                                                     |
+| **v1.2.2.1**     | 2025-11-13        | 75      | Set app icon for exe file                                           |
 | **v1.2.2.0**     | 2025-11-13        | 74      | Add more modes to set full layout when clear off is finished faster |
 | **v1.2.1.0**     | 2025-11-11        | 70      | Fix bug, add new feature to faster end clear off                    |
 | **v1.2.0.0**     | 2025-11-10        | 60      | ❌ Broken version - Change queue with messages to send               |
