@@ -416,4 +416,10 @@ class ConnectionManager:
                 }
 
     def add_func_for_analyze_msg_to_recv(self, func):
+        """
+        TODO: rename add_func_for_analyze_msg_from_lane
+        """
         self.__list_func_for_analyze_msg_to_recv.append(func)
+
+    def add_func_for_analyze_msg_to_lane(self, func):
+        self.__list_func_for_analyze_msg_to_send.append(func)
