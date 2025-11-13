@@ -1,1 +1,1 @@
-Add feature to faster end clear off
+Add more modes to set full layout when clear off is finished faster
