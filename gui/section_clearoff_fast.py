@@ -60,7 +60,36 @@ class SectionClearOffTest(QGroupBox):
             "Tryb 24: Stop(0)   Korekta(0)   C(0)   Enter(0)    Z(0)    Podnies(600)  =  600",
             "Tryb 25: Stop(0)   Korekta(0)   C(0)   Enter(500)  Z(0)    Podnies(0)    =  500",
             "Tryb 26: Stop(0)   Korekta(0)   C(0)   Enter(0)    Z(500)  Podnies(0)    =  500",
-            "Tryb 27: Stop(0)   Korekta(0)   C(0)   Enter(0)    Z(0)    Podnies(500)  =  500"
+            "Tryb 27: Stop(0)   Korekta(0)   C(0)   Enter(0)    Z(0)    Podnies(500)  =  500",
+
+            "Tryb 28: Stop(800) Z_1(1500) Korekta(800) C(800) Enter(800) Podnies(800) =  5500",
+            "Tryb 29: Stop(0)   Z_1(1500) Korekta(200) C(200) Enter(800) Podnies(800) =  3500",
+            "Tryb 30: Stop(0)   Z_1(1500) Korekta(800) C(300) Enter(800) Podnies(800) =  4200",
+            "Tryb 31: Stop(0)   Z_1(1500) Korekta(300) C(300) Enter(800) Podnies(800) =  3700",
+            "Tryb 32: Stop(0)   Z_1(1500) Korekta(300) C(300) Enter(300) Podnies(800) =  3200",
+            "Tryb 33: Stop(0)   Z_1(1500) Korekta(300) C(300) Enter(300) Podnies(300) =  2700",
+            "Tryb 34: Stop(0)   Z_1(800)  Korekta(800) C(0)   Enter(800) Podnies(800) =  3200",
+            "Tryb 35: Stop(0)   Z_1(800)  Korekta(0)   C(0)   Enter(800) Podnies(800) =  2400",
+            "Tryb 36: Stop(0)   Z_1(800)  Korekta(0)   C(0)   Enter(0)   Podnies(800) =  1600",
+            "Tryb 37: Stop(0)   Z_1(800)  Korekta(0)   C(0)   Enter(800) Podnies(0)   =  1600",
+            "Tryb 38: Stop(0)   Z_1(0)    Korekta(800) C(0)   Enter(800) Podnies(800) =  2400",
+            "Tryb 39: Stop(0)   Z_1(0)    Korekta(800) C(0)   Enter(800) Podnies(0)   =  1600",
+            "Tryb 40: Stop(0)   Z_1(0)    Korekta(800) C(0)   Enter(0)   Podnies(800) =  1600",
+            "Tryb 41: Stop(0)   Z_1(0)    Korekta(0)   C(0)   Enter(800) Podnies(800) =  1600",
+            "Tryb 42: Stop(0)   Z_1(0)    Korekta(0)   C(0)   Enter(800) Podnies(0)   =  1600",
+            "Tryb 43: Stop(0)   Z_1(0)    Korekta(0)   C(0)   Enter(0)   Podnies(800) =  800",
+            "Tryb 44: Stop(0)   Z_1(700)  Korekta(0)   C(0)   Enter(700) Podnies(700) =  2100",
+            "Tryb 45: Stop(0)   Z_1(700)  Korekta(0)   C(0)   Enter(0)   Podnies(700) =  1400",
+            "Tryb 46: Stop(0)   Z_1(700)  Korekta(0)   C(0)   Enter(700) Podnies(0)   =  1400",
+            "Tryb 47: Stop(0)   Z_1(0)    Korekta(0)   C(0)   Enter(700) Podnies(700) =  1400",
+            "Tryb 48: Stop(0)   Z_1(0)    Korekta(0)   C(0)   Enter(700) Podnies(0)   =  700",
+            "Tryb 49: Stop(0)   Z_1(0)    Korekta(0)   C(0)   Enter(0)   Podnies(700) =  700",
+            "Tryb 50: Stop(0)   Z_1(600)  Korekta(0)   C(0)   Enter(600) Podnies(600) =  1800",
+            "Tryb 51: Stop(0)   Z_1(600)  Korekta(0)   C(0)   Enter(0)   Podnies(600) =  1200",
+            "Tryb 52: Stop(0)   Z_1(600)  Korekta(0)   C(0)   Enter(600) Podnies(0)   =  1200",
+            "Tryb 53: Stop(0)   Z_1(0)    Korekta(0)   C(0)   Enter(600) Podnies(600) =  1200",
+            "Tryb 54: Stop(0)   Z_1(0)    Korekta(0)   C(0)   Enter(600) Podnies(0)   =  600",
+            "Tryb 55: Stop(0)   Z_1(0)    Korekta(0)   C(0)   Enter(0)   Podnies(600) =  600",
         ])
         layout.addWidget(self.__combo_modes, 0, 0)
 
@@ -201,6 +230,26 @@ class SectionClearOffTest(QGroupBox):
             time_wait
         )
 
+        pins = self.__count_beaten_pins(next_layout)
+        total_sum_1 = self.__add_to_hex(total_sum, pins)
+        lane_sum_1 = self.__add_to_hex(lane_sum, pins)
+
+        z_1 = lambda time_wait=-1, priority=5: self.__on_get_message(
+            message_head +
+            b"Z" +
+            number_of_throw +
+            last_throw_result +
+            lane_sum_1 +
+            total_sum_1 +
+            next_layout +
+            number_of_x +
+            time_to_end +
+            fallen_pins +
+            options,
+            priority,
+            time_wait
+        )
+
         b_click = lambda msg, priority=3, time_wait=-1: self.__on_get_message(message_head + msg, priority, time_wait)
 
         b_stop = lambda time_wait=-1, priority=9: b_click(b"T40", priority, time_wait)
@@ -236,7 +285,36 @@ class SectionClearOffTest(QGroupBox):
             [b_stop(0), b_layout(0), b_clear(0), b_enter(0), z(0), b_pick_up(600)],  #
             [b_stop(0), b_layout(0), b_clear(0), b_enter(500), z(0), b_pick_up(0)],  #
             [b_stop(0), b_layout(0), b_clear(0), b_enter(0), z(500), b_pick_up(0)],  #
-            [b_stop(0), b_layout(0), b_clear(0), b_enter(0), z(0), b_pick_up(500)]  #
+            [b_stop(0), b_layout(0), b_clear(0), b_enter(0), z(0), b_pick_up(500)],  #
+
+            [b_stop(800), z_1(1500), b_layout(800), b_clear(800), b_enter(800), b_pick_up(800)],  # Tryb 28
+            [b_stop(0), z_1(1500), b_layout(200), b_clear(200), b_enter(800), b_pick_up(800)],  # Tryb 29
+            [b_stop(0), z_1(1500), b_layout(800), b_clear(300), b_enter(800), b_pick_up(800)],  # Tryb 30
+            [b_stop(0), z_1(1500), b_layout(300), b_clear(300), b_enter(800), b_pick_up(800)],  # Tryb 31
+            [b_stop(0), z_1(1500), b_layout(300), b_clear(300), b_enter(300), b_pick_up(800)],  # Tryb 32
+            [b_stop(0), z_1(1500), b_layout(300), b_clear(300), b_enter(300), b_pick_up(300)],  # Tryb 33
+            [b_stop(0), z_1(800), b_layout(800), b_clear(0), b_enter(800), b_pick_up(800)],  # Tryb 34
+            [b_stop(0), z_1(800), b_layout(0), b_clear(0), b_enter(800), b_pick_up(800)],  # Tryb 35
+            [b_stop(0), z_1(800), b_layout(0), b_clear(0), b_enter(0), b_pick_up(800)],  # Tryb 36
+            [b_stop(0), z_1(800), b_layout(0), b_clear(0), b_enter(800), b_pick_up(0)],  # Tryb 37
+            [b_stop(0), z_1(0), b_layout(800), b_clear(0), b_enter(800), b_pick_up(800)],  # Tryb 38
+            [b_stop(0), z_1(0), b_layout(800), b_clear(0), b_enter(800), b_pick_up(0)],  # Tryb 39
+            [b_stop(0), z_1(0), b_layout(800), b_clear(0), b_enter(0), b_pick_up(800)],  # Tryb 40
+            [b_stop(0), z_1(0), b_layout(0), b_clear(0), b_enter(800), b_pick_up(800)],  # Tryb 41
+            [b_stop(0), z_1(0), b_layout(0), b_clear(0), b_enter(800), b_pick_up(0)],  # Tryb 42
+            [b_stop(0), z_1(0), b_layout(0), b_clear(0), b_enter(0), b_pick_up(800)],  # Tryb 43
+            [b_stop(0), z_1(700), b_layout(0), b_clear(0), b_enter(700), b_pick_up(700)],  # Tryb 44
+            [b_stop(0), z_1(700), b_layout(0), b_clear(0), b_enter(0), b_pick_up(700)],  # Tryb 45
+            [b_stop(0), z_1(700), b_layout(0), b_clear(0), b_enter(700), b_pick_up(0)],  # Tryb 46
+            [b_stop(0), z_1(0), b_layout(0), b_clear(0), b_enter(700), b_pick_up(700)],  # Tryb 47
+            [b_stop(0), z_1(0), b_layout(0), b_clear(0), b_enter(700), b_pick_up(0)],  # Tryb 48
+            [b_stop(0), z_1(0), b_layout(0), b_clear(0), b_enter(0), b_pick_up(700)],  # Tryb 49
+            [b_stop(0), z_1(600), b_layout(0), b_clear(0), b_enter(600), b_pick_up(600)],  # Tryb 50
+            [b_stop(0), z_1(600), b_layout(0), b_clear(0), b_enter(0), b_pick_up(600)],  # Tryb 51
+            [b_stop(0), z_1(600), b_layout(0), b_clear(0), b_enter(600), b_pick_up(0)],  # Tryb 52
+            [b_stop(0), z_1(0), b_layout(0), b_clear(0), b_enter(600), b_pick_up(600)],  # Tryb 53
+            [b_stop(0), z_1(0), b_layout(0), b_clear(0), b_enter(600), b_pick_up(0)],  # Tryb 54
+            [b_stop(0), z_1(0), b_layout(0), b_clear(0), b_enter(0), b_pick_up(600)],  # Tryb 55
         ]
 
         mode_index = self.__combo_modes.currentIndex()
@@ -249,6 +327,24 @@ class SectionClearOffTest(QGroupBox):
     def __on_get_message(self, message, priority=5, time_wait=-1):
         msg = message + self.__calculate_control_sum(message) + b"\r"
         return {"message": msg, "time_wait": time_wait, "priority": priority}
+
+    @staticmethod
+    def __add_to_hex(hex_bytes, x):
+        hex_str = hex_bytes.decode('Windows-1250')
+        hex_value = int(hex_str, 16)
+        new_hex_value = hex_value + x
+
+        new_hex_str = hex(new_hex_value)[2:].upper().zfill(3)
+        new_hex_bytes = new_hex_str.encode('Windows-1250')
+
+        return new_hex_bytes
+
+    @staticmethod
+    def __count_beaten_pins(layout):
+        hex_str = layout.decode('Windows-1250')
+        value = int(hex_str, 16)
+        ones_count = bin(value).count('1')
+        return ones_count
 
     @staticmethod
     def __calculate_control_sum(message):

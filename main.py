@@ -349,7 +349,6 @@ class GUI(QDialog):
         self.adjustSize()
 
     def __on_show_clear_off_fast(self, show: bool):
-        print("A")
         self.__section_clearoff_fast.show_control_panel(show)
         self.adjustSize()
 

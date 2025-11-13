@@ -223,7 +223,6 @@ class ConnectionManager:
         """
         msg_obj = {"message": message, "time_wait": -1, "priority": 3}
         for func in list_func_to_analyze:
-            print("A", func)
             com_in_front, com_in_end, com_out_front, com_out_end = func(message)
             if len(com_in_front) + len(com_in_end) + len(com_out_front) + len(com_out_end) != 0:
                 return com_in_front, com_in_end, com_out_front, com_out_end
