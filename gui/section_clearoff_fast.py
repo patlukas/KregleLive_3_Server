@@ -17,6 +17,9 @@ class SectionClearOffTest(QGroupBox):
         self.__list_count_clear_off_finish = []
         self.__list_count_full_throws = []
         self.__list_count_all_throws = []
+        self.__list_actually_layout = []
+        self.__list_last_layout = []
+        self.__max_throw_to_layout = 3
 
     def init(self, number_of_lane: int, log_management):
         self.__log_management = log_management
@@ -25,6 +28,8 @@ class SectionClearOffTest(QGroupBox):
             self.__list_count_clear_off_finish.append(0)
             self.__list_count_full_throws.append(0)
             self.__list_count_all_throws.append(0)
+            self.__list_actually_layout.append([0,0])
+            self.__list_last_layout.append([0,0])
         self.__box = self.__get_panel(number_of_lane)
         self.__layout.addWidget(self.__box)
 
@@ -34,62 +39,13 @@ class SectionClearOffTest(QGroupBox):
 
         self.__combo_modes = QComboBox()
         self.__combo_modes.addItems([
-            "Tryb  1: Stop(700) Korekta(700) C(700) Enter(700)  Z(1500) Podnies(700)  = 5000",
-            "Tryb  2: Stop(700) Korekta(300) C(300) Enter(700)  Z(1500) Podnies(300)  = 3800",
-            "Tryb  3: Stop(0)   Korekta(300) C(300) Enter(700)  Z(1500) Podnies(300)  = 3100",
-            "Tryb  4: Stop(0)   Korekta(200) C(200) Enter(700)  Z(1000) Podnies(200)  = 2300",
-            "Tryb  5: Stop(0)   Korekta(200) C(200) Enter(1000) Z(1000) Podnies(200)  = 2600",
-            "Tryb  6: Stop(0)   Korekta(200) C(200) Enter(1000) Z(200)  Podnies(200)  = 1800",
-            "Tryb  7: Stop(0)   Korekta(200) C(200) Enter(200)  Z(1000) Podnies(200)  = 1800",
-            "Tryb  8: Stop(0)   Korekta(200) C(200) Enter(200)  Z(200)  Podnies(1000) = 1800",
-            "Tryb  9: Stop(0)   Korekta(50)  C(50)  Enter(1000) Z(1000) Podnies(50)   = 2150",
-            "Tryb 10: Stop(0)   Korekta(50)  C(50)  Enter(1000) Z(50)   Podnies(50)   = 1200",
-            "Tryb 11: Stop(0)   Korekta(50)  C(50)  Enter(50)   Z(1000) Podnies(50)   = 1200",
-            "Tryb 12: Stop(0)   Korekta(50)  C(50)  Enter(50)   Z(50)   Podnies(1000) = 1200",
-            "Tryb 13: Stop(0)   Korekta(0)   C(0)   Enter(1000) Z(0)    Podnies(0)    = 1000",
-            "Tryb 14: Stop(0)   Korekta(0)   C(0)   Enter(0)    Z(1000) Podnies(0)    = 1000",
-            "Tryb 15: Stop(0)   Korekta(0)   C(0)   Enter(0)    Z(0)    Podnies(1000) = 1000",
-            "Tryb 16: Stop(0)   Korekta(0)   C(0)   Enter(800)  Z(0)    Podnies(0)    =  800",
-            "Tryb 17: Stop(0)   Korekta(0)   C(0)   Enter(0)    Z(800)  Podnies(0)    =  800",
-            "Tryb 18: Stop(0)   Korekta(0)   C(0)   Enter(0)    Z(0)    Podnies(800)  =  800",
-            "Tryb 19: Stop(0)   Korekta(0)   C(0)   Enter(700)  Z(0)    Podnies(0)    =  700",
-            "Tryb 20: Stop(0)   Korekta(0)   C(0)   Enter(0)    Z(700)  Podnies(0)    =  700",
-            "Tryb 21: Stop(0)   Korekta(0)   C(0)   Enter(0)    Z(0)    Podnies(700)  =  700",
-            "Tryb 22: Stop(0)   Korekta(0)   C(0)   Enter(600)  Z(0)    Podnies(0)    =  600",
-            "Tryb 23: Stop(0)   Korekta(0)   C(0)   Enter(0)    Z(600)  Podnies(0)    =  600",
-            "Tryb 24: Stop(0)   Korekta(0)   C(0)   Enter(0)    Z(0)    Podnies(600)  =  600",
-            "Tryb 25: Stop(0)   Korekta(0)   C(0)   Enter(500)  Z(0)    Podnies(0)    =  500",
-            "Tryb 26: Stop(0)   Korekta(0)   C(0)   Enter(0)    Z(500)  Podnies(0)    =  500",
-            "Tryb 27: Stop(0)   Korekta(0)   C(0)   Enter(0)    Z(0)    Podnies(500)  =  500",
-
-            "Tryb 28: Stop(800) Z_1(1500) Korekta(800) C(800) Enter(800) Podnies(800) =  5500",
-            "Tryb 29: Stop(0)   Z_1(1500) Korekta(200) C(200) Enter(800) Podnies(800) =  3500",
-            "Tryb 30: Stop(0)   Z_1(1500) Korekta(800) C(300) Enter(800) Podnies(800) =  4200",
-            "Tryb 31: Stop(0)   Z_1(1500) Korekta(300) C(300) Enter(800) Podnies(800) =  3700",
-            "Tryb 32: Stop(0)   Z_1(1500) Korekta(300) C(300) Enter(300) Podnies(800) =  3200",
-            "Tryb 33: Stop(0)   Z_1(1500) Korekta(300) C(300) Enter(300) Podnies(300) =  2700",
-            "Tryb 34: Stop(0)   Z_1(800)  Korekta(800) C(0)   Enter(800) Podnies(800) =  3200",
-            "Tryb 35: Stop(0)   Z_1(800)  Korekta(0)   C(0)   Enter(800) Podnies(800) =  2400",
-            "Tryb 36: Stop(0)   Z_1(800)  Korekta(0)   C(0)   Enter(0)   Podnies(800) =  1600",
-            "Tryb 37: Stop(0)   Z_1(800)  Korekta(0)   C(0)   Enter(800) Podnies(0)   =  1600",
-            "Tryb 38: Stop(0)   Z_1(0)    Korekta(800) C(0)   Enter(800) Podnies(800) =  2400",
-            "Tryb 39: Stop(0)   Z_1(0)    Korekta(800) C(0)   Enter(800) Podnies(0)   =  1600",
-            "Tryb 40: Stop(0)   Z_1(0)    Korekta(800) C(0)   Enter(0)   Podnies(800) =  1600",
-            "Tryb 41: Stop(0)   Z_1(0)    Korekta(0)   C(0)   Enter(800) Podnies(800) =  1600",
-            "Tryb 42: Stop(0)   Z_1(0)    Korekta(0)   C(0)   Enter(800) Podnies(0)   =  1600",
             "Tryb 43: Stop(0)   Z_1(0)    Korekta(0)   C(0)   Enter(0)   Podnies(800) =  800",
-            "Tryb 44: Stop(0)   Z_1(700)  Korekta(0)   C(0)   Enter(700) Podnies(700) =  2100",
-            "Tryb 45: Stop(0)   Z_1(700)  Korekta(0)   C(0)   Enter(0)   Podnies(700) =  1400",
-            "Tryb 46: Stop(0)   Z_1(700)  Korekta(0)   C(0)   Enter(700) Podnies(0)   =  1400",
-            "Tryb 47: Stop(0)   Z_1(0)    Korekta(0)   C(0)   Enter(700) Podnies(700) =  1400",
-            "Tryb 48: Stop(0)   Z_1(0)    Korekta(0)   C(0)   Enter(700) Podnies(0)   =  700",
-            "Tryb 49: Stop(0)   Z_1(0)    Korekta(0)   C(0)   Enter(0)   Podnies(700) =  700",
-            "Tryb 50: Stop(0)   Z_1(600)  Korekta(0)   C(0)   Enter(600) Podnies(600) =  1800",
-            "Tryb 51: Stop(0)   Z_1(600)  Korekta(0)   C(0)   Enter(0)   Podnies(600) =  1200",
-            "Tryb 52: Stop(0)   Z_1(600)  Korekta(0)   C(0)   Enter(600) Podnies(0)   =  1200",
-            "Tryb 53: Stop(0)   Z_1(0)    Korekta(0)   C(0)   Enter(600) Podnies(600) =  1200",
-            "Tryb 54: Stop(0)   Z_1(0)    Korekta(0)   C(0)   Enter(600) Podnies(0)   =  600",
-            "Tryb 55: Stop(0)   Z_1(0)    Korekta(0)   C(0)   Enter(0)   Podnies(600) =  600",
+            "Tryb 43.A: (z podniesieniem i 0ms) Stop(0)   Z_1(0)    Korekta(0)   C(0)   Enter(0)   Podnies(800) =  800",
+            "Tryb 43.B: (z podniesieniem i 200ms) Stop(0)   Z_1(0)    Korekta(0)   C(0)   Enter(0)   Podnies(800) =  800",
+            "Tryb 43.C: (z podniesieniem i 400ms) Stop(0)   Z_1(0)    Korekta(0)   C(0)   Enter(0)   Podnies(800) =  800",
+            "Tryb 43.D: (z podniesieniem i 600ms) Stop(0)   Z_1(0)    Korekta(0)   C(0)   Enter(0)   Podnies(800) =  800",
+            "Tryb 43.E: (z podniesieniem i 800ms) Stop(0)   Z_1(0)    Korekta(0)   C(0)   Enter(0)   Podnies(800) =  800",
+
         ])
         layout.addWidget(self.__combo_modes, 0, 0)
 
@@ -144,10 +100,11 @@ class SectionClearOffTest(QGroupBox):
             self.__checkboxes[1][lane].setChecked(False)
             self.__list_throw_to_current_layout[lane] = 0
             self.__list_count_clear_off_finish[lane] = 0
+            self.__list_actually_layout[lane] = [0, 100] # TODO
             self.__list_count_all_throws[lane] = 0 # then in trial after 3x 0 this function not will set full layout
             self.__actualize_label(lane)
             return [], [], [], []
-        if msg[4:5] in [b"w", b"g", b"h", b"f"]:
+        if msg[4:5] in [b"w", b"g", b"h", b"f", b"k"]:
             lane = int(msg[3:4])
             if lane >= len(self.__list_throw_to_current_layout):
                 return [], [], [], [] # {"message": msg, "time_wait": -1, "priority": 3}s
@@ -156,6 +113,11 @@ class SectionClearOffTest(QGroupBox):
             if self.__list_count_all_throws[lane] == 0:
                 self.__log_management(3, "S_COF_14", "", "Są próbne: jest rzut '{}'".format(throw_number))
                 return [], [], [], []
+
+            if throw_number < self.__list_actually_layout[lane][0]:
+                self.__list_actually_layout[lane][0] = self.__list_last_layout[lane][0]
+                self.__list_actually_layout[lane][1] = self.__list_last_layout[lane][1]
+
             if throw_number <= self.__list_count_full_throws[lane]:
                 self.__log_management(3, "S_COF_12", "", "Są jeszcze pełne: jest rzut '{}', a pełne trwają {} rzutów".format(throw_number, self.__list_count_full_throws[lane]))
                 return [], [], [], []
@@ -164,15 +126,31 @@ class SectionClearOffTest(QGroupBox):
                 return [], [], [], []
             next_layout = msg[17:20]
             fallen_pins = msg[26:29]
-            if next_layout != b"000" or fallen_pins == b"000":
-                self.__list_throw_to_current_layout[lane] += 1
-            else:
-                self.__list_throw_to_current_layout[lane] = 0
-            self.__log_management(5, "S_COF_3", "", "Na torze {} będzie rzut numer {} do układu".format(lane, self.__list_throw_to_current_layout[lane]+1))
+
+            if next_layout == b"000" and fallen_pins != b"000":
+                self.__list_last_layout[lane][0] = self.__list_actually_layout[lane][0]
+                self.__list_last_layout[lane][1] = self.__list_actually_layout[lane][1]
+                self.__list_actually_layout[lane] = [throw_number, throw_number + self.__max_throw_to_layout]
+                self.__log_management(5, "S_COF_3", "", "Na torze {} dobito układ, więc actually_layout to [{}, {}]".format(
+                    lane, self.__list_actually_layout[lane][0], self.__list_actually_layout[lane][1]))
+
+            # if next_layout != b"000" or fallen_pins == b"000":
+            #     self.__list_throw_to_current_layout[lane] += 1
+            # else:
+            #     self.__list_throw_to_current_layout[lane] = 0
+            # self.__log_management(5, "S_COF_3", "", "Na torze {} będzie rzut numer {} do układu".format(lane, self.__list_throw_to_current_layout[lane]+1))
             self.__actualize_label(lane)
-            if not self.__checkboxes[0][lane].isChecked():
+            if throw_number == self.__list_actually_layout[lane][1]:
+                self.__list_last_layout[lane][0] = self.__list_actually_layout[lane][0]
+                self.__list_last_layout[lane][1] = self.__list_actually_layout[lane][1]
+                self.__list_actually_layout[lane] = [throw_number, throw_number + self.__max_throw_to_layout]
+                self.__log_management(5, "S_COF_3", "", "Na torze {} ustawi się pełen układ, a actually_layout to [{}, {}]".format(
+                    lane, self.__list_actually_layout[lane][0], self.__list_actually_layout[lane][1]))
+                self.__actualize_label(lane)
+                if self.__checkboxes[0][lane].isChecked():
+                    return self.__analyse_max_throw_clearoff(lane, msg)
+            else:
                 return [], [], [], []
-            return self.__analyse_max_throw_clearoff(lane, msg)
         return [], [], [], []
 
     def analyze_message_to_lane(self, msg):
@@ -186,14 +164,14 @@ class SectionClearOffTest(QGroupBox):
             count_clear_off_throw = int(msg[9:12], 16)
             self.__list_count_full_throws[lane] = count_full_throw
             self.__list_count_all_throws[lane] = count_full_throw + count_clear_off_throw
+            self.__list_actually_layout[lane] = [0, count_full_throw + self.__max_throw_to_layout]
+            self.__list_last_layout[lane] = [0, count_full_throw + self.__max_throw_to_layout]
             self.__log_management(5, "S_COF_11", "", "Na torze '{}' włączono meczówkę na {}+{} rzutów".format(lane, count_full_throw, count_clear_off_throw))
+            self.__actualize_label(lane)
             return [], [], [], []
         return [], [], [], []
 
     def __analyse_max_throw_clearoff(self, lane, message):
-        max_throw = 3
-        if self.__list_throw_to_current_layout[lane] < max_throw:
-            return [], [], [], []
         self.__log_management(7, "S_COF_4", "", "Zakończenie układu i ustawienie pełnego układu na torze: {}".format(lane))
         self.__list_throw_to_current_layout[lane] = 0
         com_x_front, com_y_end =  self.__send_message_to_end_layout(
@@ -259,62 +237,30 @@ class SectionClearOffTest(QGroupBox):
         b_pick_up = lambda time_wait=-1, priority=7: b_click(b"T41", priority, time_wait)
 
         modes = [
-            [b_stop(), b_layout(), b_clear(), b_enter(), z(1500), b_pick_up()],  # A,5000
-            [b_stop(), b_layout(300), b_clear(300), b_enter(), z(1500), b_pick_up(300)],  # B,3800
-            [b_stop(0), b_layout(300), b_clear(300), b_enter(), z(1500), b_pick_up(300)],  # C,3100
-            [b_stop(0), b_layout(200), b_clear(200), b_enter(), z(1000), b_pick_up(200)],  # D,2300
-            [b_stop(0), b_layout(200), b_clear(200), b_enter(1000), z(1000), b_pick_up(200)],  # E,2600
-            [b_stop(0), b_layout(200), b_clear(200), b_enter(1000), z(200), b_pick_up(200)],  # F,1800
-            [b_stop(0), b_layout(200), b_clear(200), b_enter(200), z(1000), b_pick_up(200)],  # G,1800
-            [b_stop(0), b_layout(200), b_clear(200), b_enter(200), z(200), b_pick_up(1000)],  # H,1800
-            [b_stop(0), b_layout(50), b_clear(50), b_enter(1000), z(1000), b_pick_up(50)],  # I,2150
-            [b_stop(0), b_layout(50), b_clear(50), b_enter(1000), z(50), b_pick_up(50)],  # J,1200
-            [b_stop(0), b_layout(50), b_clear(50), b_enter(50), z(1000), b_pick_up(50)],  # K,1200
-            [b_stop(0), b_layout(50), b_clear(50), b_enter(50), z(50), b_pick_up(1000)],  # L,1200
-            [b_stop(0), b_layout(0), b_clear(0), b_enter(1000), z(0), b_pick_up(0)],  #
-            [b_stop(0), b_layout(0), b_clear(0), b_enter(0), z(1000), b_pick_up(0)],  #
-            [b_stop(0), b_layout(0), b_clear(0), b_enter(0), z(0), b_pick_up(1000)],  #
-            [b_stop(0), b_layout(0), b_clear(0), b_enter(800), z(0), b_pick_up(0)],  #
-            [b_stop(0), b_layout(0), b_clear(0), b_enter(0), z(800), b_pick_up(0)],  #
-            [b_stop(0), b_layout(0), b_clear(0), b_enter(0), z(0), b_pick_up(800)],  #
-            [b_stop(0), b_layout(0), b_clear(0), b_enter(700), z(0), b_pick_up(0)],  #
-            [b_stop(0), b_layout(0), b_clear(0), b_enter(0), z(700), b_pick_up(0)],  #
-            [b_stop(0), b_layout(0), b_clear(0), b_enter(0), z(0), b_pick_up(700)],  #
-            [b_stop(0), b_layout(0), b_clear(0), b_enter(600), z(0), b_pick_up(0)],  #
-            [b_stop(0), b_layout(0), b_clear(0), b_enter(0), z(600), b_pick_up(0)],  #
-            [b_stop(0), b_layout(0), b_clear(0), b_enter(0), z(0), b_pick_up(600)],  #
-            [b_stop(0), b_layout(0), b_clear(0), b_enter(500), z(0), b_pick_up(0)],  #
-            [b_stop(0), b_layout(0), b_clear(0), b_enter(0), z(500), b_pick_up(0)],  #
-            [b_stop(0), b_layout(0), b_clear(0), b_enter(0), z(0), b_pick_up(500)],  #
-
-            [b_stop(800), z_1(1500), b_layout(800), b_clear(800), b_enter(800), b_pick_up(800)],  # Tryb 28
-            [b_stop(0), z_1(1500), b_layout(200), b_clear(200), b_enter(800), b_pick_up(800)],  # Tryb 29
-            [b_stop(0), z_1(1500), b_layout(800), b_clear(300), b_enter(800), b_pick_up(800)],  # Tryb 30
-            [b_stop(0), z_1(1500), b_layout(300), b_clear(300), b_enter(800), b_pick_up(800)],  # Tryb 31
-            [b_stop(0), z_1(1500), b_layout(300), b_clear(300), b_enter(300), b_pick_up(800)],  # Tryb 32
-            [b_stop(0), z_1(1500), b_layout(300), b_clear(300), b_enter(300), b_pick_up(300)],  # Tryb 33
-            [b_stop(0), z_1(800), b_layout(800), b_clear(0), b_enter(800), b_pick_up(800)],  # Tryb 34
-            [b_stop(0), z_1(800), b_layout(0), b_clear(0), b_enter(800), b_pick_up(800)],  # Tryb 35
-            [b_stop(0), z_1(800), b_layout(0), b_clear(0), b_enter(0), b_pick_up(800)],  # Tryb 36
-            [b_stop(0), z_1(800), b_layout(0), b_clear(0), b_enter(800), b_pick_up(0)],  # Tryb 37
-            [b_stop(0), z_1(0), b_layout(800), b_clear(0), b_enter(800), b_pick_up(800)],  # Tryb 38
-            [b_stop(0), z_1(0), b_layout(800), b_clear(0), b_enter(800), b_pick_up(0)],  # Tryb 39
-            [b_stop(0), z_1(0), b_layout(800), b_clear(0), b_enter(0), b_pick_up(800)],  # Tryb 40
-            [b_stop(0), z_1(0), b_layout(0), b_clear(0), b_enter(800), b_pick_up(800)],  # Tryb 41
-            [b_stop(0), z_1(0), b_layout(0), b_clear(0), b_enter(800), b_pick_up(0)],  # Tryb 42
-            [b_stop(0), z_1(0), b_layout(0), b_clear(0), b_enter(0), b_pick_up(800)],  # Tryb 43
-            [b_stop(0), z_1(700), b_layout(0), b_clear(0), b_enter(700), b_pick_up(700)],  # Tryb 44
-            [b_stop(0), z_1(700), b_layout(0), b_clear(0), b_enter(0), b_pick_up(700)],  # Tryb 45
-            [b_stop(0), z_1(700), b_layout(0), b_clear(0), b_enter(700), b_pick_up(0)],  # Tryb 46
-            [b_stop(0), z_1(0), b_layout(0), b_clear(0), b_enter(700), b_pick_up(700)],  # Tryb 47
-            [b_stop(0), z_1(0), b_layout(0), b_clear(0), b_enter(700), b_pick_up(0)],  # Tryb 48
-            [b_stop(0), z_1(0), b_layout(0), b_clear(0), b_enter(0), b_pick_up(700)],  # Tryb 49
-            [b_stop(0), z_1(600), b_layout(0), b_clear(0), b_enter(600), b_pick_up(600)],  # Tryb 50
-            [b_stop(0), z_1(600), b_layout(0), b_clear(0), b_enter(0), b_pick_up(600)],  # Tryb 51
-            [b_stop(0), z_1(600), b_layout(0), b_clear(0), b_enter(600), b_pick_up(0)],  # Tryb 52
-            [b_stop(0), z_1(0), b_layout(0), b_clear(0), b_enter(600), b_pick_up(600)],  # Tryb 53
-            [b_stop(0), z_1(0), b_layout(0), b_clear(0), b_enter(600), b_pick_up(0)],  # Tryb 54
-            [b_stop(0), z_1(0), b_layout(0), b_clear(0), b_enter(0), b_pick_up(600)],  # Tryb 55
+            [
+                [b_stop(0), z_1(0), b_layout(0), b_clear(0), b_enter(0), b_pick_up(800)],
+                [b_stop(0), z_1(0), b_layout(0), b_clear(0), b_enter(0), b_pick_up(800)],
+            ],  # Tryb 43
+            [
+                [b_stop(0), z_1(0), b_layout(0), b_clear(0), b_enter(0), b_pick_up(800)],
+                [b_pick_up(0, 9), b_stop(0), z_1(0), b_layout(0), b_clear(0), b_enter(0), b_pick_up(800)],
+            ],  # Tryb 43A
+            [
+                [b_stop(0), z_1(0), b_layout(0), b_clear(0), b_enter(0), b_pick_up(800)],
+                [b_pick_up(0, 9), b_stop(200), z_1(0), b_layout(0), b_clear(0), b_enter(0), b_pick_up(800)],
+            ],  # Tryb 43B
+            [
+                [b_stop(0), z_1(0), b_layout(0), b_clear(0), b_enter(0), b_pick_up(800)],
+                [b_pick_up(0, 9), b_stop(400), z_1(0), b_layout(0), b_clear(0), b_enter(0), b_pick_up(800)],
+            ],  # Tryb 43C
+            [
+                [b_stop(0), z_1(0), b_layout(0), b_clear(0), b_enter(0), b_pick_up(800)],
+                [b_pick_up(0, 9), b_stop(600), z_1(0), b_layout(0), b_clear(0), b_enter(0), b_pick_up(800)],
+            ],  # Tryb 43D
+            [
+                [b_stop(0), z_1(0), b_layout(0), b_clear(0), b_enter(0), b_pick_up(800)],
+                [b_pick_up(0, 9), b_stop(800), z_1(0), b_layout(0), b_clear(0), b_enter(0), b_pick_up(800)],
+            ],  # Tryb 43E
         ]
 
         mode_index = self.__combo_modes.currentIndex()
@@ -322,7 +268,13 @@ class SectionClearOffTest(QGroupBox):
             self.__log_management(10, "S_COF_6", "", "Wybrano mode o nmerze {}, a jest {}".format(mode_index, len(modes)))
             mode_index = 0
         self.__log_management(3, "S_COF_5", "", "Do ustawienia pełnego ukłądu użyto metody numer {}".format(mode_index))
-        return modes[mode_index], []
+        mode_of_mode = 0
+        if fallen_pins == b"000":
+            mode_of_mode = 1
+            self.__log_management(4, "S_COF_6", "", "Do ustawienia pełnego układu zostanie użyty mode dla dziury")
+        else:
+            self.__log_management(4, "S_COF_6", "", "Do ustawienia pełnego układu zostanie użyty mode dla zbitych kręgli")
+        return modes[mode_index][mode_of_mode], []
 
     def __on_get_message(self, message, priority=5, time_wait=-1):
         msg = message + self.__calculate_control_sum(message) + b"\r"
@@ -366,4 +318,4 @@ class SectionClearOffTest(QGroupBox):
         """
         TODO
         """
-        self.__labels[lane].setText(str(self.__list_throw_to_current_layout[lane] + 1) + " | " + str(self.__list_count_clear_off_finish[lane]))
+        self.__labels[lane].setText(str(self.__list_actually_layout[lane][1]) + " | " + str(self.__list_count_clear_off_finish[lane]))
