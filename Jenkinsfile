@@ -35,7 +35,7 @@ pipeline {
                             echo "Last release: ${env.LATEST_RELEASE}"
                         } else {
                             env.LATEST_RELEASE = "v0.0.0"
-                            error "Nie udało się pobrać informacji o release!"
+                            echo "Last release doesn't exists!"
                         }
                     }
                 }
@@ -73,7 +73,7 @@ pipeline {
         stage('Build EXE') {
             steps {
                 bat '''
-                "%PYTHON34%\\Scripts\\pyinstaller.exe" --distpath . --onefile --icon=icon/icon.ico --noconsole --name %EXE_NAME% main.py
+                "%PYTHON34%\\Scripts\\pyinstaller.exe" --clean --distpath . --onefile --icon=icon/icon.ico --noconsole --name %EXE_NAME% main.py
                 '''
             }
         }
@@ -150,7 +150,6 @@ pipeline {
         stage('Del files') {
             steps {
                 script {
-                    echo "DEL"
                     bat """
                         del /f /q *
                         for /d %%i in (*) do rmdir /s /q "%%i"
