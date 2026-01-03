@@ -3,6 +3,11 @@ from PyQt5.QtWidgets import QGroupBox, QGridLayout, QPushButton
 class SectionLaneControlPanel(QGroupBox):
 
     def __init__(self):
+        """
+        self.__mode_on_lane: [int] - 1=trial started, 2=trail ended, 3=game started, 4=game ended
+        self.__enable_enter_on_lane: [bool] - only used when lane mode == 1, because only once can Enter be sent
+        self.__trial_time_on_lane: [bytes] - is used to check time is running in trial runs
+        """
         super().__init__("Sterowanie torami")
         self.__log_management = None
         self.__on_add_message = None
@@ -12,7 +17,13 @@ class SectionLaneControlPanel(QGroupBox):
         self.setLayout(self.__layout)
         self.setVisible(False)
 
+        self.__number_of_lane = 0
+        self.__mode_on_lane = []
+        self.__enable_enter_on_lane = []
+        self.__trial_time_on_lane = []
+
     def init(self, number_of_lane: int, log_management, on_add_message):
+        self.__number_of_lane = number_of_lane
         self.__log_management = log_management
         self.__on_add_message = on_add_message
 
@@ -23,6 +34,11 @@ class SectionLaneControlPanel(QGroupBox):
                                                               lambda list_lane: self.__add_new_messages(list_lane, b"T14", "Czas stop"))
         self.__layout.addWidget(self.__box_enter)
         self.__layout.addWidget(self.__box_time)
+
+        self.__mode_on_lane = [0 for _ in range(number_of_lane)]
+        self.__enable_enter_on_lane = [False for _ in range(number_of_lane)]
+        self.__trial_time_on_lane = [b"" for _ in range(number_of_lane)]
+
 
     def __get_structure(self, number_of_lane: int) -> list:
         number_of_lane_in_row = number_of_lane
@@ -83,3 +99,41 @@ class SectionLaneControlPanel(QGroupBox):
         self.setVisible(show_main)
         if show_main:
             self.adjustSize()
+
+    def analyze_message_from_lane(self, msg):
+        """
+        TODO
+        """
+        lane = self.__get_lane(msg)
+        if lane == -1 or lane > self.__number_of_lane:
+            self.__log_management(10, "LCP_ERROR_1", "", "Wiadomośc z toru {} a jest {} torów".format(lane, self.__number_of_lane))
+            return
+        self.__analyze_message__check_mode(msg)
+        self.__analyze_message__moment_of_trial(msg)
+        return self.self.__analyze_message__throw(msg)
+
+    def __analyze_message__check_mode(self, msg):
+        """
+        TODO
+        """
+        pass
+
+    def __analyze_message__moment_of_trial(self, msg):
+        """
+        TODO
+        """
+        pass
+
+    def __analyze_message__throw(self, msg):
+        """
+        TODO
+        """
+        return [], [], [], []
+
+    @staticmethod
+    def __get_lane(msg):
+        """
+        TODO
+        """
+        return 0
+
