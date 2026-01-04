@@ -5,7 +5,8 @@ class SectionLaneControlPanel(QGroupBox):
     def __init__(self):
         """
         self.__mode_on_lane: [int] - 0-before start first block, 1=trial started, 2=trail ended, 3=game started, 4=game ended
-        self.__enable_enter_on_lane: [bool] - only used when lane mode == 1, because only once can Enter be sent
+        self.__enable_enter_on_lane: [bool] - TODO
+        self.__enable_stop_time_on_lane: [bool] - TODO
         self.__trial_time_on_lane: [bytes] - is used to check time is running in trial runs
         """
         super().__init__("Sterowanie torami")
@@ -20,6 +21,7 @@ class SectionLaneControlPanel(QGroupBox):
         self.__number_of_lane = 0
         self.__mode_on_lane = []
         self.__enable_enter_on_lane = []
+        self.__enable_stop_time_on_lane = []
         self.__trial_time_on_lane = []
 
     def init(self, number_of_lane: int, log_management, on_add_message):
@@ -37,6 +39,7 @@ class SectionLaneControlPanel(QGroupBox):
 
         self.__mode_on_lane = [0 for _ in range(number_of_lane)]
         self.__enable_enter_on_lane = [False for _ in range(number_of_lane)]
+        self.__enable_stop_time_on_lane = [False for _ in range(number_of_lane)]
         self.__trial_time_on_lane = [b"" for _ in range(number_of_lane)]
 
 
@@ -131,13 +134,20 @@ class SectionLaneControlPanel(QGroupBox):
         if content == b"p1":
             self.__mode_on_lane[lane] = 1
             self.__enable_enter_on_lane[lane] = True
+            self.__enable_stop_time_on_lane[lane] = True
             self.__trial_time_on_lane[lane] = b""
         elif content == b"p0":
             self.__mode_on_lane[lane] = 2
+            self.__enable_enter_on_lane[lane] = False
+            self.__enable_stop_time_on_lane[lane] = False
         elif content == b"i1":
             self.__mode_on_lane[lane] = 3
+            self.__enable_enter_on_lane[lane] = True
+            self.__enable_stop_time_on_lane[lane] = True
         elif content == b"i0":
             self.__mode_on_lane[lane] = 4
+            self.__enable_enter_on_lane[lane] = False
+            self.__enable_stop_time_on_lane[lane] = False
 
     def __analyze_message__moment_of_trial(self, msg, lane):
         """
