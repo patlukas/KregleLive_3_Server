@@ -130,20 +130,25 @@ class SectionLaneControlPanel(QGroupBox):
         if lane == -1:
             self.__log_management(10, "LCP_ERROR_1", "", "Numer toru {} jest niepoprawny".format(lane))
             return
-        self.__analyze_message__check_mode(msg, lane)
+        self.__update_mode_from_incoming_message(msg, lane)
         self.__analyze_message__moment_of_trial(msg, lane)
         return self.self.__analyze_message__throw(msg, lane)
 
-    def __analyze_message__check_mode(self, msg, lane):
+    def __update_mode_from_incoming_message(self, msg: bytes, lane: int) -> None:
         """
-            This function change mode when trial/game is started/ended
+        Update the current mode based on an incoming message.
 
-            msg <bytes> - message from lane
-            lane <int> - lane number from where message was sent
+        Detects start and end events of a trial or game and updates
+        the internal mode state accordingly.
 
-            return None
+        Args:
+            msg (bytes): Incoming message received from a lane.
+            lane (int): Lane number from which the message was sent.
+
+        Returns:
+            None
         """
-        if len(msg) < 8:
+        if len(msg) < 9:
             return
 
         if msg[4:5] not in [b"p", b"i"]:
@@ -152,19 +157,18 @@ class SectionLaneControlPanel(QGroupBox):
         content = msg[4:6]
         if content == b"p1":
             self.__mode_on_lane[lane] = 1
-            self.__enable_enter_on_lane[lane] = True
-            self.__enable_stop_time_on_lane[lane] = True
             self.__trial_time_on_lane[lane] = b""
         elif content == b"p0":
             self.__mode_on_lane[lane] = 2
-            self.__enable_enter_on_lane[lane] = False
-            self.__enable_stop_time_on_lane[lane] = False
         elif content == b"i1":
             self.__mode_on_lane[lane] = 3
-            self.__enable_enter_on_lane[lane] = True
-            self.__enable_stop_time_on_lane[lane] = True
         elif content == b"i0":
             self.__mode_on_lane[lane] = 4
+
+        if self.__mode_on_lane[lane] in [1, 3]:
+            self.__enable_enter_on_lane[lane] = True
+            self.__enable_stop_time_on_lane[lane] = True
+        elif self.__mode_on_lane[lane] in [2, 4]:
             self.__enable_enter_on_lane[lane] = False
             self.__enable_stop_time_on_lane[lane] = False
 
