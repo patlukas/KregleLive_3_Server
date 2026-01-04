@@ -4,7 +4,7 @@ class SectionLaneControlPanel(QGroupBox):
 
     def __init__(self):
         """
-        self.__mode_on_lane: [int] - 1=trial started, 2=trail ended, 3=game started, 4=game ended
+        self.__mode_on_lane: [int] - 0-before start first block, 1=trial started, 2=trail ended, 3=game started, 4=game ended
         self.__enable_enter_on_lane: [bool] - only used when lane mode == 1, because only once can Enter be sent
         self.__trial_time_on_lane: [bytes] - is used to check time is running in trial runs
         """
@@ -104,19 +104,40 @@ class SectionLaneControlPanel(QGroupBox):
         """
         TODO
         """
-        lane = self.__get_lane(msg)
-        if lane == -1 or lane > self.__number_of_lane:
-            self.__log_management(10, "LCP_ERROR_1", "", "Wiadomość z toru {} a jest {} torów".format(lane, self.__number_of_lane))
+        lane = self.__get_lane(msg, self.__number_of_lane)
+        if lane == -1:
+            self.__log_management(10, "LCP_ERROR_1", "", "Numer toru {} jest niepoprawny".format(lane))
             return
-        self.__analyze_message__check_mode(msg)
+        self.__analyze_message__check_mode(msg, lane)
         self.__analyze_message__moment_of_trial(msg)
         return self.self.__analyze_message__throw(msg)
 
-    def __analyze_message__check_mode(self, msg):
+    def __analyze_message__check_mode(self, msg, lane):
         """
-        TODO
+            This function change mode when trial/game is started/ended
+
+            msg <bytes> - message from lane
+            lane <int> - lane number from where message was sent
+
+            return None
         """
-        pass
+        if len(msg) < 8:
+            return
+
+        if msg[4:5] not in [b"p", b"i"]:
+            return
+
+        content = msg[4:6]
+        if content == b"p1":
+            self.__mode_on_lane[lane] = 1
+            self.__enable_enter_on_lane[lane] = True
+            self.__trial_time_on_lane[lane] = b""
+        elif content == b"p0":
+            self.__mode_on_lane[lane] = 2
+        elif content == b"i1":
+            self.__mode_on_lane[lane] = 3
+        elif content == b"i0":
+            self.__mode_on_lane[lane] = 4
 
     def __analyze_message__moment_of_trial(self, msg):
         """
@@ -131,16 +152,19 @@ class SectionLaneControlPanel(QGroupBox):
         return [], [], [], []
 
     @staticmethod
-    def __get_lane(msg):
+    def __get_lane(msg, number_of_lane):
         """
         msg: bytes - message from lane
+        number_of_lane: int
 
-        return:
-            <int>
-                -1 - when message is too short
-                <0, ..> lane number
+        return <int>
+            -1 - when message is too short or lane doesn't exist
+            <0, ..> lane number
         """
         if len(msg) < 4:
             return -1
-        return int(msg[3:4])
+        lane = int(msg[3:4])
+        if lane >= number_of_lane:
+            return -1
+        return lane
 
