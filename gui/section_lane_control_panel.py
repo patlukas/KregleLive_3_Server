@@ -27,6 +27,7 @@ class SectionLaneControlPanel(QGroupBox):
         self.__enable_stop_time_on_lane = []
         self.__trial_time_on_lane = []
         self.__stop_time_deadline_on_lane = []
+        self.__stop_time_deadline_buffer_s = 15
 
     def init(self, number_of_lane: int, log_management, on_add_message):
         self.__number_of_lane = number_of_lane
@@ -73,6 +74,16 @@ class SectionLaneControlPanel(QGroupBox):
         list_lane_to_print = [x+1 for x in list_lane]
         self.__log_management(3, "LCP_CLICK", "", "Dodano nowe wiadomości przez 'Sterowanie torami': Adresaci {}, Wiadomość '{}'({})".format(list_lane_to_print, what_message_means, body_message))
         for lane in list_lane:
+            if body_message == b"T24":
+                if not self.__enable_stop_time_on_lane[lane]:
+                    continue
+                self.__stop_time_deadline_on_lane[lane] = time.time() + self.__stop_time_deadline_buffer_s
+            if body_message == b"T14":
+                if not self.__enable_enter_on_lane[lane]:
+                    continue
+                self.__stop_time_deadline_on_lane[lane] = 0
+                if self.__mode_on_lane[lane] == 1:
+                    self.__enable_enter_on_lane[lane] = False
             message = b"3" + bytes(str(lane), "cp1250") + b"38" + body_message
             self.__on_add_message(message, True, 9, 0) #TODO change time_wait
 
