@@ -2,6 +2,9 @@ import time
 
 from PyQt5.QtWidgets import QGroupBox, QGridLayout, QPushButton
 
+from utils.messages import extract_lane_id_from_incoming_message
+
+
 class SectionLaneControlPanel(QGroupBox):
 
     def __init__(self):
@@ -123,7 +126,7 @@ class SectionLaneControlPanel(QGroupBox):
         """
         TODO
         """
-        lane = self.__get_lane(msg, self.__number_of_lane)
+        lane = extract_lane_id_from_incoming_message(msg, self.__number_of_lane)
         if lane == -1:
             self.__log_management(10, "LCP_ERROR_1", "", "Numer toru {} jest niepoprawny".format(lane))
             return
@@ -213,22 +216,7 @@ class SectionLaneControlPanel(QGroupBox):
             return [], [], [], []
             # TODO Something like this
             # [], [{"message": 3?38T24??, "time_wait": ???, "priority": ???}], [], [{"message": msg, "time_wait": ???, "priority": ???}]
+            # maybe better will be:
+            # [{"message": 3?38T24??, "time_wait": 0, "priority": 9}], [], [], [{"message": msg, "time_wait": -1, "priority": 3}]
 
         return [], [], [], []
-
-    @staticmethod
-    def __get_lane(msg, number_of_lane):
-        """
-        msg: bytes - message from lane
-        number_of_lane: int
-
-        return <int>
-            -1 - when message is too short or lane doesn't exist
-            <0, ..> lane number
-        """
-        if len(msg) < 4:
-            return -1
-        lane = int(msg[3:4])
-        if lane >= number_of_lane:
-            return -1
-        return lane
