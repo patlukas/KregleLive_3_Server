@@ -109,7 +109,7 @@ class SectionLaneControlPanel(QGroupBox):
             self.__log_management(10, "LCP_ERROR_1", "", "Numer toru {} jest niepoprawny".format(lane))
             return
         self.__analyze_message__check_mode(msg, lane)
-        self.__analyze_message__moment_of_trial(msg)
+        self.__analyze_message__moment_of_trial(msg, lane)
         return self.self.__analyze_message__throw(msg)
 
     def __analyze_message__check_mode(self, msg, lane):
@@ -139,11 +139,31 @@ class SectionLaneControlPanel(QGroupBox):
         elif content == b"i0":
             self.__mode_on_lane[lane] = 4
 
-    def __analyze_message__moment_of_trial(self, msg):
+    def __analyze_message__moment_of_trial(self, msg, lane):
         """
-        TODO
+        This func analyze messages when is trial (mode == 1), and when time is started then disable possibility to click "enter"
+
+        param:
+            msg <bytes> - message from lane
+            lane <int> - lane number from where message was sent
+
+        return:
+            None
         """
-        pass
+        if self.__mode_on_lane[lane] != 1:
+            return
+        if not self.__enable_enter_on_lane[lane]:
+            return
+        if len(msg) == 35:
+            self.__enable_enter_on_lane[lane] = False
+            return
+        if len(msg) != 10:
+            return
+
+        if self.__trial_time_on_lane[lane] == b"":
+            self.__trial_time_on_lane[lane] = msg[4:7]
+        elif self.__trial_time_on_lane[lane] != msg[4:7]:
+            self.__enable_enter_on_lane = False
 
     def __analyze_message__throw(self, msg):
         """
