@@ -106,7 +106,7 @@ class SectionLaneControlPanel(QGroupBox):
         """
         lane = self.__get_lane(msg)
         if lane == -1 or lane > self.__number_of_lane:
-            self.__log_management(10, "LCP_ERROR_1", "", "Wiadomośc z toru {} a jest {} torów".format(lane, self.__number_of_lane))
+            self.__log_management(10, "LCP_ERROR_1", "", "Wiadomość z toru {} a jest {} torów".format(lane, self.__number_of_lane))
             return
         self.__analyze_message__check_mode(msg)
         self.__analyze_message__moment_of_trial(msg)
@@ -133,7 +133,14 @@ class SectionLaneControlPanel(QGroupBox):
     @staticmethod
     def __get_lane(msg):
         """
-        TODO
+        msg: bytes - message from lane
+
+        return:
+            <int>
+                -1 - when message is too short
+                <0, ..> lane number
         """
-        return 0
+        if len(msg) < 4:
+            return -1
+        return int(msg[3:4])
 
