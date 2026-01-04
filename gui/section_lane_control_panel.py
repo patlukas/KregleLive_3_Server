@@ -1,3 +1,5 @@
+import time
+
 from PyQt5.QtWidgets import QGroupBox, QGridLayout, QPushButton
 
 class SectionLaneControlPanel(QGroupBox):
@@ -8,6 +10,7 @@ class SectionLaneControlPanel(QGroupBox):
         self.__enable_enter_on_lane: [bool] - TODO
         self.__enable_stop_time_on_lane: [bool] - TODO
         self.__trial_time_on_lane: [bytes] - is used to check time is running in trial runs
+        self.__stop_time_deadline_on_lane - TODO
         """
         super().__init__("Sterowanie torami")
         self.__log_management = None
@@ -23,6 +26,7 @@ class SectionLaneControlPanel(QGroupBox):
         self.__enable_enter_on_lane = []
         self.__enable_stop_time_on_lane = []
         self.__trial_time_on_lane = []
+        self.__stop_time_deadline_on_lane = []
 
     def init(self, number_of_lane: int, log_management, on_add_message):
         self.__number_of_lane = number_of_lane
@@ -41,6 +45,7 @@ class SectionLaneControlPanel(QGroupBox):
         self.__enable_enter_on_lane = [False for _ in range(number_of_lane)]
         self.__enable_stop_time_on_lane = [False for _ in range(number_of_lane)]
         self.__trial_time_on_lane = [b"" for _ in range(number_of_lane)]
+        self.__stop_time_deadline_on_lane = [0 for _ in range(number_of_lane)]
 
 
     def __get_structure(self, number_of_lane: int) -> list:
@@ -113,7 +118,7 @@ class SectionLaneControlPanel(QGroupBox):
             return
         self.__analyze_message__check_mode(msg, lane)
         self.__analyze_message__moment_of_trial(msg, lane)
-        return self.self.__analyze_message__throw(msg)
+        return self.self.__analyze_message__throw(msg, lane)
 
     def __analyze_message__check_mode(self, msg, lane):
         """
@@ -175,10 +180,29 @@ class SectionLaneControlPanel(QGroupBox):
         elif self.__trial_time_on_lane[lane] != msg[4:7]:
             self.__enable_enter_on_lane = False
 
-    def __analyze_message__throw(self, msg):
+    def __analyze_message__throw(self, msg, lane):
         """
-        TODO
+        This function is responsible for resending the message to stop the time if a message with a new roll is received before the deadline expires
+
+        param:
+            msg <bytes> - message from lane
+            lane <int> - lane number from where message was sent
+
+        return:
+            if the message is not required: [], [], [], []
+            otherwise: [], [stop_time], [], [msg]
         """
+        if len(msg) != 35:
+            return [], [], [], []
+        if not self.__enable_stop_time_on_lane[lane]:
+            return [], [], [], []
+
+        if time.time() <= self.__stop_time_deadline_on_lane[lane]:
+            self.__stop_time_deadline_on_lane[lane] = 0
+            return [], [], [], []
+            # TODO Something like this
+            # [], [{"message": 3?38T24??, "time_wait": ???, "priority": ???}], [], [{"message": msg, "time_wait": ???, "priority": ???}]
+
         return [], [], [], []
 
     @staticmethod
@@ -197,4 +221,3 @@ class SectionLaneControlPanel(QGroupBox):
         if lane >= number_of_lane:
             return -1
         return lane
-
