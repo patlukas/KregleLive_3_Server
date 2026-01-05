@@ -66,6 +66,7 @@ The application is configured using the `config.json` file. Below is a descripti
 - `warning_response_time`: Time (in seconds) after which a first-level warning will be issued about a delayed response.
 - `critical_response_time`: Time (in seconds) after which a second-level (critical) warning will be issued about a severely delayed response.
 - `number_of_lane`: Number of bowling lanes managed by the application.
+- `stop_time_deadline_buffer_s`: Time (in seconds) how long the program waits for a message from lane with a throw to send "stop time"
 
 ## Program Structure
 
