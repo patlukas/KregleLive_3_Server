@@ -2,7 +2,7 @@ import time
 
 from PyQt5.QtWidgets import QGroupBox, QGridLayout, QPushButton
 
-from utils.messages import extract_lane_id_from_incoming_message
+from utils.messages import extract_lane_id_from_incoming_message, prepare_message_to_lane_and_encapsulate, encapsulate_message
 
 
 class SectionLaneControlPanel(QGroupBox):
@@ -93,7 +93,7 @@ class SectionLaneControlPanel(QGroupBox):
                 if self.__mode_on_lane[lane] == 1:
                     self.__enable_enter_on_lane[lane] = False
             message = b"3" + bytes(str(lane), "cp1250") + b"38" + body_message
-            self.__on_add_message(message, True, 9, 0) #TODO change time_wait
+            self.__on_add_message(message, True, 9, 0)
 
     @staticmethod
     def __get_panel_with_buttons(main_label: str, option_name: str, structure: list, number_col: int, on_click):
@@ -219,7 +219,7 @@ class SectionLaneControlPanel(QGroupBox):
 
         return:
             if the message is not required: [], [], [], []
-            otherwise: [], [stop_time], [], [msg]
+            otherwise: [stop_time], [], [], [msg]
         """
         if len(msg) != 35:
             return [], [], [], []
@@ -228,10 +228,7 @@ class SectionLaneControlPanel(QGroupBox):
 
         if time.time() <= self.__stop_time_deadline_on_lane[lane]:
             self.__stop_time_deadline_on_lane[lane] = 0
-            return [], [], [], []
-            # TODO Something like this
-            # [], [{"message": 3?38T24??, "time_wait": ???, "priority": ???}], [], [{"message": msg, "time_wait": ???, "priority": ???}]
-            # maybe better will be:
-            # [{"message": 3?38T24??, "time_wait": 0, "priority": 9}], [], [], [{"message": msg, "time_wait": -1, "priority": 3}]
-
+            packet_to_lane = prepare_message_to_lane_and_encapsulate(lane, b"T24", 9, 0)
+            packet_from_lane = encapsulate_message(msg, 3, -1)
+            return [packet_to_lane], [], [], [packet_from_lane]
         return [], [], [], []
