@@ -1,2 +1,2 @@
-- Corrected full layout setup and zero-hit handling in the last full throw, skip analysis for full throws
-- Fix Jenkins
+- "Stop time" works even if the machine is not ready because it has not picked up the pins yet
+- "Enter" can be clicked only once in trial
