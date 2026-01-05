@@ -1,2 +1,6 @@
 - "Stop time" works even if the machine is not ready because it has not picked up the pins yet
 - "Enter" can be clicked only once in trial
+
+
+Since version v1.3.x, the following field has been added to config.json:
+- stop_time_deadline_buffer_s
