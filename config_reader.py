@@ -68,6 +68,7 @@ class ConfigReader:
             "default_ip",
             "default_port",
             "max_waiting_time_for_response",
-            "warning_response_time"
+            "warning_response_time",
+            "stop_time_deadline_buffer_s"
         ]
         return list_settings

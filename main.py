@@ -183,7 +183,7 @@ class GUI(QDialog):
             self.__socket_section.set_default_address(self.__config["default_ip"], self.__config["default_port"])
             self.__socket_section.set_func_to_get_list_ip(self.__connection_manager.on_get_list_ip)
             self.__prepare_lane_stat_table(self.__config["number_of_lane"])
-            self.__section_lane_control_panel.init(self.__config["number_of_lane"], self.__log_management.add_log, self.__connection_manager.add_message_to_x)
+            self.__section_lane_control_panel.init(self.__config["number_of_lane"], self.__config["stop_time_deadline_buffer_s"], self.__log_management.add_log, self.__connection_manager.add_message_to_x)
             self.__section_clearoff_fast.init(self.__config["number_of_lane"], self.__log_management.add_log)
             self.__launch_startup_tools(self.__config["tools_to_run_on_startup"])
 
