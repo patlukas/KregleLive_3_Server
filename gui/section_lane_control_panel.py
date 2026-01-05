@@ -38,8 +38,14 @@ class SectionLaneControlPanel(QGroupBox):
         self.__stop_time_deadline_on_lane = []
         self.__stop_time_deadline_buffer_s = 15
 
-    def init(self, number_of_lane: int, log_management, on_add_message):
+    def init(self, number_of_lane: int, stop_time_deadline_buffer_s: int, log_management, on_add_message):
+        """
+        :param:
+            number_of_lane <int>
+            stop_time_deadline_buffer_s <int> - max number of second delay between click stop time, a recv message about throw result
+        """
         self.__number_of_lane = number_of_lane
+        self.__stop_time_deadline_buffer_s = stop_time_deadline_buffer_s
         self.__log_management = log_management
         self.__on_add_message = on_add_message
 
@@ -127,7 +133,7 @@ class SectionLaneControlPanel(QGroupBox):
         if show_main:
             self.adjustSize()
 
-    def analyze_message_from_lane(self, msg):
+    def analyze_message_from_lane(self, msg: bytes):
         """
         This function is responsible for analyzing messages received from the lanes
 
@@ -137,15 +143,15 @@ class SectionLaneControlPanel(QGroupBox):
         Returns:
             [list, list, list, list]
         """
-        lane = extract_lane_id_from_incoming_message(msg, self.__number_of_lane)
-        if lane == -1:
-            self.__log_management(10, "LCP_ERROR_1", "", "Numer toru {} jest niepoprawny".format(lane))
+        lane_id = extract_lane_id_from_incoming_message(msg, self.__number_of_lane)
+        if lane_id == -1:
+            self.__log_management(10, "LCP_ERROR_1", "", "Numer toru {} jest niepoprawny".format(lane_id))
             return
-        self.__update_mode_from_incoming_message(msg, lane)
-        self.__analyze_message__moment_of_trial(msg, lane)
-        return self.self.__analyze_message__throw(msg, lane)
+        self.__update_mode_from_incoming_message(msg, lane_id)
+        self.__analyze_message__moment_of_trial(msg, lane_id)
+        return self.self.__analyze_message__throw(msg, lane_id)
 
-    def __update_mode_from_incoming_message(self, msg: bytes, lane: int) -> None:
+    def __update_mode_from_incoming_message(self, msg: bytes, lane_id: int) -> None:
         """
         Update the current mode based on an incoming message.
 
@@ -154,7 +160,7 @@ class SectionLaneControlPanel(QGroupBox):
 
         Args:
             msg (bytes): Incoming message received from a lane.
-            lane (int): Lane number from which the message was sent.
+            lane_id (int): Lane number from which the message was sent.
 
         Returns:
             None
@@ -167,55 +173,55 @@ class SectionLaneControlPanel(QGroupBox):
 
         content = msg[4:6]
         if content == b"p1":
-            self.__mode_on_lane[lane] = 1
-            self.__trial_time_on_lane[lane] = b""
+            self.__mode_on_lane[lane_id] = 1
+            self.__trial_time_on_lane[lane_id] = b""
         elif content == b"p0":
-            self.__mode_on_lane[lane] = 2
+            self.__mode_on_lane[lane_id] = 2
         elif content == b"i1":
-            self.__mode_on_lane[lane] = 3
+            self.__mode_on_lane[lane_id] = 3
         elif content == b"i0":
-            self.__mode_on_lane[lane] = 4
+            self.__mode_on_lane[lane_id] = 4
 
-        if self.__mode_on_lane[lane] in [1, 3]:
-            self.__enable_enter_on_lane[lane] = True
-            self.__enable_stop_time_on_lane[lane] = True
-        elif self.__mode_on_lane[lane] in [2, 4]:
-            self.__enable_enter_on_lane[lane] = False
-            self.__enable_stop_time_on_lane[lane] = False
+        if self.__mode_on_lane[lane_id] in [1, 3]:
+            self.__enable_enter_on_lane[lane_id] = True
+            self.__enable_stop_time_on_lane[lane_id] = True
+        elif self.__mode_on_lane[lane_id] in [2, 4]:
+            self.__enable_enter_on_lane[lane_id] = False
+            self.__enable_stop_time_on_lane[lane_id] = False
 
-    def __analyze_message__moment_of_trial(self, msg, lane):
+    def __analyze_message__moment_of_trial(self, msg: bytes, lane_id: int) -> None:
         """
         This func analyze messages when is trial (mode == 1), and when time is started then disable possibility to click "enter"
 
         param:
             msg <bytes> - message from lane
-            lane <int> - lane number from where message was sent
+            lane_id <int> - lane number from where message was sent
 
         return:
             None
         """
-        if self.__mode_on_lane[lane] != 1:
+        if self.__mode_on_lane[lane_id] != 1:
             return
-        if not self.__enable_enter_on_lane[lane]:
+        if not self.__enable_enter_on_lane[lane_id]:
             return
         if len(msg) == 35:
-            self.__enable_enter_on_lane[lane] = False
+            self.__enable_enter_on_lane[lane_id] = False
             return
         if len(msg) != 10:
             return
 
-        if self.__trial_time_on_lane[lane] == b"":
-            self.__trial_time_on_lane[lane] = msg[4:7]
-        elif self.__trial_time_on_lane[lane] != msg[4:7]:
+        if self.__trial_time_on_lane[lane_id] == b"":
+            self.__trial_time_on_lane[lane_id] = msg[4:7]
+        elif self.__trial_time_on_lane[lane_id] != msg[4:7]:
             self.__enable_enter_on_lane = False
 
-    def __analyze_message__throw(self, msg, lane):
+    def __analyze_message__throw(self, msg: bytes, lane_id: int):
         """
         This function is responsible for resending the message to stop the time if a message with a new roll is received before the deadline expires
 
         param:
             msg <bytes> - message from lane
-            lane <int> - lane number from where message was sent
+            lane_id <int> - lane number from where message was sent
 
         return:
             if the message is not required: [], [], [], []
@@ -223,12 +229,12 @@ class SectionLaneControlPanel(QGroupBox):
         """
         if len(msg) != 35:
             return [], [], [], []
-        if not self.__enable_stop_time_on_lane[lane]:
+        if not self.__enable_stop_time_on_lane[lane_id]:
             return [], [], [], []
 
-        if time.time() <= self.__stop_time_deadline_on_lane[lane]:
-            self.__stop_time_deadline_on_lane[lane] = 0
-            packet_to_lane = prepare_message_to_lane_and_encapsulate(lane, b"T24", 9, 0)
+        if time.time() <= self.__stop_time_deadline_on_lane[lane_id]:
+            self.__stop_time_deadline_on_lane[lane_id] = 0
+            packet_to_lane = prepare_message_to_lane_and_encapsulate(lane_id, b"T24", 9, 0)
             packet_from_lane = encapsulate_message(msg, 3, -1)
             return [packet_to_lane], [], [], [packet_from_lane]
         return [], [], [], []
