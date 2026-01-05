@@ -9,11 +9,17 @@ class SectionLaneControlPanel(QGroupBox):
 
     def __init__(self):
         """
-        self.__mode_on_lane: [int] - 0-before start first block, 1=trial started, 2=trail ended, 3=game started, 4=game ended
-        self.__enable_enter_on_lane: [bool] - TODO
-        self.__enable_stop_time_on_lane: [bool] - TODO
+        self.__mode_on_lane: [int] - what mode is on lane
+            0 - the variable has been initialized and has not been changed yet
+            1 - trial is ready
+            2 - trial is over
+            3 - game is ready
+            4 - game is over
+        self.__enable_enter_on_lane: [bool] - Specify whether an Enter message can be sent on the track
+        self.__enable_stop_time_on_lane: [bool] - Specify whether a time-stopping message can be sent on the track
         self.__trial_time_on_lane: [bytes] - is used to check time is running in trial runs
-        self.__stop_time_deadline_on_lane - TODO
+        self.__stop_time_deadline_on_lane [float] - until what time will be send message to stop time
+        self.__stop_time_deadline_buffer_s <int> - how many seconds does it take to stop time
         """
         super().__init__("Sterowanie torami")
         self.__log_management = None
@@ -50,7 +56,6 @@ class SectionLaneControlPanel(QGroupBox):
         self.__enable_stop_time_on_lane = [False for _ in range(number_of_lane)]
         self.__trial_time_on_lane = [b"" for _ in range(number_of_lane)]
         self.__stop_time_deadline_on_lane = [0 for _ in range(number_of_lane)]
-
 
     def __get_structure(self, number_of_lane: int) -> list:
         number_of_lane_in_row = number_of_lane
@@ -124,7 +129,13 @@ class SectionLaneControlPanel(QGroupBox):
 
     def analyze_message_from_lane(self, msg):
         """
-        TODO
+        This function is responsible for analyzing messages received from the lanes
+
+        Args:
+            msg (bytes): Incoming message received from a lane.
+
+        Returns:
+            [list, list, list, list]
         """
         lane = extract_lane_id_from_incoming_message(msg, self.__number_of_lane)
         if lane == -1:
