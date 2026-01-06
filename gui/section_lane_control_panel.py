@@ -140,6 +140,20 @@ class SectionLaneControlPanel(QGroupBox):
         Args:
             msg (bytes): Incoming message received from a lane.
 
+        Activation conditions:
+            In:
+                b'____i0__\r'
+                b'____i1__\r'
+                b'____p0__\r'
+                b'____p1__\r'
+            Out:
+                [], [], [], []
+            In:
+                b'____w_____________________________\r' in place 'w' can be 'g', 'h', 'k', 'f'
+            Out:
+                [], [], [], [] - if time no will be stop
+                [T14], [], [], [b'____w_____________________________\r'] - otherwise
+
         Returns:
             [list, list, list, list]
         """
@@ -234,7 +248,7 @@ class SectionLaneControlPanel(QGroupBox):
 
         if time.time() <= self.__stop_time_deadline_on_lane[lane_id]:
             self.__stop_time_deadline_on_lane[lane_id] = 0
-            packet_to_lane = prepare_message_to_lane_and_encapsulate(lane_id, b"T24", 9, 0)
+            packet_to_lane = prepare_message_to_lane_and_encapsulate(lane_id, b"T14", 9, 0)
             packet_from_lane = encapsulate_message(msg, 3, -1)
             return [packet_to_lane], [], [], [packet_from_lane]
         return [], [], [], []

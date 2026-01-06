@@ -28,16 +28,15 @@
 #     # for x in range(10000000):
 #     #     if x % 1000000 == 0:
 #     #         print(x)
-from gui.setting_option import SettingTurnOnPrinter
+from gui.setting_option import SettingStartTimeInTrial
 
-a = SettingTurnOnPrinter()
-qaction = a.create_menu_action()
-print(a.analyze_message_to_lane(b'3038IG00100201E004005000010\r'))
-print(a.analyze_message_to_lane(b'3038IG00100201E004005000110\r'))
-print(a.analyze_message_to_lane(b'3038IG\r'))
-print(a.analyze_message_to_lane(b'3038IGaaaaaaaaaaaaaaaaaaaaaaa\r'))
+a = SettingStartTimeInTrial(None)
+print(a.analyze_message_to_lane(b'3238P003014078\r'))
+print(a.analyze_message_to_lane(b'3238P00301407\r'))
+print(a.analyze_message_to_lane(b'3238P003014078s\r'))
+print(a.analyze_message_to_lane(b'\r'))
 a.on_toggle()
-print(a.analyze_message_to_lane(b'3038IG00100201E004005000010\r'))
-print(a.analyze_message_to_lane(b'3038IG00100201E004005000110\r'))
-print(a.analyze_message_to_lane(b'3038IG\r'))
-print(a.analyze_message_to_lane(b'3038IGaaaaaaaaaaaaaaaaaaaaaaa\r'))
+print(a.analyze_message_to_lane(b'3238P003014078\r'))
+print(a.analyze_message_to_lane(b'3238P00301407\r'))
+print(a.analyze_message_to_lane(b'3238P003014078s\r'))
+print(a.analyze_message_to_lane(b'\r'))

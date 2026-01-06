@@ -94,6 +94,16 @@ class SectionClearOffTest(QGroupBox):
         return box
 
     def analyze_message_from_lane(self, msg):
+        """
+        Activation conditions:
+            In: b'____i0__\r'   Out: [], [], [], []
+            In:
+                b'____w_____________________________\r' in place 'w' can be 'g', 'h', 'k', 'f'
+            Out:
+                [], [], [], [] - if the full layout is not set
+                [set_full_layout], [], [], [b'____w_____________________________\r'] - otherwise
+
+        """
         if msg[4:6] == b"i0":
             lane = int(msg[3:4])
             self.__log_management(5, "S_COF_1", "", "Odebrano wiadomość i0 a torze '{}'({})".format(lane, msg ))
@@ -157,6 +167,13 @@ class SectionClearOffTest(QGroupBox):
         return [], [], [], []
 
     def analyze_message_to_lane(self, msg):
+        """
+        Activation conditions:
+            In:
+                b'____IG__________________0__\r'
+            Out:
+                [], [], [], []
+        """
         if msg[4:6] == b"IG":
             lane = int(msg[1:2])
             self.__log_management(5, "S_COF_10", "", "Odebrano wiadomość IG na torze '{}'({})".format(lane, msg ))
