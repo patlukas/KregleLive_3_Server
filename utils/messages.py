@@ -28,6 +28,13 @@ def encapsulate_message(prepared_message, priority=5, time_wait=-1):
     """
     return {"message": prepared_message, "time_wait": time_wait, "priority": priority}
 
+def prepare_message_and_encapsulate(content, priority=5, time_wait=-1):
+    """
+
+    """
+    message = prepare_message(content)
+    return encapsulate_message(message, priority, time_wait)
+
 def prepare_message_to_lane_and_encapsulate(lane_id, content, priority=5, time_wait=-1):
     """
 
@@ -35,7 +42,10 @@ def prepare_message_to_lane_and_encapsulate(lane_id, content, priority=5, time_w
     message = prepare_message_to_lane(lane_id, content)
     return encapsulate_message(message, priority, time_wait)
 
-def prepare_message_to_lane(lane_id, content):
-    message = b"3" + bytes(str(lane_id), "cp1250") + b"38" + content
+def prepare_message(message):
     message_with_control_sum = message + calculate_message_control_sum(message) + b"\r"
     return message_with_control_sum
+
+def prepare_message_to_lane(lane_id, content):
+    message = b"3" + bytes(str(lane_id), "cp1250") + b"38" + content
+    return prepare_message(message)

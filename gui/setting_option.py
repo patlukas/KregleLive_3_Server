@@ -2,6 +2,8 @@ from PyQt5.QtWidgets import QAction
 
 from abc import ABCMeta, abstractmethod
 
+from utils.messages import prepare_message_and_encapsulate
+
 
 class _BaseMenuSetting(metaclass=ABCMeta):
     """
@@ -65,7 +67,6 @@ class _BaseMenuSetting(metaclass=ABCMeta):
         """
         return self._is_enabled
 
-    @abstractmethod
     def analyze_message_to_lane(self, message: bool):
         """
         Analyze a message being sent to the lane.
@@ -77,7 +78,6 @@ class _BaseMenuSetting(metaclass=ABCMeta):
         """
         return [], [], [], []
 
-    @abstractmethod
     def analyze_message_from_lane(self, message: bytes):
         """
         Analyze a message received from the lane.
@@ -90,5 +90,35 @@ class _BaseMenuSetting(metaclass=ABCMeta):
         return [], [], [], []
 
 
+class SettingTurnOnPrinter(_BaseMenuSetting):
+    """
+   Menu setting responsible for enabling the printer
+   when a 'IG' message is sent with disable printer.
+   """
+    def __init__(self):
+        _BaseMenuSetting.__init__(
+            self,
+            "Uruchom drukarkę przy meczówce",
+            default_enabled=True
+        )
 
+    def analyze_message_to_lane(self, message: bytes):
+        """
+        Analyze an outgoing message and optionally inject
+        a modified packet to enable the printer.
 
+        Activation conditions:
+            In:
+                b'____IG__________________0__\r'
+            Out:
+                [], [], [], [b'____IG__________________1__\r']
+        """
+        if not self.is_enabled():
+            return [], [], [], []
+        if len(message) < 28 or message[4:6] != b"IG":
+            return [], [], [], []
+        if message[24:25] != b"0":
+            return [], [], [], []
+        content_msg = message[:24] + b"1"
+        packet = prepare_message_and_encapsulate(content_msg, 3, -1) # TODO: can a fixed value (e.g. 250) be used instead of the default -1?
+        return [], [], [], [packet]
