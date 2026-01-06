@@ -68,6 +68,7 @@ The application is configured using the `config.json` file. Below is a descripti
 - `number_of_lane`: Number of bowling lanes managed by the application.
 - `stop_time_deadline_buffer_s`: Time (in seconds) how long the program waits for a message from lane with a throw to send "stop time"
 - `enable_action_turn_on_printer`: Enable/Disable action to auto turn on printer after program run
+- `enable_action_start_time_in_trial`: Enable/Disable action to add possibility to turn on time in trial
 
 ## Program Structure
 

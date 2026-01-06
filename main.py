@@ -192,6 +192,7 @@ class GUI(QDialog):
             self.__launch_startup_tools(self.__config["tools_to_run_on_startup"])
 
             self.__action_setting_turn_on_printer.on_toggle(self.__config["enable_action_turn_on_printer"])
+            self.__action_setting_start_time_in_trial.on_toggle(self.__config["enable_action_start_time_in_trial"])
 
             self.__connection_manager.add_func_for_analyze_msg_to_recv(lambda msg: self.__section_clearoff_fast.analyze_message_from_lane(msg))
             self.__connection_manager.add_func_for_analyze_msg_to_recv(lambda msg: self.__section_lane_control_panel.analyze_message_from_lane(msg))

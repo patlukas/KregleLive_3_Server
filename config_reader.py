@@ -70,6 +70,7 @@ class ConfigReader:
             "max_waiting_time_for_response",
             "warning_response_time",
             "stop_time_deadline_buffer_s",
-            "enable_action_turn_on_printer"
+            "enable_action_turn_on_printer",
+            "enable_action_start_time_in_trial"
         ]
         return list_settings
