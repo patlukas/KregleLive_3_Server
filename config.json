@@ -20,5 +20,6 @@
   "number_of_lane": 6,
   "tools_to_run_on_startup": ["Asystent Tworzenia Dru�yn"],
   "enable_action_turn_on_printer": true,
-  "enable_action_start_time_in_trial": true
+  "enable_action_start_time_in_trial": true,
+  "enable_action_stop_communication_after_block": true
 }

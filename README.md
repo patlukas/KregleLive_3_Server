@@ -69,6 +69,7 @@ The application is configured using the `config.json` file. Below is a descripti
 - `stop_time_deadline_buffer_s`: Time (in seconds) how long the program waits for a message from lane with a throw to send "stop time"
 - `enable_action_turn_on_printer`: Enable/Disable action to auto turn on printer after program run
 - `enable_action_start_time_in_trial`: Enable/Disable action to add possibility to turn on time in trial
+- `enable_action_stop_communication_after_block`: Enable/Disable action to stop communication after block
 
 ## Program Structure
 

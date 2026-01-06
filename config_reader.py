@@ -71,6 +71,7 @@ class ConfigReader:
             "warning_response_time",
             "stop_time_deadline_buffer_s",
             "enable_action_turn_on_printer",
-            "enable_action_start_time_in_trial"
+            "enable_action_start_time_in_trial",
+            "enable_action_stop_communication_after_block"
         ]
         return list_settings

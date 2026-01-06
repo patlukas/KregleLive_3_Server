@@ -194,6 +194,7 @@ class GUI(QDialog):
 
             self.__action_setting_turn_on_printer.on_toggle(self.__config["enable_action_turn_on_printer"])
             self.__action_setting_start_time_in_trial.on_toggle(self.__config["enable_action_start_time_in_trial"])
+            self.__action_setting_stop_communication.on_toggle(self.__config["enable_action_stop_communication_after_block"])
 
             self.__connection_manager.add_func_for_analyze_msg_to_recv(lambda msg: self.__section_clearoff_fast.analyze_message_from_lane(msg))
             self.__connection_manager.add_func_for_analyze_msg_to_recv(lambda msg: self.__section_lane_control_panel.analyze_message_from_lane(msg))
