@@ -4,6 +4,9 @@ from PyQt5.QtCore import Qt
 class SectionClearOffTest(QGroupBox):
 
     def __init__(self):
+        """
+        TODO: describe variables
+        """
         super().__init__("Szybsze kończenie zbieranych")
         self.__log_management = None
         self.__box = None
