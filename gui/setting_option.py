@@ -176,6 +176,9 @@ class SettingStopCommunicationBeforeTrial(_BaseMenuSetting):
         msg_box.setDefaultButton(QMessageBox.Yes)
         return msg_box
 
+    def communication_to_lane_is_enabled(self) -> bool:
+        return not self._stop_communication
+
     def analyze_message_to_lane(self, message: bytes):
         """
         Activation conditions:

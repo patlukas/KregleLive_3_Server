@@ -175,16 +175,19 @@ class GUI(QDialog):
                                           self.__config["flags_to_run_kegeln_program"])
             self.__log_management.add_log(2, "COM_MNGR", str(self.__com_result[0]), self.__com_result[1])
 
-            self.__connection_manager = ConnectionManager(self.__config["com_x"], self.__config["com_y"],
-                                                          self.__config["com_timeout"],
-                                                          self.__config["com_write_timeout"],
-                                                          self.__log_management.add_log,
-                                                          self.__config["time_interval_break"],
-                                                          self.__config["max_waiting_time_for_response"],
-                                                          self.__config["critical_response_time"],
-                                                          self.__config["warning_response_time"],
-                                                          self.__config["number_of_lane"]
-                                                          )
+            self.__connection_manager = ConnectionManager(
+                self.__config["com_x"],
+                self.__config["com_y"],
+                self.__config["com_timeout"],
+                self.__config["com_write_timeout"],
+                self.__log_management.add_log,
+                self.__config["time_interval_break"],
+                self.__config["max_waiting_time_for_response"],
+                self.__config["critical_response_time"],
+                self.__config["warning_response_time"],
+                self.__config["number_of_lane"],
+                self.__action_setting_stop_communication.communication_to_lane_is_enabled
+            )
             self.__socket_section.set_default_address(self.__config["default_ip"], self.__config["default_port"])
             self.__socket_section.set_func_to_get_list_ip(self.__connection_manager.on_get_list_ip)
             self.__prepare_lane_stat_table(self.__config["number_of_lane"])
