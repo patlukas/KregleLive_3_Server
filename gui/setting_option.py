@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QAction
+from PyQt5.QtWidgets import QAction, QMessageBox
 
 from abc import ABCMeta, abstractmethod
 
@@ -149,3 +149,63 @@ class SettingStartTimeInTrial(_BaseMenuSetting):
         packet_pick_up = prepare_message_and_encapsulate(message[:4] + b"T41", 3, -1)
         packet_stop_time = prepare_message_and_encapsulate(message[:4] + b"T14", 9, 300)
         return [], [], [], [packet_trial, packet_pick_up, packet_stop_time]
+
+
+class SettingStopCommunicationBeforeTrial(_BaseMenuSetting):
+    """
+    Menu setting responsible stop communication before new block.
+    """
+    def __init__(self, parent):
+        _BaseMenuSetting.__init__(
+            self,
+            parent,
+            "Wstrzymuj kolejny blok",
+            default_enabled=True
+        )
+        self._msg_box = self._prepare_message_box()
+        self._was_trial_end = False
+        self._stop_communication = False
+
+    @staticmethod
+    def _prepare_message_box():
+        msg_box = QMessageBox()
+        msg_box.setIcon(QMessageBox.Warning)
+        msg_box.setWindowTitle("Koniec bloku")
+        msg_box.setText("Czy ustawić kolejny blok?")
+        msg_box.setStandardButtons(QMessageBox.Yes)
+        msg_box.setDefaultButton(QMessageBox.Yes)
+        return msg_box
+
+    def analyze_message_to_lane(self, message: bytes):
+        """
+        Activation conditions:
+            In:
+                b'____P_________\r'
+            Out:
+                [], [], [], []
+        """
+        if not self._was_trial_end:
+            return [], [], [], []
+        if len(message) != 15 or message[4:5] != b"P":
+            return [], [], [], []
+
+        self._was_trial_end = False
+        if self.is_enabled():
+            self._stop_communication = True
+            self._msg_box.exec()
+            self._stop_communication = False
+
+        return [], [], [], []
+
+    def analyze_message_from_lane(self, message: bytes):
+        """
+        Activation conditions:
+            In:
+                b'____p0__\r'
+            Out:
+                [], [], [], []
+        """
+        if len(message) != 9 or message[4:6] != b"p0":
+            return [], [], [], []
+        self._was_trial_end = True
+        return [], [], [], []
