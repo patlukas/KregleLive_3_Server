@@ -3,6 +3,7 @@ from PyQt5.QtGui import QBrush
 from connection_manager import ConnectionManager
 from gui.section_lane_control_panel import SectionLaneControlPanel
 from gui.section_clearoff_fast import SectionClearOffTest
+from gui.setting_option import SettingTurnOnPrinter
 from gui.socket_section import SocketSection
 from log_management import LogManagement
 from config_reader import ConfigReader, ConfigReaderError
@@ -91,6 +92,8 @@ class GUI(QDialog):
         self.__socket_section = None
         self.__section_lane_control_panel = SectionLaneControlPanel()
         self.__section_clearoff_fast = SectionClearOffTest()
+
+        self.__action_setting_turn_on_printer = SettingTurnOnPrinter(self)
 
         self.__set_layout()
         self.__init_program()
@@ -189,7 +192,9 @@ class GUI(QDialog):
 
             self.__connection_manager.add_func_for_analyze_msg_to_recv(lambda msg: self.__section_clearoff_fast.analyze_message_from_lane(msg))
             self.__connection_manager.add_func_for_analyze_msg_to_recv(lambda msg: self.__section_lane_control_panel.analyze_message_from_lane(msg))
+
             self.__connection_manager.add_func_for_analyze_msg_to_lane(lambda msg: self.__section_clearoff_fast.analyze_message_to_lane(msg))
+            self.__connection_manager.add_func_for_analyze_msg_to_lane(lambda msg: self.__action_setting_turn_on_printer.analyze_message_to_lane(msg))
 
             start_new_thread(self.__connection_manager.start, ())
         except ConfigReaderError as e:
@@ -266,6 +271,9 @@ class GUI(QDialog):
 
     def __create_menu_bar(self):
         menu_bar = QMenuBar(self)
+
+        settings = menu_bar.addMenu("Ustawienia")
+        settings.addAction(self.__action_setting_turn_on_printer.get_menu_action())
 
         ip_menu = menu_bar.addMenu("Adresy IP")
         ip_refresh_action = QAction("Odśwież listę adresów IP", self)

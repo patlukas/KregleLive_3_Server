@@ -9,7 +9,7 @@ class _BaseMenuSetting(metaclass=ABCMeta):
     """
     Abstract base class for a checkable QAction-based menu setting.
     """
-    def __init__(self, label: str, default_enabled=True) -> None:
+    def __init__(self, parent, label: str, default_enabled=True) -> None:
         """
 
         :param label <str> - Text displayed in the menu QAction
@@ -17,7 +17,11 @@ class _BaseMenuSetting(metaclass=ABCMeta):
         """
         self._label = label
         self._is_enabled = default_enabled
-        self._menu_action = None
+        self._menu_action = QAction(self._label, parent)
+
+        self._menu_action.setCheckable(True)
+        self._menu_action.setChecked(self._is_enabled)
+        self._menu_action.toggled.connect(lambda checked: self._on_toggled(checked))
 
     def _on_toggled(self, checked: bool) -> None:
         """
@@ -26,6 +30,7 @@ class _BaseMenuSetting(metaclass=ABCMeta):
 
         :param checked: <bool> - Current checked state of the QAction
         """
+        print(self._label, checked)
         self._is_enabled = checked
 
     def on_toggle(self, new_state=None) -> None:
@@ -43,20 +48,10 @@ class _BaseMenuSetting(metaclass=ABCMeta):
         if self._menu_action is not None:
             self._menu_action.setChecked(self._is_enabled)
 
-    def create_menu_action(self, parent=None):
+    def get_menu_action(self):
         """
-        Create and configure the QAction associated with this setting.
-        The returned QAction is intended to be added to a QMenu.
-
-        :param parent: Parent QObject (usually a QMenu or QMainWindow)
         :return: <QAction> Configured QAction instance
         """
-
-        self._menu_action = QAction(self._label, parent)
-        self._menu_action.setCheckable(True)
-        self._menu_action.setChecked(self._is_enabled)
-        self._menu_action.toggled.connect(lambda checked: self._on_toggled(checked))
-
         return self._menu_action
 
     def is_enabled(self) -> bool:
@@ -95,9 +90,10 @@ class SettingTurnOnPrinter(_BaseMenuSetting):
    Menu setting responsible for enabling the printer
    when a 'IG' message is sent with disable printer.
    """
-    def __init__(self):
+    def __init__(self, parent):
         _BaseMenuSetting.__init__(
             self,
+            parent,
             "Uruchom drukarkę przy meczówce",
             default_enabled=True
         )
