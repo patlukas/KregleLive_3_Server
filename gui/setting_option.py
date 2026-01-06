@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QAction
 
 from abc import ABCMeta, abstractmethod
 
-from utils.messages import prepare_message_and_encapsulate
+from utils.messages import prepare_message_and_encapsulate, encapsulate_message
 
 
 class _BaseMenuSetting(metaclass=ABCMeta):
@@ -118,3 +118,34 @@ class SettingTurnOnPrinter(_BaseMenuSetting):
         content_msg = message[:24] + b"1"
         packet = prepare_message_and_encapsulate(content_msg, 3, -1) # TODO: can a fixed value (e.g. 250) be used instead of the default -1?
         return [], [], [], [packet]
+
+
+class SettingStartTimeInTrial(_BaseMenuSetting):
+    """
+    Menu setting responsible for add possibility to start time in trial.
+    """
+    def __init__(self, parent):
+        _BaseMenuSetting.__init__(
+            self,
+            parent,
+            "Dodaj opcję włączenia czasu w próbnych",
+            default_enabled=True
+        )
+
+    def analyze_message_to_lane(self, message: bytes):
+        """
+        Activation conditions:
+            In:
+                b'____P_________\r'
+            Out:
+                [], [], [], [b'____P_________\r', T41, T14]
+        """
+        if not self.is_enabled():
+            return [], [], [], []
+        if len(message) != 15 or message[4:5] != b"P":
+            return [], [], [], []
+
+        packet_trial = encapsulate_message(message, 3, -1) # TODO: can a fixed value (e.g. 250) be used instead of the default -1?
+        packet_pick_up = prepare_message_and_encapsulate(message[:4] + b"T41", 3, -1)
+        packet_stop_time = prepare_message_and_encapsulate(message[:4] + b"T14", 9, 300)
+        return [], [], [], [packet_trial, packet_pick_up, packet_stop_time]
