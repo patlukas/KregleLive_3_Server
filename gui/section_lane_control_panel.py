@@ -163,7 +163,7 @@ class SectionLaneControlPanel(QGroupBox):
             return
         self.__update_mode_from_incoming_message(msg, lane_id)
         self.__analyze_message__moment_of_trial(msg, lane_id)
-        return self.self.__analyze_message__throw(msg, lane_id)
+        return self.__analyze_message__throw(msg, lane_id)
 
     def __update_mode_from_incoming_message(self, msg: bytes, lane_id: int) -> None:
         """
