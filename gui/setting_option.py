@@ -1,6 +1,5 @@
-from PyQt5.QtWidgets import QAction, QMessageBox
-
-from abc import ABCMeta, abstractmethod
+from PyQt5.QtWidgets import QAction, QPushButton
+from abc import ABCMeta
 
 from utils.messages import prepare_message_and_encapsulate, encapsulate_message
 
@@ -162,19 +161,9 @@ class SettingStopCommunicationBeforeTrial(_BaseMenuSetting):
             "Wstrzymuj kolejny blok",
             default_enabled=True
         )
-        self._msg_box = self._prepare_message_box()
         self._was_trial_end = False
         self._stop_communication = False
-
-    @staticmethod
-    def _prepare_message_box():
-        msg_box = QMessageBox()
-        msg_box.setIcon(QMessageBox.Warning)
-        msg_box.setWindowTitle("Koniec bloku")
-        msg_box.setText("Czy ustawić kolejny blok?")
-        msg_box.setStandardButtons(QMessageBox.Yes)
-        msg_box.setDefaultButton(QMessageBox.Yes)
-        return msg_box
+        self._btn_enable_communication = None
 
     def communication_to_lane_is_enabled(self) -> bool:
         return not self._stop_communication
@@ -195,8 +184,7 @@ class SettingStopCommunicationBeforeTrial(_BaseMenuSetting):
         self._was_trial_end = False
         if self.is_enabled():
             self._stop_communication = True
-            self._msg_box.exec()
-            self._stop_communication = False
+            self._btn_enable_communication.show()
 
         return [], [], [], []
 
@@ -212,3 +200,33 @@ class SettingStopCommunicationBeforeTrial(_BaseMenuSetting):
             return [], [], [], []
         self._was_trial_end = True
         return [], [], [], []
+
+    def prepare_button(self, parent):
+        self._btn_enable_communication = QPushButton("ROZPOCZNIJ KOLEJNY BLOK", parent)
+        self._btn_enable_communication.setMinimumSize(570, 200)
+        self._btn_enable_communication.setStyleSheet("""
+            QPushButton {
+                font-size: 20pt;
+                font-weight: bold;
+                background-color: #e74c3c;
+                color: white;
+                border: 4px solid #c0392b;
+                border-radius: 20px;
+                padding: 20px;
+                margin-top: 50px;
+            }
+            QPushButton:hover {
+                background-color: #ff5e4d; /* Rozjaśnienie po najechaniu */
+                border-color: #e74c3c;
+            }
+            QPushButton:pressed {
+                background-color: #c0392b; /* Ciemniejszy przy kliknięciu */
+                border-style: inset; /* Efekt wciśnięcia */
+            }
+        """)
+        self._btn_enable_communication.clicked.connect(lambda: self._on_enable_communication())
+        self._btn_enable_communication.hide()
+
+    def _on_enable_communication(self):
+        self._btn_enable_communication.hide()
+        self._stop_communication = False

@@ -281,6 +281,8 @@ class GUI(QDialog):
 
         self.__update_connect_list_layout()
 
+        self.__action_setting_stop_communication.prepare_button(self)
+
     def __create_menu_bar(self):
         menu_bar = QMenuBar(self)
 
