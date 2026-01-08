@@ -88,11 +88,11 @@ class SectionLaneControlPanel(QGroupBox):
         list_lane_to_print = [x+1 for x in list_lane]
         self.__log_management(3, "LCP_CLICK", "", "Dodano nowe wiadomości przez 'Sterowanie torami': Adresaci {}, Wiadomość '{}'({})".format(list_lane_to_print, what_message_means, body_message))
         for lane in list_lane:
-            if body_message == b"T24":
+            if body_message == b"T14":
                 if not self.__enable_stop_time_on_lane[lane]:
                     continue
                 self.__stop_time_deadline_on_lane[lane] = time.time() + self.__stop_time_deadline_buffer_s
-            if body_message == b"T14":
+            if body_message == b"T24":
                 if not self.__enable_enter_on_lane[lane]:
                     continue
                 self.__stop_time_deadline_on_lane[lane] = 0
