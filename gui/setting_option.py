@@ -231,12 +231,12 @@ class SettingStopCommunicationBeforeTrial(_BaseMenuSetting):
                 margin-top: 50px;
             }
             QPushButton:hover {
-                background-color: #ff5e4d; /* Rozjaśnienie po najechaniu */
+                background-color: #ff6e5d;
                 border-color: #e74c3c;
             }
             QPushButton:pressed {
-                background-color: #c0392b; /* Ciemniejszy przy kliknięciu */
-                border-style: inset; /* Efekt wciśnięcia */
+                background-color: #b0291b;
+                border-style: inset;
             }
         """)
         self._btn_enable_communication.clicked.connect(lambda: self._on_enable_communication())
