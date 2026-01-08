@@ -9,6 +9,7 @@
   "com_timeout": 0.05,
   "com_write_timeout": 0.05,
   "minimum_number_of_lines_to_write_in_log_file": 1,
+  "stop_time_deadline_buffer_s": 15,
   "time_interval_break": 0.05,
   "min_log_priority": 2,
   "default_ip": "192.168.0.200",
@@ -17,5 +18,14 @@
   "warning_response_time": 0.4,
   "critical_response_time": 1.0,
   "number_of_lane": 6,
-  "tools_to_run_on_startup": ["Asystent Tworzenia Dru�yn"]
+  "tools_to_run_on_startup": ["Asystent Tworzenia Dru�yn"],
+  "enable_action_turn_on_printer": true,
+  "enable_action_start_time_in_trial": true,
+  "enable_action_stop_communication_after_block": true,
+  "enable_action_show_result_from_last_block": true,
+  "list_path_to_daten_files_on_lane": [
+    "F:\\logi\\a\\CCK Anzeige",
+    "C:\\Users\\PL\\Documents\\Github\\KregleLive_3_Server\\todel",
+    "F:\\logi\\b"
+  ]
 }

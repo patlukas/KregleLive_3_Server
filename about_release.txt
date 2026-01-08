@@ -1,2 +1,14 @@
-- Corrected full layout setup and zero-hit handling in the last full throw, skip analysis for full throws
-- Fix Jenkins
+- "Stop time" works even if the machine is not ready because it has not picked up the pins yet
+- "Enter" can be clicked only once in trial
+- Add option to auto turn on printer in game
+- Add option to add possibility to start time in trial
+- Add option to show result from last block on monitor when next trial is stopped
+
+
+Since version v1.3.0, the following field has been added to config.json:
+- stop_time_deadline_buffer_s
+- enable_action_turn_on_printer
+- enable_action_start_time_in_trial
+- enable_action_stop_communication_after_block
+- enable_action_show_result_from_last_block
+- list_path_to_daten_files_on_lane

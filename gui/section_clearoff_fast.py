@@ -4,6 +4,9 @@ from PyQt5.QtCore import Qt
 class SectionClearOffTest(QGroupBox):
 
     def __init__(self):
+        """
+        TODO: describe variables
+        """
         super().__init__("Szybsze kończenie zbieranych")
         self.__log_management = None
         self.__box = None
@@ -91,11 +94,28 @@ class SectionClearOffTest(QGroupBox):
         return box
 
     def analyze_message_from_lane(self, msg):
+        """
+        Level of interference:
+            8: b'____w_____________________________\r' & 3 throw to layout & enable full layout after 3 throw
+            0: otherwise
+
+        Activation conditions:
+            In:
+                b'____i0__\r'
+            Out:
+                None
+            In:
+                b'____w_____________________________\r' in place 'w' can be 'g', 'h', 'k', 'f'
+            Out:
+                None - if the full layout is not set
+                [set_full_layout], [], [], [b'____w_____________________________\r'] - otherwise
+
+        """
         if msg[4:6] == b"i0":
             lane = int(msg[3:4])
             self.__log_management(5, "S_COF_1", "", "Odebrano wiadomość i0 a torze '{}'({})".format(lane, msg ))
             if lane >= len(self.__list_throw_to_current_layout):
-                return [], [], [], []
+                return
             self.__checkboxes[0][lane].setChecked(self.__checkboxes[1][lane].isChecked())
             self.__checkboxes[1][lane].setChecked(False)
             self.__list_throw_to_current_layout[lane] = 0
@@ -103,16 +123,16 @@ class SectionClearOffTest(QGroupBox):
             self.__list_actually_layout[lane] = [0, 100] # TODO
             self.__list_count_all_throws[lane] = 0 # then in trial after 3x 0 this function not will set full layout
             self.__actualize_label(lane)
-            return [], [], [], []
+            return
         if msg[4:5] in [b"w", b"g", b"h", b"f", b"k"]:
             lane = int(msg[3:4])
             if lane >= len(self.__list_throw_to_current_layout):
-                return [], [], [], [] # {"message": msg, "time_wait": -1, "priority": 3}s
+                return
             throw_number = int(msg[5:8], 16)
             self.__log_management(4, "S_COF_2", "", "Odebrano wiadomość o rzucie {} na torze '{}'({})".format(throw_number, lane, msg))
             if self.__list_count_all_throws[lane] == 0:
                 self.__log_management(3, "S_COF_14", "", "Są próbne: jest rzut '{}'".format(throw_number))
-                return [], [], [], []
+                return
 
             if throw_number < self.__list_actually_layout[lane][0]:
                 self.__list_actually_layout[lane][0] = self.__list_last_layout[lane][0]
@@ -120,10 +140,10 @@ class SectionClearOffTest(QGroupBox):
 
             if throw_number <= self.__list_count_full_throws[lane]:
                 self.__log_management(3, "S_COF_12", "", "Są jeszcze pełne: jest rzut '{}', a pełne trwają {} rzutów".format(throw_number, self.__list_count_full_throws[lane]))
-                return [], [], [], []
+                return
             if throw_number >= self.__list_count_all_throws[lane]:
                 self.__log_management(3, "S_COF_13", "", "Gra na torze się zakończyła: jest rzut '{}', a pełne trwają {} rzutów".format(throw_number, self.__list_count_full_throws[lane]))
-                return [], [], [], []
+                return
             next_layout = msg[17:20]
             fallen_pins = msg[26:29]
 
@@ -150,15 +170,25 @@ class SectionClearOffTest(QGroupBox):
                 if self.__checkboxes[0][lane].isChecked():
                     return self.__analyse_max_throw_clearoff(lane, msg)
             else:
-                return [], [], [], []
-        return [], [], [], []
+                return
+        return
 
     def analyze_message_to_lane(self, msg):
+        """
+        Level of interference:
+            0
+
+        Activation conditions:
+            In:
+                b'____IG_____________________\r'
+            Out:
+                None
+        """
         if msg[4:6] == b"IG":
             lane = int(msg[1:2])
             self.__log_management(5, "S_COF_10", "", "Odebrano wiadomość IG na torze '{}'({})".format(lane, msg ))
             if lane >= len(self.__list_throw_to_current_layout):
-                return [], [], [], []
+                return
 
             count_full_throw = int(msg[6:9], 16)
             count_clear_off_throw = int(msg[9:12], 16)
@@ -168,8 +198,8 @@ class SectionClearOffTest(QGroupBox):
             self.__list_last_layout[lane] = [0, count_full_throw + self.__max_throw_to_layout]
             self.__log_management(5, "S_COF_11", "", "Na torze '{}' włączono meczówkę na {}+{} rzutów".format(lane, count_full_throw, count_clear_off_throw))
             self.__actualize_label(lane)
-            return [], [], [], []
-        return [], [], [], []
+            return
+        return
 
     def __analyse_max_throw_clearoff(self, lane, message):
         self.__log_management(7, "S_COF_4", "", "Zakończenie układu i ustawienie pełnego układu na torze: {}".format(lane))

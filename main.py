@@ -3,6 +3,8 @@ from PyQt5.QtGui import QBrush
 from connection_manager import ConnectionManager
 from gui.section_lane_control_panel import SectionLaneControlPanel
 from gui.section_clearoff_fast import SectionClearOffTest
+from gui.setting_option import SettingTurnOnPrinter, SettingStartTimeInTrial, SettingStopCommunicationBeforeTrial, \
+    SettingShowResultOnMonitorFromLastGame
 from gui.socket_section import SocketSection
 from log_management import LogManagement
 from config_reader import ConfigReader, ConfigReaderError
@@ -32,7 +34,7 @@ from PyQt5.QtCore import QTimer, Qt
 from _thread import start_new_thread
 
 APP_NAME = "KL3S"
-APP_VERSION = "1.2.4"
+APP_VERSION = "1.3.0"
 
 class GUI(QDialog):
     """
@@ -91,6 +93,11 @@ class GUI(QDialog):
         self.__socket_section = None
         self.__section_lane_control_panel = SectionLaneControlPanel()
         self.__section_clearoff_fast = SectionClearOffTest()
+
+        self.__action_setting_turn_on_printer = SettingTurnOnPrinter(self)
+        self.__action_setting_start_time_in_trial = SettingStartTimeInTrial(self)
+        self.__action_setting_stop_communication = SettingStopCommunicationBeforeTrial(self)
+        self.__action_show_result_from_last_block = SettingShowResultOnMonitorFromLastGame(self)
 
         self.__set_layout()
         self.__init_program()
@@ -170,25 +177,43 @@ class GUI(QDialog):
                                           self.__config["flags_to_run_kegeln_program"])
             self.__log_management.add_log(2, "COM_MNGR", str(self.__com_result[0]), self.__com_result[1])
 
-            self.__connection_manager = ConnectionManager(self.__config["com_x"], self.__config["com_y"],
-                                                          self.__config["com_timeout"],
-                                                          self.__config["com_write_timeout"],
-                                                          self.__log_management.add_log,
-                                                          self.__config["time_interval_break"],
-                                                          self.__config["max_waiting_time_for_response"],
-                                                          self.__config["critical_response_time"],
-                                                          self.__config["warning_response_time"],
-                                                          self.__config["number_of_lane"]
-                                                          )
+            self.__connection_manager = ConnectionManager(
+                self.__config["com_x"],
+                self.__config["com_y"],
+                self.__config["com_timeout"],
+                self.__config["com_write_timeout"],
+                self.__log_management.add_log,
+                self.__config["time_interval_break"],
+                self.__config["max_waiting_time_for_response"],
+                self.__config["critical_response_time"],
+                self.__config["warning_response_time"],
+                self.__config["number_of_lane"],
+                self.__action_setting_stop_communication.communication_to_lane_is_enabled
+            )
             self.__socket_section.set_default_address(self.__config["default_ip"], self.__config["default_port"])
             self.__socket_section.set_func_to_get_list_ip(self.__connection_manager.on_get_list_ip)
             self.__prepare_lane_stat_table(self.__config["number_of_lane"])
-            self.__section_lane_control_panel.init(self.__config["number_of_lane"], self.__log_management.add_log, self.__connection_manager.add_message_to_x)
+            self.__section_lane_control_panel.init(self.__config["number_of_lane"], self.__config["stop_time_deadline_buffer_s"], self.__log_management.add_log, self.__connection_manager.add_message_to_x)
             self.__section_clearoff_fast.init(self.__config["number_of_lane"], self.__log_management.add_log)
             self.__launch_startup_tools(self.__config["tools_to_run_on_startup"])
 
+            self.__action_show_result_from_last_block.set_list_path_to_lane_dir(self.__config["list_path_to_daten_files_on_lane"])
+
+            self.__action_setting_turn_on_printer.on_toggle(self.__config["enable_action_turn_on_printer"])
+            self.__action_setting_start_time_in_trial.on_toggle(self.__config["enable_action_start_time_in_trial"])
+            self.__action_setting_stop_communication.on_toggle(self.__config["enable_action_stop_communication_after_block"])
+            self.__action_show_result_from_last_block.on_toggle(self.__config["enable_action_show_result_from_last_block"])
+
+            self.__connection_manager.add_func_for_analyze_msg_to_recv(lambda msg: self.__action_setting_stop_communication.analyze_message_from_lane(msg))
+            self.__connection_manager.add_func_for_analyze_msg_to_recv(lambda msg: self.__action_show_result_from_last_block.analyze_message_from_lane(msg))
             self.__connection_manager.add_func_for_analyze_msg_to_recv(lambda msg: self.__section_clearoff_fast.analyze_message_from_lane(msg))
+            self.__connection_manager.add_func_for_analyze_msg_to_recv(lambda msg: self.__section_lane_control_panel.analyze_message_from_lane(msg))
+
             self.__connection_manager.add_func_for_analyze_msg_to_lane(lambda msg: self.__section_clearoff_fast.analyze_message_to_lane(msg))
+            self.__connection_manager.add_func_for_analyze_msg_to_lane(lambda msg: self.__action_setting_turn_on_printer.analyze_message_to_lane(msg))
+            self.__connection_manager.add_func_for_analyze_msg_to_lane(lambda msg: self.__action_setting_stop_communication.analyze_message_to_lane(msg))
+            self.__connection_manager.add_func_for_analyze_msg_to_lane(lambda msg: self.__action_show_result_from_last_block.analyze_message_to_lane(msg))
+            self.__connection_manager.add_func_for_analyze_msg_to_lane(lambda msg: self.__action_setting_start_time_in_trial.analyze_message_to_lane(msg))
 
             start_new_thread(self.__connection_manager.start, ())
         except ConfigReaderError as e:
@@ -263,8 +288,16 @@ class GUI(QDialog):
 
         self.__update_connect_list_layout()
 
+        self.__action_setting_stop_communication.prepare_button(self)
+
     def __create_menu_bar(self):
         menu_bar = QMenuBar(self)
+
+        settings = menu_bar.addMenu("Ustawienia")
+        settings.addAction(self.__action_setting_turn_on_printer.get_menu_action())
+        settings.addAction(self.__action_setting_start_time_in_trial.get_menu_action())
+        settings.addAction(self.__action_setting_stop_communication.get_menu_action())
+        settings.addAction(self.__action_show_result_from_last_block.get_menu_action())
 
         ip_menu = menu_bar.addMenu("Adresy IP")
         ip_refresh_action = QAction("Odśwież listę adresów IP", self)

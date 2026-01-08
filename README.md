@@ -66,7 +66,12 @@ The application is configured using the `config.json` file. Below is a descripti
 - `warning_response_time`: Time (in seconds) after which a first-level warning will be issued about a delayed response.
 - `critical_response_time`: Time (in seconds) after which a second-level (critical) warning will be issued about a severely delayed response.
 - `number_of_lane`: Number of bowling lanes managed by the application.
-
+- `stop_time_deadline_buffer_s`: Time (in seconds) how long the program waits for a message from lane with a throw to send "stop time"
+- `enable_action_turn_on_printer`: Enable/Disable action to auto turn on printer after program run
+- `enable_action_start_time_in_trial`: Enable/Disable action to add possibility to turn on time in trial
+- `enable_action_stop_communication_after_block`: Enable/Disable action to stop communication after block
+- `enable_action_show_result_from_last_block`: Enable/Disable action to show results from last block
+- `list_path_to_daten_files_on_lane`: List with paths to the directory with the daten.ini file on lanes
 ## Program Structure
 
 The program consists of the following elements:
@@ -116,7 +121,9 @@ pip install -r requirements.txt
 
 | Version          | Release Date      | Commits | Changes                                                             |
 |------------------|-------------------|---------|---------------------------------------------------------------------|
-| **v1.2.5.0**     | 🚧 In Development |         |                                                                     |
+| **v1.3.2.0**     | 🚧 In Future      |         |                                                                     |
+| **v1.3.1.0**     | 🚧 In Development |         |                                                                     |
+| **v1.3.0.0**     | 2025-01-08        | 115     | Add more option to analyze message                                  |
 | **v1.2.4.0**     | 2025-11-17        | 80      | Faster finish clean-off after empty throw & Fix Jenkins             |
 | **v1.2.3.0**     | 2025-11-13        | 78      | Fix bugs with earlier finished clear off                            |
 | **v1.2.2.1**     | 2025-11-13        | 75      | Set app icon for exe file                                           |
