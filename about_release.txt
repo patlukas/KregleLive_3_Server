@@ -5,7 +5,7 @@
 - Add option to show result from last block on monitor when next trial is stopped
 
 
-Since version v1.3.x, the following field has been added to config.json:
+Since version v1.3.0, the following field has been added to config.json:
 - stop_time_deadline_buffer_s
 - enable_action_turn_on_printer
 - enable_action_start_time_in_trial
