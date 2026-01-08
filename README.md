@@ -70,7 +70,8 @@ The application is configured using the `config.json` file. Below is a descripti
 - `enable_action_turn_on_printer`: Enable/Disable action to auto turn on printer after program run
 - `enable_action_start_time_in_trial`: Enable/Disable action to add possibility to turn on time in trial
 - `enable_action_stop_communication_after_block`: Enable/Disable action to stop communication after block
-
+- `enable_action_show_result_from_last_block`: Enable/Disable action to show results from last block
+- `list_path_to_daten_files_on_lane`: List with paths to the directory with the daten.ini file on lanes
 ## Program Structure
 
 The program consists of the following elements:

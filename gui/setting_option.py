@@ -1,5 +1,7 @@
 from PyQt5.QtWidgets import QAction, QPushButton
 from abc import ABCMeta
+import os
+import shutil
 
 from utils.messages import prepare_message_and_encapsulate, encapsulate_message
 
@@ -230,3 +232,86 @@ class SettingStopCommunicationBeforeTrial(_BaseMenuSetting):
     def _on_enable_communication(self):
         self._btn_enable_communication.hide()
         self._stop_communication = False
+
+
+class SettingShowResultOnMonitorFromLastGame(_BaseMenuSetting):
+    """
+    Menu setting responsible show result from last block on monitor. (replace daten.ini)
+    """
+    def __init__(self, parent):
+        """
+        :list_path_to_lane_dir: list[str] - list with path to dir where is daten.ini
+        """
+        _BaseMenuSetting.__init__(
+            self,
+            parent,
+            "Pokaż wynik na monitorze z poprzedniej gry",
+            default_enabled=True
+        )
+        self._file_name = "daten.ini"
+        self._file_name_archive = "daten_last.ini"
+        self._file_name_future = "daten_next.ini"
+        self._list_path_to_lane_dir = []
+        self._is_trial = False
+
+    def set_list_path_to_lane_dir(self, list_path_to_lane_dir):
+        self._list_path_to_lane_dir = list_path_to_lane_dir
+
+    def analyze_message_to_lane(self, message: bytes):
+        """
+        Activation conditions:
+            In:
+                b'____P_________\r'
+            Out:
+                [], [], [], []
+        """
+        if not self.is_enabled():
+            return [], [], [], []
+
+        if message[4:5] == b"P" and not self._is_trial:
+            self._is_trial = True
+            self.__copy_on_lanes(self._file_name, self._file_name_future)
+            self.__copy_on_lanes(self._file_name_archive, self._file_name, True)
+
+        return [], [], [], []
+
+    def analyze_message_from_lane(self, message: bytes):
+        """
+        Activation conditions:
+            In:
+                b'____i0__\r'
+                b'____p1__\r'
+            Out:
+                [], [], [], []
+        """
+        if not self.is_enabled():
+            return [], [], [], []
+
+        if message[4:6] == b"i0":
+            self._is_trial = False
+            self.__copy_on_lanes(self._file_name, self._file_name_archive)
+
+        if message[4:6] == b"p1":
+            self.__copy_on_lanes(self._file_name_future, self._file_name, True)
+
+        return [], [], [], []
+
+    def __copy_file(self, src, target, remove_src=False):
+        if not os.path.exists(src):
+            print("Brak pliku:", src)
+            return
+
+        try:
+            shutil.copy2(src, target)
+            print("Skopiowano:", src, "->", target)
+            if remove_src:
+                os.remove(src)
+                print("Del", src)
+        except Exception as e:
+            print("Błąd kopiowania:", src, e)
+
+    def __copy_on_lanes(self, src_name, target_name, remove_src=False):
+        for s in self._list_path_to_lane_dir:
+            src = os.path.join(s, src_name)
+            target = os.path.join(s, target_name)
+            self.__copy_file(src, target, remove_src)

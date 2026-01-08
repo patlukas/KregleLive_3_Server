@@ -72,6 +72,8 @@ class ConfigReader:
             "stop_time_deadline_buffer_s",
             "enable_action_turn_on_printer",
             "enable_action_start_time_in_trial",
-            "enable_action_stop_communication_after_block"
+            "enable_action_stop_communication_after_block",
+            "enable_action_show_result_from_last_block",
+            "list_path_to_daten_files_on_lane"
         ]
         return list_settings
