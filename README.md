@@ -123,7 +123,7 @@ pip install -r requirements.txt
 |------------------|-------------------|---------|---------------------------------------------------------------------|
 | **v1.3.2.0**     | 🚧 In Future      |         |                                                                     |
 | **v1.3.1.0**     | 🚧 In Development |         |                                                                     |
-| **v1.3.0.0**     | 2025-01-08        | 117     | Add more option to analyze message                                  |
+| **v1.3.0.0**     | 2025-01-08        | 118     | Add more option to analyze message                                  |
 | **v1.2.4.0**     | 2025-11-17        | 80      | Faster finish clean-off after empty throw & Fix Jenkins             |
 | **v1.2.3.0**     | 2025-11-13        | 78      | Fix bugs with earlier finished clear off                            |
 | **v1.2.2.1**     | 2025-11-13        | 75      | Set app icon for exe file                                           |
