@@ -219,15 +219,26 @@ class ConnectionManager:
             self.__on_add_log(10, "CON_READ_ERROR", com_in.get_alias(), e)
             return -1, b""
 
-    def __analyze_msg(self, message, list_func_to_analyze):
+    def  __analyze_msg(self, message, list_func_to_analyze):
         """
         TODO
         """
-        msg_obj = {"message": message, "time_wait": -1, "priority": 3}
+
         for func in list_func_to_analyze:
-            com_in_front, com_in_end, com_out_front, com_out_end = func(message)
-            if len(com_in_front) + len(com_in_end) + len(com_out_front) + len(com_out_end) != 0:
-                return com_in_front, com_in_end, com_out_front, com_out_end
+            result = func(message)
+            if result is None:
+                continue
+            if isinstance(result, bytes):
+                message = result
+            elif isinstance(result, tuple):
+                if len(result) != 4:
+                    self.__on_add_log(10, "CON_ANA_MSG_1", "", result)
+                elif len(result[0]) + len(result[1]) + len(result[2]) + len(result[3]) == 0:
+                    self.__on_add_log(10, "CON_ANA_MSG_2", "", result)
+                else:
+                    return result
+
+        msg_obj = {"message": message, "time_wait": -1, "priority": 3}
         return [], [], [], [msg_obj]
 
     def __edit_message_on_the_fly(self, options: int, messages: bytes) -> bytes:
