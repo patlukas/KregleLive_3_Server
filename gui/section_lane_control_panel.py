@@ -140,6 +140,10 @@ class SectionLaneControlPanel(QGroupBox):
         Args:
             msg (bytes): Incoming message received from a lane.
 
+        Level of interference:
+            8: b'____w_____________________________\r' & was clicked "Stop time" when pins weren't standing
+            0: otherwise
+
         Activation conditions:
             In:
                 b'____i0__\r'
@@ -147,15 +151,15 @@ class SectionLaneControlPanel(QGroupBox):
                 b'____p0__\r'
                 b'____p1__\r'
             Out:
-                [], [], [], []
+                None
             In:
                 b'____w_____________________________\r' in place 'w' can be 'g', 'h', 'k', 'f'
             Out:
-                [], [], [], [] - if time no will be stop
+                None - if time no will be stop
                 [T14], [], [], [b'____w_____________________________\r'] - otherwise
 
         Returns:
-            [list, list, list, list]
+            None || [list, list, list, list]
         """
         lane_id = extract_lane_id_from_incoming_message(msg, self.__number_of_lane)
         if lane_id == -1:
@@ -238,17 +242,17 @@ class SectionLaneControlPanel(QGroupBox):
             lane_id <int> - lane number from where message was sent
 
         return:
-            if the message is not required: [], [], [], []
+            if the message is not required: None
             otherwise: [stop_time], [], [], [msg]
         """
         if len(msg) != 35:
-            return [], [], [], []
+            return
         if not self.__enable_stop_time_on_lane[lane_id]:
-            return [], [], [], []
+            return
 
         if time.time() <= self.__stop_time_deadline_on_lane[lane_id]:
             self.__stop_time_deadline_on_lane[lane_id] = 0
             packet_to_lane = prepare_message_to_lane_and_encapsulate(lane_id, b"T14", 9, 0)
             packet_from_lane = encapsulate_message(msg, 3, -1)
             return [packet_to_lane], [], [], [packet_from_lane]
-        return [], [], [], []
+        return

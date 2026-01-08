@@ -3,7 +3,7 @@ from abc import ABCMeta
 import os
 import shutil
 
-from utils.messages import prepare_message_and_encapsulate, encapsulate_message
+from utils.messages import prepare_message_and_encapsulate, encapsulate_message, prepare_message
 
 
 class _BaseMenuSetting(metaclass=ABCMeta):
@@ -72,7 +72,7 @@ class _BaseMenuSetting(metaclass=ABCMeta):
 
         :param message: <bytes> Message to analyze (terminated with b"\r")
         """
-        return [], [], [], []
+        return
 
     def analyze_message_from_lane(self, message: bytes):
         """
@@ -83,7 +83,7 @@ class _BaseMenuSetting(metaclass=ABCMeta):
 
         :param message: <bytes> Message to analyze (terminated with b"\r")
         """
-        return [], [], [], []
+        return
 
 
 class SettingTurnOnPrinter(_BaseMenuSetting):
@@ -104,21 +104,24 @@ class SettingTurnOnPrinter(_BaseMenuSetting):
         Analyze an outgoing message and optionally inject
         a modified packet to enable the printer.
 
+        Level of interference:
+            2: b'____IG__________________0__\r'
+            0: otherwise
+
         Activation conditions:
             In:
                 b'____IG__________________0__\r'
             Out:
-                [], [], [], [b'____IG__________________1__\r']
+                b'____IG__________________1__\r'
         """
         if not self.is_enabled():
-            return [], [], [], []
+            return
         if len(message) < 28 or message[4:6] != b"IG":
-            return [], [], [], []
+            return
         if message[24:25] != b"0":
-            return [], [], [], []
+            return
         content_msg = message[:24] + b"1"
-        packet = prepare_message_and_encapsulate(content_msg, 3, -1) # TODO: can a fixed value (e.g. 250) be used instead of the default -1?
-        return [], [], [], [packet]
+        return prepare_message(content_msg)
 
 
 class SettingStartTimeInTrial(_BaseMenuSetting):
@@ -135,6 +138,10 @@ class SettingStartTimeInTrial(_BaseMenuSetting):
 
     def analyze_message_to_lane(self, message: bytes):
         """
+        Level of interference:
+            9: b'____P_________\r' - every time
+            0: otherwise
+
         Activation conditions:
             In:
                 b'____P_________\r'
@@ -142,9 +149,9 @@ class SettingStartTimeInTrial(_BaseMenuSetting):
                 [], [], [], [b'____P_________\r', T41, T14]
         """
         if not self.is_enabled():
-            return [], [], [], []
+            return
         if len(message) != 15 or message[4:5] != b"P":
-            return [], [], [], []
+            return
 
         packet_trial = encapsulate_message(message, 3, -1) # TODO: can a fixed value (e.g. 250) be used instead of the default -1?
         packet_pick_up = prepare_message_and_encapsulate(message[:4] + b"T41", 3, -1)
@@ -172,36 +179,42 @@ class SettingStopCommunicationBeforeTrial(_BaseMenuSetting):
 
     def analyze_message_to_lane(self, message: bytes):
         """
+        Level of interference:
+            0
+
         Activation conditions:
             In:
                 b'____P_________\r'
             Out:
-                [], [], [], []
+                None
         """
         if not self._was_trial_end:
-            return [], [], [], []
+            return
         if len(message) != 15 or message[4:5] != b"P":
-            return [], [], [], []
+            return
 
         self._was_trial_end = False
         if self.is_enabled():
             self._stop_communication = True
             self._btn_enable_communication.show()
 
-        return [], [], [], []
+        return
 
     def analyze_message_from_lane(self, message: bytes):
         """
+        Level of interference:
+            0
+
         Activation conditions:
             In:
                 b'____p0__\r'
             Out:
-                [], [], [], []
+                None
         """
         if len(message) != 9 or message[4:6] != b"p0":
-            return [], [], [], []
+            return
         self._was_trial_end = True
-        return [], [], [], []
+        return
 
     def prepare_button(self, parent):
         self._btn_enable_communication = QPushButton("ROZPOCZNIJ KOLEJNY BLOK", parent)
@@ -259,33 +272,39 @@ class SettingShowResultOnMonitorFromLastGame(_BaseMenuSetting):
 
     def analyze_message_to_lane(self, message: bytes):
         """
+        Level of interference:
+            0
+
         Activation conditions:
             In:
                 b'____P_________\r'
             Out:
-                [], [], [], []
+                None
         """
         if not self.is_enabled():
-            return [], [], [], []
+            return
 
         if message[4:5] == b"P" and not self._is_trial:
             self._is_trial = True
             self.__copy_on_lanes(self._file_name, self._file_name_future)
             self.__copy_on_lanes(self._file_name_archive, self._file_name, True)
 
-        return [], [], [], []
+        return
 
     def analyze_message_from_lane(self, message: bytes):
         """
+        Level of interference:
+            0
+
         Activation conditions:
             In:
                 b'____i0__\r'
                 b'____p1__\r'
             Out:
-                [], [], [], []
+                None
         """
         if not self.is_enabled():
-            return [], [], [], []
+            return
 
         if message[4:6] == b"i0":
             self._is_trial = False
@@ -294,7 +313,7 @@ class SettingShowResultOnMonitorFromLastGame(_BaseMenuSetting):
         if message[4:6] == b"p1":
             self.__copy_on_lanes(self._file_name_future, self._file_name, True)
 
-        return [], [], [], []
+        return
 
     def __copy_file(self, src, target, remove_src=False):
         if not os.path.exists(src):
