@@ -6,7 +6,7 @@ import shutil
 from utils.messages import prepare_message_and_encapsulate, encapsulate_message, prepare_message
 
 
-class _BaseMenuSetting(metaclass=ABCMeta):
+class CheckboxActionAnalyzedMessage(metaclass=ABCMeta):
     """
     Abstract base class for a checkable QAction-based menu setting.
     """
@@ -86,13 +86,13 @@ class _BaseMenuSetting(metaclass=ABCMeta):
         return
 
 
-class SettingTurnOnPrinter(_BaseMenuSetting):
+class SettingTurnOnPrinter(CheckboxActionAnalyzedMessage):
     """
    Menu setting responsible for enabling the printer
    when a 'IG' message is sent with disable printer.
    """
     def __init__(self, parent):
-        _BaseMenuSetting.__init__(
+        CheckboxActionAnalyzedMessage.__init__(
             self,
             parent,
             "Uruchom drukarkę przy meczówce",
@@ -124,12 +124,12 @@ class SettingTurnOnPrinter(_BaseMenuSetting):
         return prepare_message(content_msg)
 
 
-class SettingStartTimeInTrial(_BaseMenuSetting):
+class SettingStartTimeInTrial(CheckboxActionAnalyzedMessage):
     """
     Menu setting responsible for add possibility to start time in trial.
     """
     def __init__(self, parent):
-        _BaseMenuSetting.__init__(
+        CheckboxActionAnalyzedMessage.__init__(
             self,
             parent,
             "Dodaj opcję włączenia czasu w próbnych",
@@ -159,12 +159,12 @@ class SettingStartTimeInTrial(_BaseMenuSetting):
         return [], [], [], [packet_trial, packet_pick_up, packet_stop_time]
 
 
-class SettingStopCommunicationBeforeTrial(_BaseMenuSetting):
+class SettingStopCommunicationBeforeTrial(CheckboxActionAnalyzedMessage):
     """
     Menu setting responsible stop communication before new block.
     """
     def __init__(self, parent):
-        _BaseMenuSetting.__init__(
+        CheckboxActionAnalyzedMessage.__init__(
             self,
             parent,
             "Wstrzymuj kolejny blok",
@@ -247,7 +247,7 @@ class SettingStopCommunicationBeforeTrial(_BaseMenuSetting):
         self._stop_communication = False
 
 
-class SettingShowResultOnMonitorFromLastGame(_BaseMenuSetting):
+class SettingShowResultOnMonitorFromLastGame(CheckboxActionAnalyzedMessage):
     """
     Menu setting responsible show result from last block on monitor. (replace daten.ini)
     """
@@ -255,7 +255,7 @@ class SettingShowResultOnMonitorFromLastGame(_BaseMenuSetting):
         """
         :list_path_to_lane_dir: list[str] - list with path to dir where is daten.ini
         """
-        _BaseMenuSetting.__init__(
+        CheckboxActionAnalyzedMessage.__init__(
             self,
             parent,
             "Pokaż wynik na monitorze z poprzedniej gry",
