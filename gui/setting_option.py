@@ -1,12 +1,11 @@
 from PyQt5.QtWidgets import QAction, QPushButton
-from abc import ABCMeta
 import os
 import shutil
 
 from utils.messages import prepare_message_and_encapsulate, encapsulate_message, prepare_message
 
 
-class CheckboxActionAnalyzedMessage(metaclass=ABCMeta):
+class CheckboxActionAnalyzedMessage:
     """
     Abstract base class for a checkable QAction-based menu setting.
     """
@@ -33,6 +32,10 @@ class CheckboxActionAnalyzedMessage(metaclass=ABCMeta):
         """
         print(self._label, checked)
         self._is_enabled = checked
+        self._after_toggled()
+
+    def _after_toggled(self):
+        pass
 
     def on_toggle(self, new_state=None) -> None:
         """
