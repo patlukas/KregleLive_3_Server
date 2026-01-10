@@ -237,7 +237,13 @@ class ConnectionManager:
                     self.__on_add_log(10, "CON_ANA_MSG_2", "", result)
                 else:
                     return result
-
+            elif isinstance(result, dict):
+                # When you want prepare packet with specific time_wait or priority, you must return [], [], [], [packet],
+                # not only packet
+                self.__on_add_log(10, "CON_ANA_MSG_3", "", result)
+            else:
+                self.__on_add_log(10, "CON_ANA_MSG_4", "", result)
+        print("_", message)
         msg_obj = {"message": message, "time_wait": -1, "priority": 3}
         return [], [], [], [msg_obj]
 
