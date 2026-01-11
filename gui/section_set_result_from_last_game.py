@@ -2,17 +2,16 @@ from gui.setting_option import CheckboxActionAnalyzedMessage
 from utils.messages import extract_lane_id_from_outgoing_message, prepare_message, encapsulate_message, \
     prepare_message_and_encapsulate
 
-from PyQt5.QtWidgets import QGroupBox, QGridLayout, QLabel, QHBoxLayout
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
+from PyQt5.QtWidgets import QGroupBox, QGridLayout, QLabel, QHBoxLayout, QWidget, QComboBox, QLineEdit
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QIntValidator
 
 
 class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessage, QGroupBox):
-    """
-    """
     def __init__(self, parent):
         """
+            self.__round_in_block - -1 - when is trial, 0 on first lane, 1 on second, ...
+            self.__is_during_game - True after "IG" and "P", False after "p0" and "i0"
         """
         QGroupBox.__init__(self, "Wynik z elimiminacji", parent)
         CheckboxActionAnalyzedMessage.__init__(
@@ -82,10 +81,10 @@ class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessage, QGroupBox):
 
     def __create_value_editor(self, lane_id: int, stored_values: list, list_value_actions: list) -> QLineEdit:
         editor  = QLineEdit()
-        editor .setValidator(QIntValidator(0, 4095))
-        editor .setMaxLength(4)
-        editor .setFixedWidth(60)
-        editor .setAlignment(Qt.AlignCenter)
+        editor.setValidator(QIntValidator(0, 4095))
+        editor.setMaxLength(4)
+        editor.setFixedWidth(60)
+        editor.setAlignment(Qt.AlignCenter)
 
         editor .textEdited.connect(lambda value, lane=lane_id: self.__handle_user_value_edit(stored_values, lane, value))
 
@@ -119,6 +118,11 @@ class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessage, QGroupBox):
 
     @staticmethod
     def __int_to_hex_bytes(value_int: int) -> bytes:
+        """
+        <0      => b"000"
+        0-4095  => b"000" - b"FFF"
+        >4095   => b"000"
+        """
         if not 0 <= value_int <= 4095:
             return b"000"
 
@@ -127,14 +131,27 @@ class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessage, QGroupBox):
     def analyze_message_to_lane(self, message: bytes):
         """
         Level of interference:
-            3: b'____IG_________000_________\r'
+            8: b'____IG_________000_________\r' and mode 1
+            3: b'____IG_________000_________\r' and mode 0
+            3: b'____IG_____________________\r' and mode 2
+            1: b'____P_________\r'
             0: otherwise
 
         Activation conditions:
-            In:
+            In: (mode 1)
                 b'____IG_________000_________\r'
             Out:
-                b'____IG_________xyz_________\r - 'xyz' result from last game
+                [], [], [], [b'____IG_________xyz_________\r', Z] - 'xyz' result from last game
+
+            In:
+                b'____IG_____________________\r'
+            Out:
+                b'____IG_________xyz_________\r' - 'xyz' result from last game
+
+            In:
+                b'____P_________\r'
+            Out:
+                None
         """
         if not self.is_enabled():
             return
@@ -158,12 +175,16 @@ class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessage, QGroupBox):
 
     def analyze_message_from_lane(self, message: bytes):
         """
-        Analyze a message received from the lane.
+        Level of interference:
+            1: b'____i0__\r'
+            1: b'____p0__\r'
+            0: otherwise
 
-        Subclasses must implement this method and decide whether
-        to act based on the current enabled state.
-
-        :param message: <bytes> Message to analyze (terminated with b"\r")
+        Activation conditions:
+            In: (mode 1)
+                b'____i0__\r' || b'____p0__\r'
+            Out:
+                None
         """
         if message[4:6] == b"i0" or message[4:6] == b"p0":
             self.__is_during_game = False
@@ -185,7 +206,7 @@ class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessage, QGroupBox):
         if self.__mode == 1:
             if total_sum > 0:
                 return
-            
+
             message_z = message[:4] + b"Z000000000" + new_total_sum_bytes +  b"000000000000000"
             packet_ig = encapsulate_message(message)
             packet_z = prepare_message_and_encapsulate(message_z)
