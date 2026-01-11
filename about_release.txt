@@ -1,0 +1,2 @@
+Fix bug: send 'Enter' after 'Stop time'
+Add section to set result from last game as total sum

@@ -24,15 +24,6 @@
   "enable_action_stop_communication_after_block": true,
   "enable_action_show_result_from_last_block": true,
   "list_path_to_daten_files_on_lane": [
-    "F:\\logi\\a\\CCK Anzeige",
-    "C:\\Users\\PL\\Documents\\Github\\KregleLive_3_Server\\todel",
-    "F:\\logi\\b",
-    "\\\\PL\\Users\\PL\\Documents\\todel",
-    "\\\\Bahneins\\c\\CCK Anzeige",
-    "\\\\Bahnzwei\\c\\CCK Anzeige",
-    "\\\\Bahndrei\\c\\CCK Anzeige",
-    "\\\\Bahnvier\\c\\CCK Anzeige",
-    "\\\\BahnFuenf\\c\\CCK Anzeige",
-    "\\\\BahnSechs\\c\\CCK Anzeige"
+    "C:\\Users\\PL\\Documents\\Github\\KregleLive_3_Server\\todel"
   ]
 }
