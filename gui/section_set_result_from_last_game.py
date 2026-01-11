@@ -26,7 +26,9 @@ class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessage, QGroupBox):
         self.__round_in_block = -1
         self.__is_during_game = False
         self.__list_sum = []
+        self.__list_sum_next = []
         self.__list_set_input_value = []
+        self.__list_set_next_input_value = []
         self.__mode = 2
 
     def _after_toggled(self):
@@ -36,13 +38,15 @@ class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessage, QGroupBox):
     def init(self, number_of_lane: int):
         self.__number_of_lane = number_of_lane
         self.__list_sum = [0 for _ in range(number_of_lane)]
+        self.__list_sum_next = [0 for _ in range(number_of_lane)]
         self.__list_set_input_value = [lambda value="": None for _ in range(number_of_lane)]
+        self.__list_set_next_input_value = [lambda value="": None for _ in range(number_of_lane)]
         self.__prepare_section()
 
     def __prepare_section(self):
-        self.setToolTip("Dodanie wyniku z eliminacji do aktualnej gry.\nWyniki będą automatycznie przepisywane na odpowiednie tory, po otrzymaniu komunikatu o nowym torze.\n"
-                        "Ustawianie wartości odbywa się tylko i wyłącznie w pierwszej wiadomości na torze.\n"
-                        "Po otrzymaniu wiadomości, że będą próbne, wyniki zostaną wykasowane i wtedy można wprowadzić wyniki dotyczące następnego bloku.")
+        self.setToolTip("Dodanie wyniku z eliminacji do aktualnej gry.\n\nWyniki będą automatycznie przepisywane na odpowiednie tory, po otrzymaniu komunikatu o kolejnym torze.\n"
+                        "Ustawianie wartości odbywa się tylko i wyłącznie w pierwszej wiadomości na torze.\n\n"
+                        "Po otrzymaniu wiadomości o próbnych, wyniki z rzędu 'Następny blok' zostaną przeniesione do 'Aktualny blok'.")
         old_layout = self.layout()
         if old_layout:
             QWidget().setLayout(old_layout)
@@ -57,43 +61,55 @@ class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessage, QGroupBox):
         ])
         combo_modes.currentIndexChanged.connect(self.__selected_mode)
         combo_modes.setCurrentIndex(self.__mode)
-        layout.addWidget(combo_modes, 0, 0, 1, self.__number_of_lane)
+        layout.addWidget(combo_modes, 0, 0, 1, self.__number_of_lane+1)
+
+        label_now = QLabel("Aktualny blok")
+        label_next = QLabel("Następny blok")
+        layout.addWidget(label_now, 2, 0)
+        layout.addWidget(label_next, 3, 0)
+
 
         for i in range(self.__number_of_lane):
-            pair_layout = QVBoxLayout()
-            pair_layout.setSpacing(0)
-
             label = QLabel("Tor " + str(i + 1))
             label.setAlignment(Qt.AlignCenter)
+            layout.addWidget(label, 1, 1 + i)
 
-            input_result = QLineEdit()
-            input_result.setValidator(QIntValidator(0, 4095))
-            input_result.setMaxLength(4)
-            input_result.setFixedWidth(45)
-            input_result.setAlignment(Qt.AlignCenter)
-            input_result.textEdited.connect(lambda value, lane=i: self.__edited_current_additional_value(lane, value))
+        for i in range(self.__number_of_lane):
+            line_edit = self.__prepare_line_edit_el()
+            line_edit.textEdited.connect(lambda value, lane=i: self.__edited_additional_value(self.__list_sum ,lane, value))
 
-            self.__list_set_input_value[i] = lambda value=None, el=input_result, lane_id=i: self.__change_current_additional_value(el, lane_id, value)
+            self.__list_set_input_value[i] = lambda value=None, el=line_edit, lane_id=i: self.__change_additional_value(self.__list_sum, el, lane_id, value)
+            layout.addWidget(line_edit, 2, 1 + i)
 
-            pair_layout.addWidget(label)
-            pair_layout.addWidget(input_result)
-            pair_layout.addStretch()
+        for i in range(self.__number_of_lane):
+            input_result_next = self.__prepare_line_edit_el(i, self.__list_sum_next)
+            input_result_next.textEdited.connect(lambda value, lane=i: self.__edited_additional_value(self.__list_sum_next, lane, value))
 
-            layout.addLayout(pair_layout, 1, i)
+            self.__list_set_next_input_value[i] = lambda value=None, el=input_result_next, lane_id=i: self.__change_additional_value(self.__list_sum_next, el, lane_id, value)
+            layout.addWidget(input_result_next, 3, 1 + i)
 
         self.setLayout(layout)
+
+    def __prepare_line_edit_el(self):
+        line_edit = QLineEdit()
+        line_edit.setValidator(QIntValidator(0, 4095))
+        line_edit.setMaxLength(4)
+        line_edit.setFixedWidth(60)
+        line_edit.setAlignment(Qt.AlignCenter)
+
+        return line_edit
 
     def __selected_mode(self, index: int):
         self.__mode = index
 
-    def __edited_current_additional_value(self, lane_id, new_value):
+    def __edited_additional_value(self, list_val, lane_id, new_value):
         if not new_value:
             value_int = 0
         else:
             value_int = int(new_value)
-        self.__set_current_additional_value(lane_id, value_int)
+        self.__set_additional_value(list_val, lane_id, value_int)
 
-    def __change_current_additional_value(self, el, lane_id: int, value_int):
+    def __change_additional_value(self, list_val, el, lane_id: int, value_int):
         if value_int is None:
             value_int = 0
             value_str = ""
@@ -101,13 +117,13 @@ class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessage, QGroupBox):
             value_str = str(value_int)
 
         el.setText(value_str)
-        self.__set_current_additional_value(lane_id, value_int)
+        self.__set_additional_value(list_val, lane_id, value_int)
 
-    def __set_current_additional_value(self, lane_id: int, value: int):
+    def __set_additional_value(self, list_val, lane_id: int, value: int):
         if value < 0 or value > 4095:
             value = 0
 
-        self.__list_sum[lane_id] = value
+        list_val[lane_id] = value
 
     def __int_to_bytes_hex(self, val_int: int) -> bytes:
         if val_int < 0 or val_int > 4095:
@@ -139,7 +155,8 @@ class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessage, QGroupBox):
                     # Replace values from next block to currnet block
                     # TODO or set empty value in input
                     for i in range(self.__number_of_lane):
-                        self.__list_set_input_value[i]()
+                        self.__list_set_input_value[i](self.__list_sum_next[i])
+                        self.__list_set_next_input_value[i]()
                 self.__round_in_block = -1
             return
 
