@@ -97,6 +97,7 @@ class SectionClearOffTest(QGroupBox):
         """
         Level of interference:
             8: b'____w_____________________________\r' & 3 throw to layout & enable full layout after 3 throw
+            1: b'____i0__\r'
             0: otherwise
 
         Activation conditions:
@@ -176,7 +177,8 @@ class SectionClearOffTest(QGroupBox):
     def analyze_message_to_lane(self, msg):
         """
         Level of interference:
-            0
+            1: b'____IG_____________________\r'
+            0: Otherwise
 
         Activation conditions:
             In:

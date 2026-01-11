@@ -142,6 +142,10 @@ class SectionLaneControlPanel(QGroupBox):
 
         Level of interference:
             8: b'____w_____________________________\r' & was clicked "Stop time" when pins weren't standing
+            1: b'____i0__\r'
+            1: b'____i1__\r'
+            1: b'____p0__\r'
+            1: b'____p1__\r'
             0: otherwise
 
         Activation conditions:

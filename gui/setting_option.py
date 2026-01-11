@@ -183,7 +183,8 @@ class SettingStopCommunicationBeforeTrial(CheckboxActionAnalyzedMessage):
     def analyze_message_to_lane(self, message: bytes):
         """
         Level of interference:
-            0
+            1: b'____P_________\r'
+            0: Otherwise
 
         Activation conditions:
             In:
@@ -206,7 +207,8 @@ class SettingStopCommunicationBeforeTrial(CheckboxActionAnalyzedMessage):
     def analyze_message_from_lane(self, message: bytes):
         """
         Level of interference:
-            0
+            1: b'____p0__\r'
+            0: Otherwise
 
         Activation conditions:
             In:
@@ -276,7 +278,8 @@ class SettingShowResultOnMonitorFromLastGame(CheckboxActionAnalyzedMessage):
     def analyze_message_to_lane(self, message: bytes):
         """
         Level of interference:
-            0
+            1: b'____P_________\r'
+            0: Otherwise
 
         Activation conditions:
             In:
@@ -297,7 +300,9 @@ class SettingShowResultOnMonitorFromLastGame(CheckboxActionAnalyzedMessage):
     def analyze_message_from_lane(self, message: bytes):
         """
         Level of interference:
-            0
+            1: b'____i0__\r'
+            1: b'____p1__\r'
+            0: Otherwise
 
         Activation conditions:
             In:
