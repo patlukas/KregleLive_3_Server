@@ -44,6 +44,19 @@ class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessage, QGroupBox):
 
         layout = QGridLayout()
 
+        combo_modes = QComboBox()
+        combo_modes.addItems([
+            # "Edycja wiadomości ustawiającej meczówkę na pierwszym torze",
+            # "Edycja wyniku po ustawieniu pierwszego toru meczówki",
+            # "[*] Edycja wiadomości ustawiającej meczówkę na KAŻDYM torze"
+            "Ustawienie wyniku na pierwszym torze (IG)",
+            "Edycja wyniku na pierwszym torze (Z)",
+            "[*] Ustawienie wyniku na każdym torze (IG)"
+        ])
+        combo_modes.currentIndexChanged.connect(self.__selected_mode)
+        combo_modes.setCurrentIndex(self.__mode)
+        layout.addWidget(combo_modes, 0, 0, 1, self.__number_of_lane)
+
         for i in range(self.__number_of_lane):
             pair_layout = QVBoxLayout()
             pair_layout.setSpacing(0)
@@ -64,9 +77,13 @@ class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessage, QGroupBox):
             pair_layout.addWidget(input_result)
             pair_layout.addStretch()
 
-            layout.addLayout(pair_layout, 0, i)
+            layout.addLayout(pair_layout, 1, i)
 
         self.setLayout(layout)
+
+    def __selected_mode(self, index: int):
+        print("Mode", index)
+        self.__mode = index
 
     def __edited_current_additional_value(self, lane_id, new_value):
         if not new_value:
