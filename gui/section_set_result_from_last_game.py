@@ -59,79 +59,70 @@ class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessage, QGroupBox):
             "Edycja wyniku na pierwszym torze (Z)",
             "[*] Ustawienie wyniku na każdym torze (IG)"
         ])
-        combo_modes.currentIndexChanged.connect(self.__selected_mode)
+        combo_modes.currentIndexChanged.connect(self.__on_mode_selected)
         combo_modes.setCurrentIndex(self.__mode)
         layout.addWidget(combo_modes, 0, 0, 1, self.__number_of_lane+1)
 
-        label_now = QLabel("Aktualny blok")
-        label_next = QLabel("Następny blok")
-        layout.addWidget(label_now, 2, 0)
-        layout.addWidget(label_next, 3, 0)
-
+        layout.addWidget(QLabel("Aktualny blok"), 2, 0)
+        layout.addWidget(QLabel("Następny blok"), 3, 0)
 
         for i in range(self.__number_of_lane):
             label = QLabel("Tor " + str(i + 1))
             label.setAlignment(Qt.AlignCenter)
             layout.addWidget(label, 1, 1 + i)
 
-        for i in range(self.__number_of_lane):
-            line_edit = self.__prepare_line_edit_el()
-            line_edit.textEdited.connect(lambda value, lane=i: self.__edited_additional_value(self.__list_sum ,lane, value))
-
-            self.__list_set_input_value[i] = lambda value=None, el=line_edit, lane_id=i: self.__change_additional_value(self.__list_sum, el, lane_id, value)
+            line_edit = self.__create_value_editor(i, self.__list_sum, self.__list_set_input_value)
             layout.addWidget(line_edit, 2, 1 + i)
 
         for i in range(self.__number_of_lane):
-            input_result_next = self.__prepare_line_edit_el(i, self.__list_sum_next)
-            input_result_next.textEdited.connect(lambda value, lane=i: self.__edited_additional_value(self.__list_sum_next, lane, value))
-
-            self.__list_set_next_input_value[i] = lambda value=None, el=input_result_next, lane_id=i: self.__change_additional_value(self.__list_sum_next, el, lane_id, value)
+            input_result_next = self.__create_value_editor(i, self.__list_sum_next, self.__list_set_next_input_value)
             layout.addWidget(input_result_next, 3, 1 + i)
 
         self.setLayout(layout)
 
-    def __prepare_line_edit_el(self):
-        line_edit = QLineEdit()
-        line_edit.setValidator(QIntValidator(0, 4095))
-        line_edit.setMaxLength(4)
-        line_edit.setFixedWidth(60)
-        line_edit.setAlignment(Qt.AlignCenter)
+    def __create_value_editor(self, lane_id: int, stored_values: list, list_value_actions: list) -> QLineEdit:
+        editor  = QLineEdit()
+        editor .setValidator(QIntValidator(0, 4095))
+        editor .setMaxLength(4)
+        editor .setFixedWidth(60)
+        editor .setAlignment(Qt.AlignCenter)
 
-        return line_edit
+        editor .textEdited.connect(lambda value, lane=lane_id: self.__handle_user_value_edit(stored_values, lane, value))
 
-    def __selected_mode(self, index: int):
-        self.__mode = index
+        list_value_actions[lane_id] = lambda value=None, widget=editor , lane=lane_id: self.__update_editor_value(stored_values, widget, lane, value)
 
-    def __edited_additional_value(self, list_val, lane_id, new_value):
-        if not new_value:
-            value_int = 0
-        else:
-            value_int = int(new_value)
-        self.__set_additional_value(list_val, lane_id, value_int)
+        return editor
 
-    def __change_additional_value(self, list_val, el, lane_id: int, value_int):
+    def __on_mode_selected(self, mode_index: int) -> None:
+        self.__mode = mode_index
+
+    def __handle_user_value_edit(self, stored_values: list, lane_id: int, text_value: str) -> None:
+        value_int = int(text_value) if text_value else 0
+        self.__set_lane_value(stored_values, lane_id, value_int)
+
+    def __update_editor_value(self, stored_values: list, editor: QLineEdit, lane_id: int, value_int: int) -> None:
         if value_int is None:
             value_int = 0
             value_str = ""
         else:
             value_str = str(value_int)
 
-        el.setText(value_str)
-        self.__set_additional_value(list_val, lane_id, value_int)
+        editor.setText(value_str)
+        self.__set_lane_value(stored_values, lane_id, value_int)
 
-    def __set_additional_value(self, list_val, lane_id: int, value: int):
-        if value < 0 or value > 4095:
+    @staticmethod
+    def __set_lane_value(stored_values: list, lane_id: int, value: int) -> None:
+        if not 0 <= value <= 4095:
             value = 0
 
-        list_val[lane_id] = value
+        stored_values[lane_id] = value
 
-    def __int_to_bytes_hex(self, val_int: int) -> bytes:
-        if val_int < 0 or val_int > 4095:
+    @staticmethod
+    def __int_to_hex_bytes(value_int: int) -> bytes:
+        if not 0 <= value_int <= 4095:
             return b"000"
 
-        value_hex = format(val_int, "03X")
-        value_bytes = value_hex.encode()
-        return value_bytes
+        return format(value_int, "03X").encode()
 
     def analyze_message_to_lane(self, message: bytes):
         """
@@ -152,8 +143,6 @@ class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessage, QGroupBox):
             if not self.__is_during_game:
                 self.__is_during_game = True
                 if self.__round_in_block != -1:
-                    # Replace values from next block to currnet block
-                    # TODO or set empty value in input
                     for i in range(self.__number_of_lane):
                         self.__list_set_input_value[i](self.__list_sum_next[i])
                         self.__list_set_next_input_value[i]()
@@ -180,24 +169,28 @@ class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessage, QGroupBox):
             self.__is_during_game = False
 
     def __prepare_ig_messages(self, message: bytes):
-        # TODO
         total_sum = int(message[15:18].decode(), 16)
         additional_sum = self.__get_sum_from_last_game(message)
         new_total_sum = total_sum + additional_sum
-        new_total_sum_bytes = self.__int_to_bytes_hex(new_total_sum)
+        new_total_sum_bytes = self.__int_to_hex_bytes(new_total_sum)
+
         if self.__mode == 0:
             if total_sum > 0:
                 return
+
             message = message[:15] + new_total_sum_bytes + message[18:]
             message = prepare_message(message[:-2])
             return message
+
         if self.__mode == 1:
             if total_sum > 0:
                 return
+            
             message_z = message[:4] + b"Z000000000" + new_total_sum_bytes +  b"000000000000000"
             packet_ig = encapsulate_message(message)
             packet_z = prepare_message_and_encapsulate(message_z)
             return [], [], [], [packet_ig, packet_z]
+
         if self.__mode == 2:
             message = message[:15] + new_total_sum_bytes + message[18:]
             message = prepare_message(message[:-2])
