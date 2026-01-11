@@ -21,6 +21,7 @@ class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessage, QGroupBox):
             "Ustawianie wyniku z eliminacji",
             default_enabled=True
         )
+        self.__parent = parent
         self.__number_of_lane = 0
         self.__round_in_block = -1
         self.__is_during_game = False
@@ -30,6 +31,7 @@ class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessage, QGroupBox):
 
     def _after_toggled(self):
         self.setVisible(self._is_enabled)
+        self.__parent.adjustSize()
 
     def init(self, number_of_lane: int):
         self.__number_of_lane = number_of_lane
@@ -38,6 +40,9 @@ class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessage, QGroupBox):
         self.__prepare_section()
 
     def __prepare_section(self):
+        self.setToolTip("Dodanie wyniku z eliminacji do aktualnej gry.\nWyniki będą automatycznie przepisywane na odpowiednie tory, po otrzymaniu komunikatu o nowym torze.\n"
+                        "Ustawianie wartości odbywa się tylko i wyłącznie w pierwszej wiadomości na torze.\n"
+                        "Po otrzymaniu wiadomości, że będą próbne, wyniki zostaną wykasowane i wtedy można wprowadzić wyniki dotyczące następnego bloku.")
         old_layout = self.layout()
         if old_layout:
             QWidget().setLayout(old_layout)
@@ -46,9 +51,6 @@ class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessage, QGroupBox):
 
         combo_modes = QComboBox()
         combo_modes.addItems([
-            # "Edycja wiadomości ustawiającej meczówkę na pierwszym torze",
-            # "Edycja wyniku po ustawieniu pierwszego toru meczówki",
-            # "[*] Edycja wiadomości ustawiającej meczówkę na KAŻDYM torze"
             "Ustawienie wyniku na pierwszym torze (IG)",
             "Edycja wyniku na pierwszym torze (Z)",
             "[*] Ustawienie wyniku na każdym torze (IG)"
@@ -82,7 +84,6 @@ class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessage, QGroupBox):
         self.setLayout(layout)
 
     def __selected_mode(self, index: int):
-        print("Mode", index)
         self.__mode = index
 
     def __edited_current_additional_value(self, lane_id, new_value):
@@ -207,121 +208,3 @@ class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessage, QGroupBox):
 
         for i in range(self.__number_of_lane):
             self.__list_set_input_value[i](new_list[i])
-
-
-
-# # Old version
-# class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessage, QGroupBox):
-#     """
-#     """
-#     def __init__(self, parent):
-#         """
-#         """
-#         QGroupBox.__init__(self, "Wynik z elimiminacji", parent)
-#         CheckboxActionAnalyzedMessage.__init__(
-#             self,
-#             parent,
-#             "Ustawianie wyniku z eliminacji",
-#             default_enabled=True
-#         )
-#         self.__number_of_lane = 0
-#         self.__list_hex_sum = []
-#         self.__list_set_input_value = []
-#
-#     def _after_toggled(self):
-#         self.setVisible(self._is_enabled)
-#
-#     def init(self, number_of_lane: int):
-#         self.__number_of_lane = number_of_lane
-#         self.__list_hex_sum = [b"000" for _ in range(number_of_lane)]
-#         self.__list_set_input_value = [lambda value="": None for _ in range(number_of_lane)]
-#         self.__prepare_section()
-#
-#     def __prepare_section(self):
-#         old_layout = self.layout()
-#         if old_layout:
-#             QWidget().setLayout(old_layout)
-#
-#         layout = QGridLayout()
-#
-#         for i in range(self.__number_of_lane):
-#             pair_layout = QVBoxLayout()
-#             pair_layout.setSpacing(0)
-#
-#             label = QLabel("Tor " + str(i + 1))
-#             label.setAlignment(Qt.AlignCenter)
-#
-#             input_result = QLineEdit()
-#             input_result.setValidator(QIntValidator(0, 4095))
-#             input_result.setMaxLength(4)
-#             input_result.setFixedWidth(45)
-#             input_result.setAlignment(Qt.AlignCenter)
-#             input_result.textChanged.connect(lambda value, lane=i: self.__change_input_result(lane, value))
-#
-#             self.__list_set_input_value[i] = lambda value="", el=input_result: el.setText(value)
-#
-#             pair_layout.addWidget(label)
-#             pair_layout.addWidget(input_result)
-#             pair_layout.addStretch()
-#
-#             layout.addLayout(pair_layout, 0, i)
-#
-#         self.setLayout(layout)
-#
-#     def __change_input_result(self, lane_id, new_value):
-#         if not new_value:
-#             value_int = 0
-#         else:
-#             value_int = int(new_value)
-#
-#         if value_int < 0 or value_int > 4095:
-#             return
-#
-#         value_hex = format(value_int, "03X")
-#         value_bytes = value_hex.encode()
-#         self.__list_hex_sum[lane_id] = value_bytes
-#
-#     def analyze_message_to_lane(self, message: bytes):
-#         """
-#         Level of interference:
-#             3: b'____IG_________000_________\r'
-#             0: otherwise
-#
-#         Activation conditions:
-#             In:
-#                 b'____IG_________000_________\r'
-#             Out:
-#                 b'____IG_________xyz_________\r - 'xyz' result from last game
-#         """
-#         if not self.is_enabled():
-#             return
-#
-#         if message[4:6] != b"IG":
-#             return
-#
-#         if message[15:18] != b"000":
-#             return
-#
-#         #Option 1
-#         message = message[:15] + self.__get_sum_from_last_game(message) + message[18:]
-#         message = prepare_message(message[:-2])
-#         print(message)
-#         return message
-#
-#         #Option 2
-#         # new_sum = self.__get_sum_from_last_game(message)
-#         # if new_sum == b"000":
-#         #     return
-#         # message_z = message[:4] + b"Z000000000" + new_sum +  b"000000000000000"
-#         # packet_ig = encapsulate_message(message)
-#         # packet_z = prepare_message_and_encapsulate(message_z)
-#         # return [], [], [], [packet_ig, packet_z]
-#
-#     def __get_sum_from_last_game(self, message: bytes) -> bytes:
-#         lane_id = extract_lane_id_from_outgoing_message(message, self.__number_of_lane)
-#         if lane_id is None:
-#             return b"000"
-#         sum_hex = self.__list_hex_sum[lane_id]
-#         self.__list_set_input_value[lane_id]()
-#         print(lane_id, sum_hex, self.__list_hex_sum)
-#         return sum_hex
