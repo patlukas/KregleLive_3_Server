@@ -18,7 +18,7 @@ class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessage, QGroupBox):
             self,
             parent,
             "Ustawianie wyniku z eliminacji",
-            default_enabled=True
+            default_enabled=False
         )
         self.__parent = parent
         self.__number_of_lane = 0
@@ -78,6 +78,7 @@ class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessage, QGroupBox):
             layout.addWidget(input_result_next, 3, 1 + i)
 
         self.setLayout(layout)
+        self.setVisible(self.is_enabled())
 
     def __create_value_editor(self, lane_id: int, stored_values: list, list_value_actions: list) -> QLineEdit:
         editor  = QLineEdit()

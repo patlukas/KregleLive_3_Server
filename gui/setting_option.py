@@ -30,7 +30,6 @@ class CheckboxActionAnalyzedMessage:
 
         :param checked: <bool> - Current checked state of the QAction
         """
-        print(self._label, checked)
         self._is_enabled = checked
         self._after_toggled()
 
