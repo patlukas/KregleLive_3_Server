@@ -5,6 +5,7 @@ from gui.section_lane_control_panel import SectionLaneControlPanel
 from gui.section_clearoff_fast import SectionClearOffTest
 from gui.setting_option import SettingTurnOnPrinter, SettingStartTimeInTrial, SettingStopCommunicationBeforeTrial, \
     SettingShowResultOnMonitorFromLastGame
+from gui.section_set_result_from_last_game import SectionSetResultFromLastGame
 from gui.socket_section import SocketSection
 from log_management import LogManagement
 from config_reader import ConfigReader, ConfigReaderError
@@ -93,6 +94,7 @@ class GUI(QDialog):
         self.__socket_section = None
         self.__section_lane_control_panel = SectionLaneControlPanel()
         self.__section_clearoff_fast = SectionClearOffTest()
+        self.__section_set_result_from_last_game = SectionSetResultFromLastGame(self)
 
         self.__action_setting_turn_on_printer = SettingTurnOnPrinter(self)
         self.__action_setting_start_time_in_trial = SettingStartTimeInTrial(self)
@@ -197,6 +199,8 @@ class GUI(QDialog):
             self.__section_clearoff_fast.init(self.__config["number_of_lane"], self.__log_management.add_log)
             self.__launch_startup_tools(self.__config["tools_to_run_on_startup"])
 
+            self.__section_set_result_from_last_game.init(self.__config["number_of_lane"])
+
             self.__action_show_result_from_last_block.set_list_path_to_lane_dir(self.__config["list_path_to_daten_files_on_lane"])
 
             self.__action_setting_turn_on_printer.on_toggle(self.__config["enable_action_turn_on_printer"])
@@ -204,6 +208,7 @@ class GUI(QDialog):
             self.__action_setting_stop_communication.on_toggle(self.__config["enable_action_stop_communication_after_block"])
             self.__action_show_result_from_last_block.on_toggle(self.__config["enable_action_show_result_from_last_block"])
 
+            self.__connection_manager.add_func_for_analyze_msg_to_recv(lambda msg: self.__section_set_result_from_last_game.analyze_message_from_lane(msg))
             self.__connection_manager.add_func_for_analyze_msg_to_recv(lambda msg: self.__action_setting_stop_communication.analyze_message_from_lane(msg))
             self.__connection_manager.add_func_for_analyze_msg_to_recv(lambda msg: self.__action_show_result_from_last_block.analyze_message_from_lane(msg))
             self.__connection_manager.add_func_for_analyze_msg_to_recv(lambda msg: self.__section_clearoff_fast.analyze_message_from_lane(msg))
@@ -213,6 +218,7 @@ class GUI(QDialog):
             self.__connection_manager.add_func_for_analyze_msg_to_lane(lambda msg: self.__action_setting_turn_on_printer.analyze_message_to_lane(msg))
             self.__connection_manager.add_func_for_analyze_msg_to_lane(lambda msg: self.__action_setting_stop_communication.analyze_message_to_lane(msg))
             self.__connection_manager.add_func_for_analyze_msg_to_lane(lambda msg: self.__action_show_result_from_last_block.analyze_message_to_lane(msg))
+            self.__connection_manager.add_func_for_analyze_msg_to_lane(lambda msg: self.__section_set_result_from_last_game.analyze_message_to_lane(msg))
             self.__connection_manager.add_func_for_analyze_msg_to_lane(lambda msg: self.__action_setting_start_time_in_trial.analyze_message_to_lane(msg))
 
             start_new_thread(self.__connection_manager.start, ())
@@ -285,6 +291,7 @@ class GUI(QDialog):
 
         self.__layout.addWidget(self.__section_lane_control_panel)
         self.__layout.addWidget(self.__section_clearoff_fast)
+        self.__layout.addWidget(self.__section_set_result_from_last_game)
 
         self.__update_connect_list_layout()
 
@@ -339,6 +346,8 @@ class GUI(QDialog):
         clear_off.setChecked(False)
         clear_off.triggered.connect(lambda checked: self.__on_show_clear_off_fast(checked))
         view_menu.addAction(clear_off)
+
+        view_menu.addAction(self.__section_set_result_from_last_game.get_menu_action())
 
         self.__add_menu_with_tools_to_menu_bar(menu_bar)
 
