@@ -77,7 +77,7 @@ class SectionLaneControlPanel(QGroupBox):
         return action
 
     def __on_show_lane_control(self, name_type: str, show: bool):
-        self.show_control_panel(name_type, show)
+        self.__show_control_panel(name_type, show)
         self.__parent.adjustSize()
 
     def __get_structure(self, number_of_lane: int) -> list:
@@ -135,7 +135,7 @@ class SectionLaneControlPanel(QGroupBox):
         box.setVisible(False)
         return box
 
-    def show_control_panel(self, name: str, show: bool):
+    def __show_control_panel(self, name: str, show: bool):
         if self.__box_time is None or self.__box_enter is None:
             return
 

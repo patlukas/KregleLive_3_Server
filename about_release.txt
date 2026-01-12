@@ -1,5 +1,6 @@
 Fix bug: send 'Enter' after 'Stop time'
 Add section to set result from last game as total sum
+Add more configuration options
 
 Since version v1.4.0, the following field has been added to config.json:
 - show_section_set_result_from_last_game

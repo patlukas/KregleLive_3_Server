@@ -24,7 +24,8 @@
   "enable_action_stop_communication_after_block": true,
   "enable_action_show_result_from_last_block": true,
   "list_path_to_daten_files_on_lane": [
-    "C:\\Users\\PL\\Documents\\Github\\KregleLive_3_Server\\todel"
+    "C:\\Users\\PL\\Documents\\Github\\KregleLive_3_Server\\todel",
+    "F:\\logi\\a\\CCK Anzeige"
   ],
   "show_section_set_result_from_last_game": true,
   "show_section_enter": false,
