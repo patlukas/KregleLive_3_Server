@@ -316,18 +316,18 @@ class SettingShowResultOnMonitorFromLastGame(CheckboxActionAnalyzedMessage):
         return
 
     def __copy_file(self, src, target, remove_src=False):
+        """
+        :logs: ERROR_ACTION_MONITOR (10)
+        """
         if not os.path.exists(src):
-            print("Brak pliku:", src)
             return
 
         try:
             shutil.copy2(src, target)
-            print("Skopiowano:", src, "->", target)
             if remove_src:
                 os.remove(src)
-                print("Del", src)
         except Exception as e:
-            print("Błąd kopiowania:", src, e)
+            self._add_log(10, "ERROR_ACTION_MONITOR", "", "Błąd podczas kopiowania pliku: {} -> {} | {}".format(src, target, e))
 
     def __copy_on_lanes(self, src_name, target_name, remove_src=False):
         for s in self._list_path_to_lane_dir:
