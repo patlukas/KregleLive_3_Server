@@ -229,6 +229,7 @@ class ConnectionManager:
             if result is None:
                 continue
             if isinstance(result, bytes):
+                self.__on_add_log(5, "CON_ANA_MSG_REPLACE", "", "{} -> {}".format(message, result))
                 message = result
             elif isinstance(result, tuple):
                 if len(result) != 4:
@@ -236,6 +237,7 @@ class ConnectionManager:
                 elif len(result[0]) + len(result[1]) + len(result[2]) + len(result[3]) == 0:
                     self.__on_add_log(10, "CON_ANA_MSG_2", "", result)
                 else:
+                    self.__on_add_log(5, "CON_ANA_MSG_PACKET", "", "{} -> {}".format(message, result))
                     return result
             elif isinstance(result, dict):
                 # When you want prepare packet with specific time_wait or priority, you must return [], [], [], [packet],
