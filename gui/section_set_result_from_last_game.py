@@ -14,12 +14,7 @@ class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessageBase, QGroupBox)
             self.__is_during_game - True after "IG" and "P", False after "p0" and "i0"
         """
         QGroupBox.__init__(self, "Wynik z elimiminacji", parent)
-        CheckboxActionAnalyzedMessageBase.__init__(
-            self,
-            parent,
-            "Ustawianie wyniku z eliminacji",
-            default_enabled=False
-        )
+        CheckboxActionAnalyzedMessageBase.__init__(self, parent, "Ustawianie wyniku z eliminacji", False)
         self.__parent = parent
         self.__number_of_lane = 0
         self.__round_in_block = -1
@@ -36,7 +31,6 @@ class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessageBase, QGroupBox)
 
     def init(self, number_of_lane: int, enable: bool, on_add_log):
         self._init_action(enable, on_add_log)
-        self._add_log(3, "S_COF_14", "", "Są próbne: jest rzut ''")
         self.__number_of_lane = number_of_lane
         self.__list_sum = [0 for _ in range(number_of_lane)]
         self.__list_sum_next = [0 for _ in range(number_of_lane)]

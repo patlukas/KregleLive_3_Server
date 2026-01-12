@@ -35,7 +35,7 @@ from PyQt5.QtCore import QTimer, Qt
 from _thread import start_new_thread
 
 APP_NAME = "KL3S"
-APP_VERSION = "1.3.1"
+APP_VERSION = "1.4.0"
 
 class GUI(QDialog):
     """
@@ -199,7 +199,7 @@ class GUI(QDialog):
             self.__section_clearoff_fast.init(self.__config["number_of_lane"], self.__log_management.add_log)
             self.__launch_startup_tools(self.__config["tools_to_run_on_startup"])
 
-            self.__section_set_result_from_last_game.init(self.__config["number_of_lane"], True, self.__log_management.add_log)
+            self.__section_set_result_from_last_game.init(self.__config["number_of_lane"], self.__config["show_section_set_result_from_last_game"], self.__log_management.add_log)
 
             self.__action_show_result_from_last_block.set_list_path_to_lane_dir(self.__config["list_path_to_daten_files_on_lane"])
 

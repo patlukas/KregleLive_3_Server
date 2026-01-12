@@ -72,6 +72,7 @@ The application is configured using the `config.json` file. Below is a descripti
 - `enable_action_stop_communication_after_block`: Enable/Disable action to stop communication after block
 - `enable_action_show_result_from_last_block`: Enable/Disable action to show results from last block
 - `list_path_to_daten_files_on_lane`: List with paths to the directory with the daten.ini file on lanes
+- `show_section_set_result_from_last_game`: Show/hide section to set result from last game
 ## Program Structure
 
 The program consists of the following elements:
@@ -121,8 +122,8 @@ pip install -r requirements.txt
 
 | Version          | Release Date      | Commits | Changes                                                             |
 |------------------|-------------------|---------|---------------------------------------------------------------------|
-| **v1.3.2.0**     | 🚧 In Future      |         |                                                                     |
-| **v1.3.1.0**     | 🚧 In Development |         | Fix bug, set total sum from last game                               |
+| **v1.4.1.0**     | 🚧 In Future      |         |                                                                     |
+| **v1.4.0.0**     | 🚧 In Development |         | Fix bug, set total sum from last game                               |
 | **v1.3.0.0**     | 2025-01-08        | 118     | Add more option to analyze message                                  |
 | **v1.2.4.0**     | 2025-11-17        | 80      | Faster finish clean-off after empty throw & Fix Jenkins             |
 | **v1.2.3.0**     | 2025-11-13        | 78      | Fix bugs with earlier finished clear off                            |

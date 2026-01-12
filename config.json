@@ -25,5 +25,6 @@
   "enable_action_show_result_from_last_block": true,
   "list_path_to_daten_files_on_lane": [
     "C:\\Users\\PL\\Documents\\Github\\KregleLive_3_Server\\todel"
-  ]
+  ],
+  "show_section_set_result_from_last_game": false
 }
