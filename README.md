@@ -72,6 +72,9 @@ The application is configured using the `config.json` file. Below is a descripti
 - `enable_action_stop_communication_after_block`: Enable/Disable action to stop communication after block
 - `enable_action_show_result_from_last_block`: Enable/Disable action to show results from last block
 - `list_path_to_daten_files_on_lane`: List with paths to the directory with the daten.ini file on lanes
+- `show_section_set_result_from_last_game`: Show/hide section to set result from last game
+- `show_section_enter`: Show/hide section to send message "Enter" to lane
+- `show_section_stop_time`: Show/hide section to send message "Stop time" to lane
 ## Program Structure
 
 The program consists of the following elements:
@@ -119,27 +122,28 @@ pip install -r requirements.txt
 
 ## 📌 Version History
 
-| Version          | Release Date      | Commits | Changes                                                             |
-|------------------|-------------------|---------|---------------------------------------------------------------------|
-| **v1.3.2.0**     | 🚧 In Future      |         |                                                                     |
-| **v1.3.1.0**     | 🚧 In Development |         |                                                                     |
-| **v1.3.0.0**     | 2025-01-08        | 117     | Add more option to analyze message                                  |
-| **v1.2.4.0**     | 2025-11-17        | 80      | Faster finish clean-off after empty throw & Fix Jenkins             |
-| **v1.2.3.0**     | 2025-11-13        | 78      | Fix bugs with earlier finished clear off                            |
-| **v1.2.2.1**     | 2025-11-13        | 75      | Set app icon for exe file                                           |
-| **v1.2.2.0**     | 2025-11-13        | 74      | Add more modes to set full layout when clear off is finished faster |
-| **v1.2.1.0**     | 2025-11-11        | 70      | Fix bug, add new feature to faster end clear off                    |
-| **v1.2.0.0**     | 2025-11-10        | 60      | ❌ Broken version - Change queue with messages to send               |
-| **v1.1.3.0**     | 2025-02-28        | 46      | Added Jenkins to create new releases                                |  
-| **v1.1.1**       | 2025-02-21        | 42      | Added waiting for a response from the lanes                         |
-| **v1.1.0**       | 2025-02-05        | 38      | Added automatic creation of TCP server                              |
-| **v1.0.6**       | 2025-11-22        | 34      | Added support for Polish characters                                 |
-| **v1.0.5**       | 2024-11-02        | 33      | Added dropdown with possible IP addresses                           |
-| **v1.0.4**       | 2024-08-13        | 28      |                                                                     |
-| **v1.0.3**       | 2024-08-08        | 21      |                                                                     |
-| **v1.0.2**       | 2024-06-15        | 15      |                                                                     |
-| **v1.0.1**       | 2023-10-19        | 10      |                                                                     |
-| **First commit** | 2023-06-30        | 1       |                                                                     |
+| Version          | Release Date      | Commits | Changes                                                                |
+|------------------|-------------------|---------|------------------------------------------------------------------------|
+| **v1.4.2.0**     | 🚧 In Future      |         |                                                                        |
+| **v1.4.1.0**     | 🚧 In Development |         |                                                                        |
+| **v1.4.0.0**     | 2026-01-13        | 145     | Fix bug, set total sum from last game, add more configuration options  |
+| **v1.3.0.0**     | 2026-01-08        | 118     | Add more option to analyze message                                     |
+| **v1.2.4.0**     | 2025-11-17        | 80      | Faster finish clean-off after empty throw & Fix Jenkins                |
+| **v1.2.3.0**     | 2025-11-13        | 78      | Fix bugs with earlier finished clear off                               |
+| **v1.2.2.1**     | 2025-11-13        | 75      | Set app icon for exe file                                              |
+| **v1.2.2.0**     | 2025-11-13        | 74      | Add more modes to set full layout when clear off is finished faster    |
+| **v1.2.1.0**     | 2025-11-11        | 70      | Fix bug, add new feature to faster end clear off                       |
+| **v1.2.0.0**     | 2025-11-10        | 60      | ❌ Broken version - Change queue with messages to send                  |
+| **v1.1.3.0**     | 2025-02-28        | 46      | Added Jenkins to create new releases                                   |  
+| **v1.1.1**       | 2025-02-21        | 42      | Added waiting for a response from the lanes                            |
+| **v1.1.0**       | 2025-02-05        | 38      | Added automatic creation of TCP server                                 |
+| **v1.0.6**       | 2025-11-22        | 34      | Added support for Polish characters                                    |
+| **v1.0.5**       | 2024-11-02        | 33      | Added dropdown with possible IP addresses                              |
+| **v1.0.4**       | 2024-08-13        | 28      |                                                                        |
+| **v1.0.3**       | 2024-08-08        | 21      |                                                                        |
+| **v1.0.2**       | 2024-06-15        | 15      |                                                                        |
+| **v1.0.1**       | 2023-10-19        | 10      |                                                                        |
+| **First commit** | 2023-06-30        | 1       |                                                                        |
 
 ![](https://github.ct8.pl/readme/patlukas/KregleLive_3_Server)
 

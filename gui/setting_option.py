@@ -1,12 +1,11 @@
 from PyQt5.QtWidgets import QAction, QPushButton
-from abc import ABCMeta
 import os
 import shutil
 
 from utils.messages import prepare_message_and_encapsulate, encapsulate_message, prepare_message
 
 
-class _BaseMenuSetting(metaclass=ABCMeta):
+class CheckboxActionAnalyzedMessageBase:
     """
     Abstract base class for a checkable QAction-based menu setting.
     """
@@ -16,6 +15,7 @@ class _BaseMenuSetting(metaclass=ABCMeta):
         :param label <str> - Text displayed in the menu QAction
         :param default_enabled <bool=True> - Initial state of the setting
         """
+        self._add_log = lambda a,b,c,d: None
         self._label = label
         self._is_enabled = default_enabled
         self._menu_action = QAction(self._label, parent)
@@ -31,8 +31,15 @@ class _BaseMenuSetting(metaclass=ABCMeta):
 
         :param checked: <bool> - Current checked state of the QAction
         """
-        print(self._label, checked)
         self._is_enabled = checked
+        self._after_toggled()
+
+    def _after_toggled(self):
+        pass
+
+    def _init_action(self, new_state, on_add_message):
+        self._add_log = on_add_message
+        self.on_toggle(new_state)
 
     def on_toggle(self, new_state=None) -> None:
         """
@@ -86,18 +93,21 @@ class _BaseMenuSetting(metaclass=ABCMeta):
         return
 
 
-class SettingTurnOnPrinter(_BaseMenuSetting):
+class CheckboxActionAnalyzedMessage(CheckboxActionAnalyzedMessageBase):
+    def __init__(self, parent, label, default_enabled):
+        super().__init__(parent, label, default_enabled)
+
+    def init(self, new_state, on_add_message):
+        self._init_action(new_state, on_add_message)
+
+
+class SettingTurnOnPrinter(CheckboxActionAnalyzedMessage):
     """
-   Menu setting responsible for enabling the printer
-   when a 'IG' message is sent with disable printer.
-   """
+    Menu setting responsible for enabling the printer
+    when a 'IG' message is sent with disable printer.
+    """
     def __init__(self, parent):
-        _BaseMenuSetting.__init__(
-            self,
-            parent,
-            "Uruchom drukarkę przy meczówce",
-            default_enabled=True
-        )
+        super().__init__(parent,"Uruchom drukarkę przy meczówce", default_enabled=True)
 
     def analyze_message_to_lane(self, message: bytes):
         """
@@ -124,17 +134,12 @@ class SettingTurnOnPrinter(_BaseMenuSetting):
         return prepare_message(content_msg)
 
 
-class SettingStartTimeInTrial(_BaseMenuSetting):
+class SettingStartTimeInTrial(CheckboxActionAnalyzedMessage):
     """
     Menu setting responsible for add possibility to start time in trial.
     """
     def __init__(self, parent):
-        _BaseMenuSetting.__init__(
-            self,
-            parent,
-            "Dodaj opcję włączenia czasu w próbnych",
-            default_enabled=True
-        )
+        super().__init__(parent,"Dodaj opcję włączenia czasu w próbnych", default_enabled=True)
 
     def analyze_message_to_lane(self, message: bytes):
         """
@@ -153,23 +158,18 @@ class SettingStartTimeInTrial(_BaseMenuSetting):
         if len(message) != 15 or message[4:5] != b"P":
             return
 
-        packet_trial = encapsulate_message(message, 3, -1) # TODO: can a fixed value (e.g. 250) be used instead of the default -1?
+        packet_trial = encapsulate_message(message, 3, -1)
         packet_pick_up = prepare_message_and_encapsulate(message[:4] + b"T41", 3, -1)
         packet_stop_time = prepare_message_and_encapsulate(message[:4] + b"T14", 9, 300)
         return [], [], [], [packet_trial, packet_pick_up, packet_stop_time]
 
 
-class SettingStopCommunicationBeforeTrial(_BaseMenuSetting):
+class SettingStopCommunicationBeforeTrial(CheckboxActionAnalyzedMessage):
     """
     Menu setting responsible stop communication before new block.
     """
     def __init__(self, parent):
-        _BaseMenuSetting.__init__(
-            self,
-            parent,
-            "Wstrzymuj kolejny blok",
-            default_enabled=True
-        )
+        super().__init__(parent,"Wstrzymuj kolejny blok", default_enabled=True)
         self._was_trial_end = False
         self._stop_communication = False
         self._btn_enable_communication = None
@@ -180,13 +180,16 @@ class SettingStopCommunicationBeforeTrial(_BaseMenuSetting):
     def analyze_message_to_lane(self, message: bytes):
         """
         Level of interference:
-            0
+            1: b'____P_________\r'
+            0: Otherwise
 
         Activation conditions:
             In:
                 b'____P_________\r'
             Out:
                 None
+
+        :logs: STOP_COM_STOP (5)
         """
         if not self._was_trial_end:
             return
@@ -195,6 +198,7 @@ class SettingStopCommunicationBeforeTrial(_BaseMenuSetting):
 
         self._was_trial_end = False
         if self.is_enabled():
+            self._add_log(5, "STOP_COM_STOP", "", "Zatrzymano komunikację")
             self._stop_communication = True
             self._btn_enable_communication.show()
 
@@ -203,7 +207,8 @@ class SettingStopCommunicationBeforeTrial(_BaseMenuSetting):
     def analyze_message_from_lane(self, message: bytes):
         """
         Level of interference:
-            0
+            1: b'____p0__\r'
+            0: Otherwise
 
         Activation conditions:
             In:
@@ -231,23 +236,27 @@ class SettingStopCommunicationBeforeTrial(_BaseMenuSetting):
                 margin-top: 50px;
             }
             QPushButton:hover {
-                background-color: #ff5e4d; /* Rozjaśnienie po najechaniu */
+                background-color: #ff6e5d;
                 border-color: #e74c3c;
             }
             QPushButton:pressed {
-                background-color: #c0392b; /* Ciemniejszy przy kliknięciu */
-                border-style: inset; /* Efekt wciśnięcia */
+                background-color: #b0291b;
+                border-style: inset;
             }
         """)
-        self._btn_enable_communication.clicked.connect(lambda: self._on_enable_communication())
+        self._btn_enable_communication.clicked.connect(lambda: self._enable_communication())
         self._btn_enable_communication.hide()
 
-    def _on_enable_communication(self):
+    def _enable_communication(self):
+        """
+        :logs: STOP_COM_START (5)
+        """
+        self._add_log(5, "STOP_COM_START", "", "Wznowiono komunikację")
         self._btn_enable_communication.hide()
         self._stop_communication = False
 
 
-class SettingShowResultOnMonitorFromLastGame(_BaseMenuSetting):
+class SettingShowResultOnMonitorFromLastGame(CheckboxActionAnalyzedMessage):
     """
     Menu setting responsible show result from last block on monitor. (replace daten.ini)
     """
@@ -255,12 +264,7 @@ class SettingShowResultOnMonitorFromLastGame(_BaseMenuSetting):
         """
         :list_path_to_lane_dir: list[str] - list with path to dir where is daten.ini
         """
-        _BaseMenuSetting.__init__(
-            self,
-            parent,
-            "Pokaż wynik na monitorze z poprzedniej gry",
-            default_enabled=True
-        )
+        super().__init__(parent,"Pokaż wynik na monitorze z poprzedniej gry", default_enabled=True)
         self._file_name = "daten.ini"
         self._file_name_archive = "daten_last.ini"
         self._file_name_future = "daten_next.ini"
@@ -273,7 +277,8 @@ class SettingShowResultOnMonitorFromLastGame(_BaseMenuSetting):
     def analyze_message_to_lane(self, message: bytes):
         """
         Level of interference:
-            0
+            1: b'____P_________\r'
+            0: Otherwise
 
         Activation conditions:
             In:
@@ -294,7 +299,9 @@ class SettingShowResultOnMonitorFromLastGame(_BaseMenuSetting):
     def analyze_message_from_lane(self, message: bytes):
         """
         Level of interference:
-            0
+            1: b'____i0__\r'
+            1: b'____p1__\r'
+            0: Otherwise
 
         Activation conditions:
             In:
@@ -316,18 +323,18 @@ class SettingShowResultOnMonitorFromLastGame(_BaseMenuSetting):
         return
 
     def __copy_file(self, src, target, remove_src=False):
+        """
+        :logs: ERROR_ACTION_MONITOR (10)
+        """
         if not os.path.exists(src):
-            print("Brak pliku:", src)
             return
 
         try:
             shutil.copy2(src, target)
-            print("Skopiowano:", src, "->", target)
             if remove_src:
                 os.remove(src)
-                print("Del", src)
         except Exception as e:
-            print("Błąd kopiowania:", src, e)
+            self._add_log(10, "ERROR_ACTION_MONITOR", "", "Błąd podczas kopiowania pliku: {} -> {} | {}".format(src, target, e))
 
     def __copy_on_lanes(self, src_name, target_name, remove_src=False):
         for s in self._list_path_to_lane_dir:

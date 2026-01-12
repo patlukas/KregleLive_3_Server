@@ -12,6 +12,20 @@ def extract_lane_id_from_incoming_message(msg: bytes, lane_count: int):
         return None
     return lane
 
+def extract_lane_id_from_outgoing_message(msg: bytes, lane_count: int):
+    """
+    Extract lane id from outgoing message.
+
+    Returns:
+        lane id (0..lane_count-1) or None if invalid.
+    """
+    if len(msg) < 4:
+        return None
+    lane = int(msg[1:2])
+    if lane >= lane_count:
+        return None
+    return lane
+
 def calculate_message_control_sum(message):
     """
 

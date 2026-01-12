@@ -1,13 +1,13 @@
 import time
 
-from PyQt5.QtWidgets import QGroupBox, QGridLayout, QPushButton
+from PyQt5.QtWidgets import QGroupBox, QGridLayout, QPushButton, QAction
 
 from utils.messages import extract_lane_id_from_incoming_message, prepare_message_to_lane_and_encapsulate, encapsulate_message
 
 
 class SectionLaneControlPanel(QGroupBox):
 
-    def __init__(self):
+    def __init__(self, parent):
         """
         self.__mode_on_lane: [int] - what mode is on lane
             0 - the variable has been initialized and has not been changed yet
@@ -22,10 +22,13 @@ class SectionLaneControlPanel(QGroupBox):
         self.__stop_time_deadline_buffer_s <int> - how many seconds does it take to stop time
         """
         super().__init__("Sterowanie torami")
+        self.__parent = parent
         self.__log_management = None
         self.__on_add_message = None
         self.__box_enter = None
         self.__box_time = None
+        self.action_enter = self.__prepare_action_widget("Sterowanie torami - Enter", "Enter")
+        self.action_stop_time = self.__prepare_action_widget("Sterowanie torami - Czas stop", "Time")
         self.__layout = QGridLayout()
         self.setLayout(self.__layout)
         self.setVisible(False)
@@ -38,7 +41,7 @@ class SectionLaneControlPanel(QGroupBox):
         self.__stop_time_deadline_on_lane = []
         self.__stop_time_deadline_buffer_s = 15
 
-    def init(self, number_of_lane: int, stop_time_deadline_buffer_s: int, log_management, on_add_message):
+    def init(self, number_of_lane: int, stop_time_deadline_buffer_s: int, log_management, on_add_message, show_section_enter, show_section_stop_time):
         """
         :param:
             number_of_lane <int>
@@ -57,11 +60,25 @@ class SectionLaneControlPanel(QGroupBox):
         self.__layout.addWidget(self.__box_enter)
         self.__layout.addWidget(self.__box_time)
 
+        self.action_enter.setChecked(show_section_enter)
+        self.action_stop_time.setChecked(show_section_stop_time)
+
         self.__mode_on_lane = [0 for _ in range(number_of_lane)]
         self.__enable_enter_on_lane = [False for _ in range(number_of_lane)]
         self.__enable_stop_time_on_lane = [False for _ in range(number_of_lane)]
         self.__trial_time_on_lane = [b"" for _ in range(number_of_lane)]
         self.__stop_time_deadline_on_lane = [0 for _ in range(number_of_lane)]
+
+    def __prepare_action_widget(self, label, name_type):
+        action = QAction(label, self)
+        action.setCheckable(True)
+        action.setChecked(False)
+        action.toggled.connect(lambda checked: self.__on_show_lane_control(name_type, checked))
+        return action
+
+    def __on_show_lane_control(self, name_type: str, show: bool):
+        self.__show_control_panel(name_type, show)
+        self.__parent.adjustSize()
 
     def __get_structure(self, number_of_lane: int) -> list:
         number_of_lane_in_row = number_of_lane
@@ -88,11 +105,11 @@ class SectionLaneControlPanel(QGroupBox):
         list_lane_to_print = [x+1 for x in list_lane]
         self.__log_management(3, "LCP_CLICK", "", "Dodano nowe wiadomości przez 'Sterowanie torami': Adresaci {}, Wiadomość '{}'({})".format(list_lane_to_print, what_message_means, body_message))
         for lane in list_lane:
-            if body_message == b"T24":
+            if body_message == b"T14":
                 if not self.__enable_stop_time_on_lane[lane]:
                     continue
                 self.__stop_time_deadline_on_lane[lane] = time.time() + self.__stop_time_deadline_buffer_s
-            if body_message == b"T14":
+            if body_message == b"T24":
                 if not self.__enable_enter_on_lane[lane]:
                     continue
                 self.__stop_time_deadline_on_lane[lane] = 0
@@ -118,7 +135,7 @@ class SectionLaneControlPanel(QGroupBox):
         box.setVisible(False)
         return box
 
-    def show_control_panel(self, name: str, show: bool):
+    def __show_control_panel(self, name: str, show: bool):
         if self.__box_time is None or self.__box_enter is None:
             return
 
@@ -142,6 +159,10 @@ class SectionLaneControlPanel(QGroupBox):
 
         Level of interference:
             8: b'____w_____________________________\r' & was clicked "Stop time" when pins weren't standing
+            1: b'____i0__\r'
+            1: b'____i1__\r'
+            1: b'____p0__\r'
+            1: b'____p1__\r'
             0: otherwise
 
         Activation conditions:
