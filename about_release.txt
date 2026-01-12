@@ -3,3 +3,5 @@ Add section to set result from last game as total sum
 
 Since version v1.4.0, the following field has been added to config.json:
 - show_section_set_result_from_last_game
+- show_section_enter
+- show_section_stop_time

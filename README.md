@@ -73,6 +73,8 @@ The application is configured using the `config.json` file. Below is a descripti
 - `enable_action_show_result_from_last_block`: Enable/Disable action to show results from last block
 - `list_path_to_daten_files_on_lane`: List with paths to the directory with the daten.ini file on lanes
 - `show_section_set_result_from_last_game`: Show/hide section to set result from last game
+- `show_section_enter`: Show/hide section to send message "Enter" to lane
+- `show_section_stop_time`: Show/hide section to send message "Stop time" to lane
 ## Program Structure
 
 The program consists of the following elements:

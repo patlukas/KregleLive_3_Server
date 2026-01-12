@@ -1,13 +1,13 @@
 import time
 
-from PyQt5.QtWidgets import QGroupBox, QGridLayout, QPushButton
+from PyQt5.QtWidgets import QGroupBox, QGridLayout, QPushButton, QAction
 
 from utils.messages import extract_lane_id_from_incoming_message, prepare_message_to_lane_and_encapsulate, encapsulate_message
 
 
 class SectionLaneControlPanel(QGroupBox):
 
-    def __init__(self):
+    def __init__(self, parent):
         """
         self.__mode_on_lane: [int] - what mode is on lane
             0 - the variable has been initialized and has not been changed yet
@@ -22,10 +22,13 @@ class SectionLaneControlPanel(QGroupBox):
         self.__stop_time_deadline_buffer_s <int> - how many seconds does it take to stop time
         """
         super().__init__("Sterowanie torami")
+        self.__parent = parent
         self.__log_management = None
         self.__on_add_message = None
         self.__box_enter = None
         self.__box_time = None
+        self.action_enter = self.__prepare_action_widget("Sterowanie torami - Enter", "Enter")
+        self.action_stop_time = self.__prepare_action_widget("Sterowanie torami - Czas stop", "Time")
         self.__layout = QGridLayout()
         self.setLayout(self.__layout)
         self.setVisible(False)
@@ -38,7 +41,7 @@ class SectionLaneControlPanel(QGroupBox):
         self.__stop_time_deadline_on_lane = []
         self.__stop_time_deadline_buffer_s = 15
 
-    def init(self, number_of_lane: int, stop_time_deadline_buffer_s: int, log_management, on_add_message):
+    def init(self, number_of_lane: int, stop_time_deadline_buffer_s: int, log_management, on_add_message, show_section_enter, show_section_stop_time):
         """
         :param:
             number_of_lane <int>
@@ -57,11 +60,25 @@ class SectionLaneControlPanel(QGroupBox):
         self.__layout.addWidget(self.__box_enter)
         self.__layout.addWidget(self.__box_time)
 
+        self.action_enter.setChecked(show_section_enter)
+        self.action_stop_time.setChecked(show_section_stop_time)
+
         self.__mode_on_lane = [0 for _ in range(number_of_lane)]
         self.__enable_enter_on_lane = [False for _ in range(number_of_lane)]
         self.__enable_stop_time_on_lane = [False for _ in range(number_of_lane)]
         self.__trial_time_on_lane = [b"" for _ in range(number_of_lane)]
         self.__stop_time_deadline_on_lane = [0 for _ in range(number_of_lane)]
+
+    def __prepare_action_widget(self, label, name_type):
+        action = QAction(label, self)
+        action.setCheckable(True)
+        action.setChecked(False)
+        action.toggled.connect(lambda checked: self.__on_show_lane_control(name_type, checked))
+        return action
+
+    def __on_show_lane_control(self, name_type: str, show: bool):
+        self.show_control_panel(name_type, show)
+        self.__parent.adjustSize()
 
     def __get_structure(self, number_of_lane: int) -> list:
         number_of_lane_in_row = number_of_lane

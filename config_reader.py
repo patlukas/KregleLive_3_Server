@@ -75,6 +75,8 @@ class ConfigReader:
             "enable_action_stop_communication_after_block",
             "enable_action_show_result_from_last_block",
             "list_path_to_daten_files_on_lane",
-            "show_section_set_result_from_last_game"
+            "show_section_set_result_from_last_game",
+            "show_section_enter",
+            "show_section_stop_time"
         ]
         return list_settings

@@ -92,7 +92,7 @@ class GUI(QDialog):
         self.__priority_dropdown = None
         self.__kegeln_program_has_been_started = False
         self.__socket_section = None
-        self.__section_lane_control_panel = SectionLaneControlPanel()
+        self.__section_lane_control_panel = SectionLaneControlPanel(self)
         self.__section_clearoff_fast = SectionClearOffTest()
         self.__section_set_result_from_last_game = SectionSetResultFromLastGame(self)
 
@@ -195,7 +195,14 @@ class GUI(QDialog):
             self.__socket_section.set_default_address(self.__config["default_ip"], self.__config["default_port"])
             self.__socket_section.set_func_to_get_list_ip(self.__connection_manager.on_get_list_ip)
             self.__prepare_lane_stat_table(self.__config["number_of_lane"])
-            self.__section_lane_control_panel.init(self.__config["number_of_lane"], self.__config["stop_time_deadline_buffer_s"], self.__log_management.add_log, self.__connection_manager.add_message_to_x)
+            self.__section_lane_control_panel.init(
+                self.__config["number_of_lane"],
+                self.__config["stop_time_deadline_buffer_s"],
+                self.__log_management.add_log,
+                self.__connection_manager.add_message_to_x,
+                self.__config["show_section_enter"],
+                self.__config["show_section_stop_time"]
+            )
             self.__section_clearoff_fast.init(self.__config["number_of_lane"], self.__log_management.add_log)
             self.__launch_startup_tools(self.__config["tools_to_run_on_startup"])
 
@@ -329,17 +336,8 @@ class GUI(QDialog):
         lane_stat_list_table.triggered.connect(lambda checked: self.__on_show_table_stat(checked))
         view_menu.addAction(lane_stat_list_table)
 
-        lane_control_enter = QAction("Sterowanie torami - Enter", self)
-        lane_control_enter.setCheckable(True)
-        lane_control_enter.setChecked(False)
-        lane_control_enter.triggered.connect(lambda checked: self.__on_show_lane_control("Enter", checked))
-        view_menu.addAction(lane_control_enter)
-
-        lane_control_time = QAction("Sterowanie torami - Czas stop", self)
-        lane_control_time.setCheckable(True)
-        lane_control_time.setChecked(False)
-        lane_control_time.triggered.connect(lambda checked: self.__on_show_lane_control("Time", checked))
-        view_menu.addAction(lane_control_time)
+        view_menu.addAction(self.__section_lane_control_panel.action_enter)
+        view_menu.addAction(self.__section_lane_control_panel.action_stop_time)
 
         clear_off = QAction("Zbierane na 3 rzuty", self)
         clear_off.setCheckable(True)
@@ -363,6 +361,7 @@ class GUI(QDialog):
             "<h3>Kręgle Live - Serwer</h3>"
             "<p>Wersja: {}</p>".format(APP_VERSION) +
             "<p>Aplikacja wykonana w PyQt5.</p>"
+            "<p>Aplikacja wykonana w PyQt5.</p>"
         )
         QMessageBox.information(self, "O aplikacji", about_text)
 
@@ -384,10 +383,6 @@ class GUI(QDialog):
             self.__timer_update_table_lane_stat.start(500)
         else:
             self.__timer_update_table_lane_stat.stop()
-        self.adjustSize()
-
-    def __on_show_lane_control(self, name_type: str, show: bool):
-        self.__section_lane_control_panel.show_control_panel(name_type, show)
         self.adjustSize()
 
     def __on_show_clear_off_fast(self, show: bool):
