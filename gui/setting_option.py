@@ -188,6 +188,8 @@ class SettingStopCommunicationBeforeTrial(CheckboxActionAnalyzedMessage):
                 b'____P_________\r'
             Out:
                 None
+
+        :logs: STOP_COM_STOP (5)
         """
         if not self._was_trial_end:
             return
@@ -196,6 +198,7 @@ class SettingStopCommunicationBeforeTrial(CheckboxActionAnalyzedMessage):
 
         self._was_trial_end = False
         if self.is_enabled():
+            self._add_log(5, "STOP_COM_STOP", "", "Zatrzymano komunikację")
             self._stop_communication = True
             self._btn_enable_communication.show()
 
@@ -241,10 +244,14 @@ class SettingStopCommunicationBeforeTrial(CheckboxActionAnalyzedMessage):
                 border-style: inset;
             }
         """)
-        self._btn_enable_communication.clicked.connect(lambda: self._on_enable_communication())
+        self._btn_enable_communication.clicked.connect(lambda: self._enable_communication())
         self._btn_enable_communication.hide()
 
-    def _on_enable_communication(self):
+    def _enable_communication(self):
+        """
+        :logs: STOP_COM_START (5)
+        """
+        self._add_log(5, "STOP_COM_START", "", "Wznowiono komunikację")
         self._btn_enable_communication.hide()
         self._stop_communication = False
 
