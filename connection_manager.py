@@ -243,7 +243,6 @@ class ConnectionManager:
                 self.__on_add_log(10, "CON_ANA_MSG_3", "", result)
             else:
                 self.__on_add_log(10, "CON_ANA_MSG_4", "", result)
-        print("_", message)
         msg_obj = {"message": message, "time_wait": -1, "priority": 3}
         return [], [], [], [msg_obj]
 
