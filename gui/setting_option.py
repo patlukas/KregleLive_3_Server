@@ -5,7 +5,7 @@ import shutil
 from utils.messages import prepare_message_and_encapsulate, encapsulate_message, prepare_message
 
 
-class CheckboxActionAnalyzedMessage:
+class CheckboxActionAnalyzedMessageBase:
     """
     Abstract base class for a checkable QAction-based menu setting.
     """
@@ -15,6 +15,7 @@ class CheckboxActionAnalyzedMessage:
         :param label <str> - Text displayed in the menu QAction
         :param default_enabled <bool=True> - Initial state of the setting
         """
+        self._add_log = lambda a,b,c,d: None
         self._label = label
         self._is_enabled = default_enabled
         self._menu_action = QAction(self._label, parent)
@@ -35,6 +36,10 @@ class CheckboxActionAnalyzedMessage:
 
     def _after_toggled(self):
         pass
+
+    def _init_action(self, new_state, on_add_message):
+        self._add_log = on_add_message
+        self.on_toggle(new_state)
 
     def on_toggle(self, new_state=None) -> None:
         """
@@ -88,18 +93,21 @@ class CheckboxActionAnalyzedMessage:
         return
 
 
+class CheckboxActionAnalyzedMessage(CheckboxActionAnalyzedMessageBase):
+    def __init__(self, parent, label, default_enabled):
+        super().__init__(parent, label, default_enabled)
+
+    def init(self, new_state, on_add_message):
+        self._init_action(new_state, on_add_message)
+
+
 class SettingTurnOnPrinter(CheckboxActionAnalyzedMessage):
     """
    Menu setting responsible for enabling the printer
    when a 'IG' message is sent with disable printer.
    """
     def __init__(self, parent):
-        CheckboxActionAnalyzedMessage.__init__(
-            self,
-            parent,
-            "Uruchom drukarkę przy meczówce",
-            default_enabled=True
-        )
+        super().__init__(parent,"Uruchom drukarkę przy meczówce", default_enabled=True)
 
     def analyze_message_to_lane(self, message: bytes):
         """
@@ -131,12 +139,7 @@ class SettingStartTimeInTrial(CheckboxActionAnalyzedMessage):
     Menu setting responsible for add possibility to start time in trial.
     """
     def __init__(self, parent):
-        CheckboxActionAnalyzedMessage.__init__(
-            self,
-            parent,
-            "Dodaj opcję włączenia czasu w próbnych",
-            default_enabled=True
-        )
+        super().__init__(parent,"Dodaj opcję włączenia czasu w próbnych", default_enabled=True)
 
     def analyze_message_to_lane(self, message: bytes):
         """
@@ -166,12 +169,7 @@ class SettingStopCommunicationBeforeTrial(CheckboxActionAnalyzedMessage):
     Menu setting responsible stop communication before new block.
     """
     def __init__(self, parent):
-        CheckboxActionAnalyzedMessage.__init__(
-            self,
-            parent,
-            "Wstrzymuj kolejny blok",
-            default_enabled=True
-        )
+        super().__init__(parent,"Wstrzymuj kolejny blok", default_enabled=True)
         self._was_trial_end = False
         self._stop_communication = False
         self._btn_enable_communication = None
@@ -259,12 +257,7 @@ class SettingShowResultOnMonitorFromLastGame(CheckboxActionAnalyzedMessage):
         """
         :list_path_to_lane_dir: list[str] - list with path to dir where is daten.ini
         """
-        CheckboxActionAnalyzedMessage.__init__(
-            self,
-            parent,
-            "Pokaż wynik na monitorze z poprzedniej gry",
-            default_enabled=True
-        )
+        super().__init__(parent,"Pokaż wynik na monitorze z poprzedniej gry", default_enabled=True)
         self._file_name = "daten.ini"
         self._file_name_archive = "daten_last.ini"
         self._file_name_future = "daten_next.ini"

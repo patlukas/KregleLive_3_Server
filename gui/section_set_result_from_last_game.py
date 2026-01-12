@@ -1,4 +1,4 @@
-from gui.setting_option import CheckboxActionAnalyzedMessage
+from gui.setting_option import CheckboxActionAnalyzedMessageBase
 from utils.messages import extract_lane_id_from_outgoing_message, prepare_message, encapsulate_message, \
     prepare_message_and_encapsulate
 
@@ -7,14 +7,14 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIntValidator
 
 
-class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessage, QGroupBox):
+class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessageBase, QGroupBox):
     def __init__(self, parent):
         """
             self.__round_in_block - -1 - when is trial, 0 on first lane, 1 on second, ...
             self.__is_during_game - True after "IG" and "P", False after "p0" and "i0"
         """
         QGroupBox.__init__(self, "Wynik z elimiminacji", parent)
-        CheckboxActionAnalyzedMessage.__init__(
+        CheckboxActionAnalyzedMessageBase.__init__(
             self,
             parent,
             "Ustawianie wyniku z eliminacji",
@@ -34,7 +34,9 @@ class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessage, QGroupBox):
         self.setVisible(self._is_enabled)
         self.__parent.adjustSize()
 
-    def init(self, number_of_lane: int):
+    def init(self, number_of_lane: int, enable: bool, on_add_log):
+        self._init_action(enable, on_add_log)
+        self._add_log(3, "S_COF_14", "", "Są próbne: jest rzut ''")
         self.__number_of_lane = number_of_lane
         self.__list_sum = [0 for _ in range(number_of_lane)]
         self.__list_sum_next = [0 for _ in range(number_of_lane)]
