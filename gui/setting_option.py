@@ -103,9 +103,9 @@ class CheckboxActionAnalyzedMessage(CheckboxActionAnalyzedMessageBase):
 
 class SettingTurnOnPrinter(CheckboxActionAnalyzedMessage):
     """
-   Menu setting responsible for enabling the printer
-   when a 'IG' message is sent with disable printer.
-   """
+    Menu setting responsible for enabling the printer
+    when a 'IG' message is sent with disable printer.
+    """
     def __init__(self, parent):
         super().__init__(parent,"Uruchom drukarkę przy meczówce", default_enabled=True)
 
@@ -158,7 +158,7 @@ class SettingStartTimeInTrial(CheckboxActionAnalyzedMessage):
         if len(message) != 15 or message[4:5] != b"P":
             return
 
-        packet_trial = encapsulate_message(message, 3, -1) # TODO: can a fixed value (e.g. 250) be used instead of the default -1?
+        packet_trial = encapsulate_message(message, 3, -1)
         packet_pick_up = prepare_message_and_encapsulate(message[:4] + b"T41", 3, -1)
         packet_stop_time = prepare_message_and_encapsulate(message[:4] + b"T14", 9, 300)
         return [], [], [], [packet_trial, packet_pick_up, packet_stop_time]

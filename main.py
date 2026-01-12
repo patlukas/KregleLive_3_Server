@@ -203,8 +203,8 @@ class GUI(QDialog):
 
             self.__action_show_result_from_last_block.set_list_path_to_lane_dir(self.__config["list_path_to_daten_files_on_lane"])
 
-            self.__action_setting_turn_on_printer.on_toggle(self.__config["enable_action_turn_on_printer"])
-            self.__action_setting_start_time_in_trial.on_toggle(self.__config["enable_action_start_time_in_trial"])
+            self.__action_setting_turn_on_printer.init(self.__config["enable_action_turn_on_printer"], self.__log_management.add_log)
+            self.__action_setting_start_time_in_trial.init(self.__config["enable_action_start_time_in_trial"], self.__log_management.add_log)
             self.__action_setting_stop_communication.init(self.__config["enable_action_stop_communication_after_block"], self.__log_management.add_log)
             self.__action_show_result_from_last_block.init(self.__config["enable_action_show_result_from_last_block"], self.__log_management.add_log)
 
