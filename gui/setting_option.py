@@ -223,7 +223,8 @@ class SettingStopCommunicationBeforeTrial(CheckboxActionAnalyzedMessage):
 
     def prepare_button(self, parent):
         self._btn_enable_communication = QPushButton("ROZPOCZNIJ KOLEJNY BLOK", parent)
-        self._btn_enable_communication.setMinimumSize(570, 200)
+        self._btn_enable_communication.setMinimumSize(570, 150)
+        self._btn_enable_communication.move(0, 35)
         self._btn_enable_communication.setStyleSheet("""
             QPushButton {
                 font-size: 20pt;
@@ -233,7 +234,6 @@ class SettingStopCommunicationBeforeTrial(CheckboxActionAnalyzedMessage):
                 border: 4px solid #c0392b;
                 border-radius: 20px;
                 padding: 20px;
-                margin-top: 50px;
             }
             QPushButton:hover {
                 background-color: #ff6e5d;
