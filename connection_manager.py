@@ -120,6 +120,7 @@ class ConnectionManager:
             self.__com_reader(self.__com_y, self.__com_x, self.__sockets, self.__recv_com_y_additional_options, self.__list_func_for_analyze_msg_to_send)
             self.__com_y.send()
 
+            # TODO rename __check_communication_to_com_x_is_enabled to __check_communication_outgoing_is_enabled
             if self.__check_communication_to_com_x_is_enabled() and time.time() >= time_next_sending_x:
                 if time_next_sending_x > 0 and last_sent_x != b"":
                     self.__on_add_log(10, "CON_ERROR_WAIT", "COM_X", "Oczekiwanie na tyle długie, że zostanie wysłana nowa wiadomość. Ostatnio wysłana: " + str(last_sent_x))
@@ -132,7 +133,10 @@ class ConnectionManager:
                     time_last_sending_x = time.time()
                     last_sent_x = sent_msg_x
                     response_waiting_mode = 3
-            bytes_to_send_to_com_x = self.__sockets.communications()
+
+            enable_send_to_socket = self.__check_communication_to_com_x_is_enabled()
+            bytes_to_send_to_com_x = self.__sockets.communications(enable_send_to_socket)
+
             if bytes_to_send_to_com_x != b"":
                 # TODO
                 self.__on_add_log(10, "TODO_1", "", "Give msg from socket to com_x")
