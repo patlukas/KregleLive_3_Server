@@ -126,7 +126,7 @@ pip install -r requirements.txt
 |------------------|-------------------|---------|-------------------------------------------------------------------------|
 | **v1.4.3.0**     | 🚧 In Future      |         |                                                                         |
 | **v1.4.2.0**     | 🚧 In Development |         |                                                                         |
-| **v1.4.1.0**     | 2026-01-13        | 150     | Fix bug, change style                                                   |
+| **v1.4.1.0**     | 2026-01-13        | 153     | Fix bug, change style                                                   |
 | **v1.4.0.0**     | 2026-01-13        | 145     | ❌ Fix bug, set total sum from last game, add more configuration options |
 | **v1.3.0.0**     | 2026-01-08        | 118     | Add more option to analyze message                                      |
 | **v1.2.4.0**     | 2025-11-17        | 80      | Faster finish clean-off after empty throw & Fix Jenkins                 |
