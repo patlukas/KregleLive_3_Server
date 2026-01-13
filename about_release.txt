@@ -1,2 +1,2 @@
-Fix bug with change message "IG" during set new total sum
+Fix bug with change message 'IG' during set new total sum
 Stop socket communication when communication to lanes is stopped
