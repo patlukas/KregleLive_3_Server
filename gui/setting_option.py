@@ -174,7 +174,7 @@ class SettingStopCommunicationBeforeTrial(CheckboxActionAnalyzedMessage):
         self._stop_communication = False
         self._btn_enable_communication = None
 
-    def communication_to_lane_is_enabled(self) -> bool:
+    def communication_outgoing_is_enabled(self) -> bool:
         return not self._stop_communication
 
     def analyze_message_to_lane(self, message: bytes):

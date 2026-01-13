@@ -190,7 +190,7 @@ class GUI(QDialog):
                 self.__config["critical_response_time"],
                 self.__config["warning_response_time"],
                 self.__config["number_of_lane"],
-                self.__action_setting_stop_communication.communication_to_lane_is_enabled
+                self.__action_setting_stop_communication.communication_outgoing_is_enabled
             )
             self.__socket_section.set_default_address(self.__config["default_ip"], self.__config["default_port"])
             self.__socket_section.set_func_to_get_list_ip(self.__connection_manager.on_get_list_ip)
