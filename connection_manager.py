@@ -29,7 +29,7 @@ class ConnectionManager:
     """
     def __init__(self, com_name_x: str, com_name_y: str, com_timeout, com_write_timeout: float, on_add_log,
                  time_interval_break: float, max_waiting_time_for_response: float, critical_response_time: float,
-                 warning_response_time: float, number_of_lane: int, check_communication_to_com_x_is_enabled):
+                 warning_response_time: float, number_of_lane: int, check_communication_outgoing_is_enabled):
         """
         :param com_name_x: <str> name of COM port to get information from 9pin machine, e.g. "COM1"
         :param com_name_y: <str> name of COM port to get information from computer application, e.g. "COM2"
@@ -41,7 +41,7 @@ class ConnectionManager:
         :param critical_response_time: <float>  time in seconds after which program will inform about the criticaly long waiting time for a response
         :param warning_response_time: <float> time in seconds after which program will inform about the alarmingly long waiting time for a response
         :param number_of_lane: <int>
-        :param check_communication_to_com_x_is_enabled: <func()=bool> return True if communication is enabled, otherwise return False
+        :param check_communication_outgoing_is_enabled: <func()=bool> return True if communication is enabled, otherwise return False
 
         List of additional_options: <empty list>
 
@@ -66,7 +66,7 @@ class ConnectionManager:
         self.__on_add_log(2, "CON_INFO", "", "COM_X={}, COM_Y={}".format(com_name_x, com_name_y))
         self.__list_func_for_analyze_msg_to_send = []
         self.__list_func_for_analyze_msg_to_recv = []
-        self.__check_communication_to_com_x_is_enabled = check_communication_to_com_x_is_enabled
+        self.__check_communication_outgoing_is_enabled = check_communication_outgoing_is_enabled
 
         for _ in range(self.__number_of_lane):
             self.__history_of_communication_x.append({
@@ -120,7 +120,7 @@ class ConnectionManager:
             self.__com_reader(self.__com_y, self.__com_x, self.__sockets, self.__recv_com_y_additional_options, self.__list_func_for_analyze_msg_to_send)
             self.__com_y.send()
 
-            if self.__check_communication_to_com_x_is_enabled() and time.time() >= time_next_sending_x:
+            if self.__check_communication_outgoing_is_enabled() and time.time() >= time_next_sending_x:
                 if time_next_sending_x > 0 and last_sent_x != b"":
                     self.__on_add_log(10, "CON_ERROR_WAIT", "COM_X", "Oczekiwanie na tyle długie, że zostanie wysłana nowa wiadomość. Ostatnio wysłana: " + str(last_sent_x))
                     time_next_sending_x = 0
@@ -132,7 +132,10 @@ class ConnectionManager:
                     time_last_sending_x = time.time()
                     last_sent_x = sent_msg_x
                     response_waiting_mode = 3
-            bytes_to_send_to_com_x = self.__sockets.communications()
+
+            enable_send_to_socket = self.__check_communication_outgoing_is_enabled()
+            bytes_to_send_to_com_x = self.__sockets.communications(enable_send_to_socket)
+
             if bytes_to_send_to_com_x != b"":
                 # TODO
                 self.__on_add_log(10, "TODO_1", "", "Give msg from socket to com_x")

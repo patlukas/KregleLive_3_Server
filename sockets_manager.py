@@ -148,9 +148,11 @@ class SocketsManager:
         result.append(["Kolejka", str(self.__queue_not_sent_data.count(b"\r")), str(len(self.__queue_not_sent_data)), "0", "0"])
         return result
 
-    def communications(self) -> bytes:
+    def communications(self, enable_send: bool) -> bytes:
         """
         Manages socket operations including accepting new connections, receiving and sending data.
+
+        :param: enable_send - is allowed send to socket
 
         :return: <bytes> all received data
         :logs: SKT_MNGR_ERROR (10), SKT_MNGR_ERR_2 (10)
@@ -168,8 +170,9 @@ class SocketsManager:
                     self.__accept_new_client()
                 else:
                     received_data += self.__socket_recv(socket_el)[1]
-            for socket_el in list_ready_to_write:
-                self.__socket_send(socket_el)
+            if enable_send:
+                for socket_el in list_ready_to_write:
+                    self.__socket_send(socket_el)
 
         except OSError as e:
             self.__on_add_log(10, "SKT_MNGR_ERROR", "", "Error occurred while managing sockets connections "

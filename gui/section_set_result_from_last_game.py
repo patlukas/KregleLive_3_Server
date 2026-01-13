@@ -210,8 +210,8 @@ class SectionSetResultFromLastGame(CheckboxActionAnalyzedMessageBase, QGroupBox)
             return [], [], [], [packet_ig, packet_z]
 
         if self.__mode == 2:
-            message = message[:15] + new_total_sum_bytes + message[18:]
-            message = prepare_message(message[:-2])
+            message = message[:15] + new_total_sum_bytes + message[18:25]
+            message = prepare_message(message)
             return message
 
     def __get_sum_from_last_game(self, message: bytes) -> int:
