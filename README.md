@@ -124,8 +124,9 @@ pip install -r requirements.txt
 
 | Version          | Release Date      | Commits | Changes                                                                 |
 |------------------|-------------------|---------|-------------------------------------------------------------------------|
-| **v1.4.3.0**     | 🚧 In Future      |         |                                                                         |
-| **v1.4.2.0**     | 🚧 In Development |         |                                                                         |
+| **v1.4.4.0**     | 🚧 In Future      |         |                                                                         |
+| **v1.4.3.0**     | 🚧 In Development |         |                                                                         |
+| **v1.4.2.0**     | 2026-01-15        | 157     | Temporary button before next block                                      |
 | **v1.4.1.0**     | 2026-01-13        | 153     | Fix bug, change style                                                   |
 | **v1.4.0.0**     | 2026-01-13        | 145     | ❌ Fix bug, set total sum from last game, add more configuration options |
 | **v1.3.0.0**     | 2026-01-08        | 118     | Add more option to analyze message                                      |

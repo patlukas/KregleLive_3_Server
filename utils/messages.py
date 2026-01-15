@@ -1,4 +1,4 @@
-def extract_lane_id_from_incoming_message(msg: bytes, lane_count: int):
+def extract_lane_id_from_incoming_message(msg: bytes, lane_count=-1):
     """
     Extract lane id from incoming message.
 
@@ -8,11 +8,11 @@ def extract_lane_id_from_incoming_message(msg: bytes, lane_count: int):
     if len(msg) < 4:
         return None
     lane = int(msg[3:4])
-    if lane >= lane_count:
+    if lane_count != -1 and lane >= lane_count:
         return None
     return lane
 
-def extract_lane_id_from_outgoing_message(msg: bytes, lane_count: int):
+def extract_lane_id_from_outgoing_message(msg: bytes, lane_count=-1):
     """
     Extract lane id from outgoing message.
 
@@ -22,7 +22,7 @@ def extract_lane_id_from_outgoing_message(msg: bytes, lane_count: int):
     if len(msg) < 4:
         return None
     lane = int(msg[1:2])
-    if lane >= lane_count:
+    if lane_count != -1 and lane >= lane_count:
         return None
     return lane
 

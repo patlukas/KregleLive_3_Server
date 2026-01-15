@@ -2,7 +2,8 @@ from PyQt5.QtWidgets import QAction, QPushButton
 import os
 import shutil
 
-from utils.messages import prepare_message_and_encapsulate, encapsulate_message, prepare_message
+from utils.messages import prepare_message_and_encapsulate, encapsulate_message, prepare_message, \
+    extract_lane_id_from_incoming_message, extract_lane_id_from_outgoing_message
 
 
 class CheckboxActionAnalyzedMessageBase:
@@ -170,9 +171,11 @@ class SettingStopCommunicationBeforeTrial(CheckboxActionAnalyzedMessage):
     """
     def __init__(self, parent):
         super().__init__(parent,"Wstrzymuj kolejny blok", default_enabled=True)
-        self._was_trial_end = False
+        self._mode = 0
+        self._active_lanes = set()
         self._stop_communication = False
-        self._btn_enable_communication = None
+        self._btn_temporary = None
+        self._btn_main = None
 
     def communication_outgoing_is_enabled(self) -> bool:
         return not self._stop_communication
@@ -191,18 +194,27 @@ class SettingStopCommunicationBeforeTrial(CheckboxActionAnalyzedMessage):
 
         :logs: STOP_COM_STOP (5)
         """
-        if not self._was_trial_end:
-            return
-        if len(message) != 15 or message[4:5] != b"P":
-            return
+        if message[4:5] == b"P":
+            if self._mode == 0:
+                return
+            lane_id = extract_lane_id_from_outgoing_message(message)
+            self._active_lanes.discard(lane_id)
+            if self._mode == 1:
+                if self.is_enabled():
+                    self._add_log(5, "STOP_COM_STOP", "", "Zatrzymano komunikację")
+                    self._stop_communication = True
 
-        self._was_trial_end = False
-        if self.is_enabled():
-            self._add_log(5, "STOP_COM_STOP", "", "Zatrzymano komunikację")
-            self._stop_communication = True
-            self._btn_enable_communication.show()
+                if len(self._active_lanes) > 0:
+                    self._show_button(1, 2)
+                    self._mode = 2
+                else:
+                    self._show_button(1, 3)
+                    self._mode = 3
 
-        return
+            elif self._mode == 2:
+                if len(self._active_lanes) == 0:
+                    self._show_button(2, 3)
+                    self._mode = 3
 
     def analyze_message_from_lane(self, message: bytes):
         """
@@ -216,16 +228,23 @@ class SettingStopCommunicationBeforeTrial(CheckboxActionAnalyzedMessage):
             Out:
                 None
         """
-        if len(message) != 9 or message[4:6] != b"p0":
-            return
-        self._was_trial_end = True
+        if message[4:6] == b"p0":
+            if self._mode in [2, 3]:
+                self._enable_communication()
+            self._mode = 1
+            lane_id = extract_lane_id_from_incoming_message(message)
+            self._active_lanes.add(lane_id)
         return
 
     def prepare_button(self, parent):
-        self._btn_enable_communication = QPushButton("ROZPOCZNIJ KOLEJNY BLOK", parent)
-        self._btn_enable_communication.setMinimumSize(570, 150)
-        self._btn_enable_communication.move(0, 35)
-        self._btn_enable_communication.setStyleSheet("""
+        self._prepare_button_main(parent)
+        self._prepare_button_temporary(parent)
+
+    def _prepare_button_main(self, parent):
+        self._btn_main = QPushButton("ROZPOCZNIJ KOLEJNY BLOK", parent)
+        self._btn_main.setMinimumSize(570, 150)
+        self._btn_main.move(0, 35)
+        self._btn_main.setStyleSheet("""
             QPushButton {
                 font-size: 20pt;
                 font-weight: bold;
@@ -244,16 +263,58 @@ class SettingStopCommunicationBeforeTrial(CheckboxActionAnalyzedMessage):
                 border-style: inset;
             }
         """)
-        self._btn_enable_communication.clicked.connect(lambda: self._enable_communication())
-        self._btn_enable_communication.hide()
+        self._btn_main.clicked.connect(lambda: self._enable_communication())
+        self._btn_main.hide()
+
+    def _prepare_button_temporary(self, parent):
+        self._btn_temporary = QPushButton("\n\nROZPOCZNIJ KOLEJNY BLOK\n\n(Mogą jeszcze nie wszystkie tory być gotowe)", parent)
+        self._btn_temporary.setMinimumSize(570, 150)
+        self._btn_temporary.move(0, 35)
+        self._btn_temporary.setStyleSheet("""
+            QPushButton {
+                font-size: 12pt;
+                background-color: #979797;
+                color: white;
+                border: 4px solid #909090;
+                border-radius: 10px;
+                padding: 5px;
+            }
+            QPushButton:hover {
+                background-color: #afafaf;
+                border-color: #a0a0a0;
+            }
+            QPushButton:pressed {
+                background-color: #606060;
+                border-style: inset;
+            }
+        """)
+        self._btn_temporary.clicked.connect(lambda: self._enable_communication())
+        self._btn_temporary.hide()
 
     def _enable_communication(self):
         """
         :logs: STOP_COM_START (5)
         """
-        self._add_log(5, "STOP_COM_START", "", "Wznowiono komunikację")
-        self._btn_enable_communication.hide()
+        if not self._stop_communication:
+            self._add_log(5, "STOP_COM_START", "", "Wznowiono komunikację")
+        self._btn_temporary.hide()
+        self._btn_main.hide()
+        if self._mode == 2:
+            self._active_lanes.clear()
+        self._mode = 0
         self._stop_communication = False
+
+    def _show_button(self, old_mode, new_mode):
+        if old_mode == 1 and new_mode == 2:
+            if self.is_enabled():
+                self._btn_temporary.show()
+        elif old_mode == 1 and new_mode == 3:
+            if self.is_enabled():
+                self._btn_main.show()
+        elif old_mode == 2 and new_mode == 3:
+            self._btn_temporary.hide()
+            if self.is_enabled():
+                self._btn_main.show()
 
 
 class SettingShowResultOnMonitorFromLastGame(CheckboxActionAnalyzedMessage):

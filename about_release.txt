@@ -1,2 +1,1 @@
-Fix bug with change message 'IG' during set new total sum
-Stop socket communication when communication to lanes is stopped
+Add temporary button to start new block, before all lanes will be ready for next block
