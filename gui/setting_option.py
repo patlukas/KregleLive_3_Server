@@ -197,7 +197,7 @@ class SettingStopCommunicationBeforeTrial(CheckboxActionAnalyzedMessage):
         if message[4:5] == b"P":
             if self._mode == 0:
                 return
-            lane_id = extract_lane_id_from_outgoing_message(message, 100)
+            lane_id = extract_lane_id_from_outgoing_message(message)
             self._active_lanes.discard(lane_id)
             if self._mode == 1:
                 if self.is_enabled():
@@ -232,7 +232,7 @@ class SettingStopCommunicationBeforeTrial(CheckboxActionAnalyzedMessage):
             if self._mode in [2, 3]:
                 self._enable_communication()
             self._mode = 1
-            lane_id = extract_lane_id_from_incoming_message(message, 100) # TODO
+            lane_id = extract_lane_id_from_incoming_message(message)
             self._active_lanes.add(lane_id)
         return
 
