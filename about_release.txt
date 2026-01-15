@@ -1,1 +1,1 @@
-Add temporary button to start new block, before all lanes will be ready for next block
+Add buffer before copy
