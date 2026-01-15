@@ -1,6 +1,8 @@
-from PyQt5.QtWidgets import QAction, QPushButton
+from PyQt5.QtWidgets import QAction, QPushButton, QComboBox, QHBoxLayout, QLabel
 import os
 import shutil
+import threading
+
 
 from utils.messages import prepare_message_and_encapsulate, encapsulate_message, prepare_message, \
     extract_lane_id_from_incoming_message, extract_lane_id_from_outgoing_message
@@ -331,6 +333,38 @@ class SettingShowResultOnMonitorFromLastGame(CheckboxActionAnalyzedMessage):
         self._file_name_future = "daten_next.ini"
         self._list_path_to_lane_dir = []
         self._is_trial = False
+        self._buffer_time_P = 0
+        self._buffer_time_i0 = 0
+        self._buffer_time_p1 = 0
+        options = []
+        for i in range(6):
+            for j in range(0, 11, 1):
+                for k in range(6):
+                    options.append(["i0=" + str(i) + " P=" + str(j) + " p1=" + str(k), [i, j, k]])
+        self._list_buffer_option = options
+        self.layout_select_buffer = self._prepare_widget_select_buffer(parent, self._list_buffer_option)
+
+    def _prepare_widget_select_buffer(self, parent, options):
+        layout = QHBoxLayout()
+
+        label = QLabel("Opóźnienie kopiowania plików na telewizorach (s)")
+        layout.addWidget(label)
+
+        combo = QComboBox(parent)
+
+        for a, b in options:
+            combo.addItem(a, b)
+
+        combo.currentIndexChanged.connect(self._change_buffer_time)
+
+        layout.addWidget(combo)
+
+        return layout
+
+    def _change_buffer_time(self, index):
+        self._buffer_time_i0 = self._list_buffer_option[index][1][0]
+        self._buffer_time_P = self._list_buffer_option[index][1][1]
+        self._buffer_time_p1 = self._list_buffer_option[index][1][2]
 
     def set_list_path_to_lane_dir(self, list_path_to_lane_dir):
         self._list_path_to_lane_dir = list_path_to_lane_dir
@@ -352,8 +386,8 @@ class SettingShowResultOnMonitorFromLastGame(CheckboxActionAnalyzedMessage):
 
         if message[4:5] == b"P" and not self._is_trial:
             self._is_trial = True
-            self.__copy_on_lanes(self._file_name, self._file_name_future)
-            self.__copy_on_lanes(self._file_name_archive, self._file_name, True)
+            self.__copy_on_lanes(self._file_name, self._file_name_future, self._buffer_time_P)
+            self.__copy_on_lanes(self._file_name_archive, self._file_name, self._buffer_time_P, True)
 
         return
 
@@ -376,14 +410,21 @@ class SettingShowResultOnMonitorFromLastGame(CheckboxActionAnalyzedMessage):
 
         if message[4:6] == b"i0":
             self._is_trial = False
-            self.__copy_on_lanes(self._file_name, self._file_name_archive)
+            self.__copy_on_lanes(self._file_name, self._file_name_archive, self._buffer_time_i0)
 
         if message[4:6] == b"p1":
-            self.__copy_on_lanes(self._file_name_future, self._file_name, True)
+            self.__copy_on_lanes(self._file_name_future, self._file_name, self._buffer_time_p1, True)
 
         return
 
-    def __copy_file(self, src, target, remove_src=False):
+    def __copy_file(self, src, target, buffer_time, remove_src=False):
+        threading.Timer(
+            buffer_time,
+            lambda s=src, t=target, r=remove_src: self.__copy_file_body(s, t, r)
+        ).start()
+
+
+    def __copy_file_body(self, src, target, remove_src=False):
         """
         :logs: ERROR_ACTION_MONITOR (10)
         """
@@ -397,8 +438,8 @@ class SettingShowResultOnMonitorFromLastGame(CheckboxActionAnalyzedMessage):
         except Exception as e:
             self._add_log(10, "ERROR_ACTION_MONITOR", "", "Błąd podczas kopiowania pliku: {} -> {} | {}".format(src, target, e))
 
-    def __copy_on_lanes(self, src_name, target_name, remove_src=False):
+    def __copy_on_lanes(self, src_name, target_name, buffer_time, remove_src=False):
         for s in self._list_path_to_lane_dir:
             src = os.path.join(s, src_name)
             target = os.path.join(s, target_name)
-            self.__copy_file(src, target, remove_src)
+            self.__copy_file(src, target, buffer_time, remove_src)

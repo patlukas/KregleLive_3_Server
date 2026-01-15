@@ -35,7 +35,7 @@ from PyQt5.QtCore import QTimer, Qt
 from _thread import start_new_thread
 
 APP_NAME = "KL3S"
-APP_VERSION = "1.4.2"
+APP_VERSION = "1.4.3"
 
 class GUI(QDialog):
     """
@@ -300,6 +300,8 @@ class GUI(QDialog):
         self.__layout.addWidget(self.__section_clearoff_fast)
         self.__layout.addWidget(self.__section_set_result_from_last_game)
 
+        self.__layout.addLayout(self.__action_show_result_from_last_block.layout_select_buffer)
+
         self.__update_connect_list_layout()
 
         self.__action_setting_stop_communication.prepare_button(self)
@@ -360,7 +362,6 @@ class GUI(QDialog):
         about_text = (
             "<h3>Kręgle Live - Serwer</h3>"
             "<p>Wersja: {}</p>".format(APP_VERSION) +
-            "<p>Aplikacja wykonana w PyQt5.</p>"
             "<p>Aplikacja wykonana w PyQt5.</p>"
         )
         QMessageBox.information(self, "O aplikacji", about_text)
