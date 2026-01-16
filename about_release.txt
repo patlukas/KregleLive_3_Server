@@ -1,1 +1,1 @@
-Add new method to copy files on TV
+Fix copy files on TV
