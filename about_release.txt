@@ -1,1 +1,1 @@
-Add buffer before copy
+Add new method to copy files on TV
