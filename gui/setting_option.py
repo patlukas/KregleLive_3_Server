@@ -295,7 +295,7 @@ class SettingStopCommunicationBeforeTrial(CheckboxActionAnalyzedMessage):
         """
         :logs: STOP_COM_START (5)
         """
-        if not self._stop_communication:
+        if self._stop_communication:
             self._add_log(5, "STOP_COM_START", "", "Wznowiono komunikację")
         self._btn_temporary.hide()
         self._btn_main.hide()
@@ -379,15 +379,34 @@ class SettingShowResultOnMonitorFromLastGame(CheckboxActionAnalyzedMessage):
 
         return
 
-    def __is_str_int_file(self, path, string="Probe=1"):
+    def __is_probe_in_file(self, path):
         try:
             with open(path, "r", encoding="cp1250") as f:
-                for line in f:
-                    if string in line:
-                        self._add_log(8, "EVENT_1", "", "Jest {} w {}".format(string, path))
-                        return True
+                bahn = None
+                probe = None
 
-            self._add_log(8, "EVENT_2", "", "Nie ma {} w {}".format(string, path))
+                for line in f:
+                    line = line.strip()
+
+                    if line.startswith("[Mannschaft"):
+                        if probe == "1" and bahn != "-1":
+                            self._add_log(8, "EVENT_0", "", "Są próbne w {}".format(path))
+                            return True
+                        bahn = None
+                        probe = None
+                        continue
+
+                    if line.startswith("Bahn="):
+                        bahn = line.split("=", 1)[1]
+
+                    elif line.startswith("Probe="):
+                        probe = line.split("=", 1)[1]
+
+                if probe == "1" and bahn != "-1":
+                    self._add_log(8, "EVENT_1", "", "Są próbne w {}".format(path))
+                    return True
+
+            self._add_log(8, "EVENT_2", "", "Nie ma próbnych w {}".format(path))
             return False
 
         except Exception as e:
@@ -421,6 +440,6 @@ class SettingShowResultOnMonitorFromLastGame(CheckboxActionAnalyzedMessage):
             path_future = os.path.join(s, file_future)
             path_arch = os.path.join(s, file_arch)
 
-            if self.__is_str_int_file(path_now, "Probe=1"):
+            if self.__is_probe_in_file(path_now):
                 self.__copy_file(path_now, path_future, False)
                 self.__copy_file(path_arch, path_now, False)
