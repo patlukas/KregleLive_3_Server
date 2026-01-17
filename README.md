@@ -126,6 +126,7 @@ pip install -r requirements.txt
 |------------------|-------------------|---------|-------------------------------------------------------------------------|
 | **v1.4.7.0**     | 🚧 In Future      |         |                                                                         |
 | **v1.4.6.0**     | 🚧 In Development |         |                                                                         |
+| **v1.4.5.1**     | 2026-01-16        | 164     | Change copy files on TV                                                 |
 | **v1.4.5.0**     | 2026-01-16        | 163     | Fix copy files on TV                                                    |
 | **v1.4.4.0**     | 2026-01-16        | 161     | Add new method to copy files on TV                                      |
 | **v1.4.3.0**     | 2026-01-15        | 159     | Add buffer before copy                                                  |

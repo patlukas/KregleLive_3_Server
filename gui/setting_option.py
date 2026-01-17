@@ -443,3 +443,5 @@ class SettingShowResultOnMonitorFromLastGame(CheckboxActionAnalyzedMessage):
             if self.__is_probe_in_file(path_now):
                 self.__copy_file(path_now, path_future, False)
                 self.__copy_file(path_arch, path_now, False)
+            else:
+                self.__copy_file(path_now, path_arch, False)
